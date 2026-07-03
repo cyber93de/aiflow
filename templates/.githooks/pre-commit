@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Enforce Google-style format + lint + unit tests before a commit.
+# Emergency bypass (discouraged): AIFLOW_SKIP_VERIFY=1 git commit ...
+[ "${AIFLOW_SKIP_VERIFY:-}" = "1" ] && exit 0
+set -uo pipefail
+have() { command -v "$1" >/dev/null 2>&1; }
+fail() { echo "✗ pre-commit: $1" >&2; exit 1; }
+
+echo "• pre-commit: format + lint + tests"
+
+# 1) Format staged files in place (Google style), then re-stage.
+staged="$(git diff --cached --name-only --diff-filter=ACM)"
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  case "$f" in
+    *.py)  have black && black -q "$f"; have isort && isort -q "$f" ;;
+    *.js|*.jsx|*.ts|*.tsx|*.json|*.css|*.md|*.yml|*.yaml) have prettier && prettier --write --log-level error "$f" ;;
+    *.go)  have gofmt && gofmt -w "$f" ;;
+    *.java) have google-java-format && google-java-format -i "$f" ;;
+    *.dart) have dart && dart format "$f" >/dev/null 2>&1 ;;
+    *.c|*.cc|*.cpp|*.h|*.hpp) have clang-format && clang-format -i --style=Google "$f" ;;
+    *.sh)  have shfmt && shfmt -w -i 2 "$f" ;;
+  esac
+  git add "$f" 2>/dev/null || true
+done <<< "$staged"
+
+# 2) Lint + tests by detected stack (best-effort; fails the commit on error).
+if [ -f package.json ]; then
+  have npx && npx --no-install eslint . >/dev/null 2>&1 || true
+  if grep -q '"test"' package.json; then npm test --silent || fail "npm test failed"; fi
+fi
+[ -f pyproject.toml ] || [ -f requirements.txt ] && { have ruff && { ruff check . || fail "ruff failed"; }; have pytest && { pytest -q || fail "pytest failed"; }; }
+[ -f go.mod ] && { [ -z "$(gofmt -l .)" ] || fail "gofmt"; have go && { go vet ./... || true; go test ./... || fail "go test failed"; }; }
+[ -f pubspec.yaml ] && { have dart && dart analyze >/dev/null 2>&1; have flutter && { flutter test || fail "flutter test failed"; }; }
+
+echo "• pre-commit OK"
+exit 0

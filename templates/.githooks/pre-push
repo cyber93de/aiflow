@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Enforce the branching governance model (.aiflow/branching.json):
+#  - PR-only: no direct push to protected branches (main/develop)
+#  - strict naming: pushed branch must match an allowed branch type
+# Bypass (e.g. for the release process): AIFLOW_ALLOW_DIRECT_PUSH=1
+set -uo pipefail
+
+# aiflow: sync Beads issues <-> GitHub before push (non-fatal). Needs GITHUB_TOKEN in env
+# and github.owner/repo configured (aiflow apply does this). Skips silently otherwise.
+if [ -d .beads ] && command -v bd >/dev/null 2>&1 && [ -n "${GITHUB_TOKEN:-}" ] \
+   && [ "$(command -v jq >/dev/null 2>&1 && jq -r '.vcs // "github"' .aiflow/config.json 2>/dev/null || echo github)" = github ]; then
+  bd github sync >/dev/null 2>&1 || echo "  ! bd github sync failed (continuing push)" >&2
+fi
+
+MODEL=".aiflow/branching.json"
+[ -f "$MODEL" ] || exit 0
+command -v jq >/dev/null 2>&1 || exit 0
+[ "${AIFLOW_ALLOW_DIRECT_PUSH:-}" = "1" ] && exit 0
+
+PRONLY="$(jq -r '.pullRequests.required // false' "$MODEL")"
+PROTECTED="$(jq -r '(.pullRequests.protectedBranches // ["main","develop"]) | join(" ")' "$MODEL")"
+STRICT="$(jq -r 'if .branchNaming=="enforced" then "true" else "false" end' "$MODEL")"
+TYPES="$(jq -r '(.permanentBranches + ([.branchTypes[] | sub("/\\*$";"/")])) | join(" ")' "$MODEL")"
+
+fail() { echo "✗ pre-push (branching): $1" >&2; echo "  see docs/branching.md — bypass with AIFLOW_ALLOW_DIRECT_PUSH=1 (discouraged)" >&2; exit 1; }
+
+# stdin: <local ref> <local sha> <remote ref> <remote sha>
+while read -r lref lsha rref rsha; do
+  [ -z "${rref:-}" ] && continue
+  branch="${rref#refs/heads/}"
+
+  # PR-only: block direct pushes to protected branches
+  if [ "$PRONLY" = true ]; then
+    for p in $PROTECTED; do
+      [ "$branch" = "$p" ] && fail "direct push to protected branch '$branch' is not allowed (merge via Pull Request)"
+    done
+  fi
+
+  # strict naming: branch must be permanent or match an allowed type prefix
+  if [ "$STRICT" = true ]; then
+    ok=false
+    for t in $TYPES; do
+      case "$t" in
+        */) [[ "$branch" == ${t}* ]] && ok=true ;;   # type prefix, e.g. feature/
+        *)  [ "$branch" = "$t" ] && ok=true ;;        # exact permanent branch
+      esac
+    done
+    [ "$ok" = true ] || fail "branch name '$branch' does not match an allowed type ($TYPES)"
+  fi
+done
+exit 0

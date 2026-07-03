@@ -1,0 +1,36 @@
+# --- aiflow ---
+.env
+.env.local
+result.json
+.aiflow/runs/
+.aiflow/ralph.log
+.aiflow/requirements-report.md
+
+# --- generated indexes / graphs ---
+graphify-out/
+.cocoindex_code/
+.aiflow/router-config.json
+
+# --- claude-code-router lives in $HOME, never in the repo (do not commit keys) ---
+
+# --- Claude Code ---
+.claude/settings.local.json
+.claude/memory/        # comment out if you want to commit shared memory
+
+# --- secrets / keys ---
+*.pem
+*.key
+*.p12
+
+# --- common build/deps ---
+node_modules/
+dist/
+build/
+.venv/
+__pycache__/
+*.pyc
+target/
+.dart_tool/
+.idea/
+.vscode/
+.DS_Store

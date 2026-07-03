@@ -1,0 +1,71 @@
+name: Release
+
+# On every push to main: if VERSION has no matching git tag yet, build per-OS
+# archives, tag v<VERSION>, and publish a GitHub Release with the assets.
+# Bump VERSION + push  -> a release is cut. Ordinary pushes -> no-op.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need tags to detect existing releases
+
+      - name: Read version
+        id: ver
+        run: |
+          v="$(tr -d ' \t\r\n' < VERSION)"
+          [ -n "$v" ] || { echo "VERSION file empty"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "tag=v$v"     >> "$GITHUB_OUTPUT"
+
+      - name: Skip if this version is already released
+        id: check
+        run: |
+          if git rev-parse -q --verify "refs/tags/${{ steps.ver.outputs.tag }}" >/dev/null; then
+            echo "exists=true"  >> "$GITHUB_OUTPUT"
+            echo "::notice::Tag ${{ steps.ver.outputs.tag }} already exists — nothing to release."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build per-OS archives
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          set -euo pipefail
+          ver="${{ steps.ver.outputs.version }}"
+          stage="aiflow-$ver"
+          mkdir -p "dist/$stage"
+          cp -r bin lib templates install.sh install.ps1 README.md README.de.md LICENSE VERSION "dist/$stage/"
+          cd dist
+          command -v zip >/dev/null 2>&1 || sudo apt-get -y -q install zip
+          tar -czf "aiflow-$ver-linux.tar.gz" "$stage"
+          tar -czf "aiflow-$ver-macos.tar.gz" "$stage"
+          zip -qr  "aiflow-$ver-windows.zip"  "$stage"
+          sha256sum aiflow-"$ver"-linux.tar.gz aiflow-"$ver"-macos.tar.gz aiflow-"$ver"-windows.zip \
+            > "aiflow-$ver-SHA256SUMS.txt"
+          ls -la
+
+      - name: Publish GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: aiflow ${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          files: |
+            dist/aiflow-${{ steps.ver.outputs.version }}-linux.tar.gz
+            dist/aiflow-${{ steps.ver.outputs.version }}-macos.tar.gz
+            dist/aiflow-${{ steps.ver.outputs.version }}-windows.zip
+            dist/aiflow-${{ steps.ver.outputs.version }}-SHA256SUMS.txt

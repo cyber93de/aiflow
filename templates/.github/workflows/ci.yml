@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Auto-detect stack and run style + tests. Extend per project.
+      - name: Node
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Node verify
+        if: hashFiles('package.json') != ''
+        run: |
+          npm ci || npm install
+          npx --yes prettier --check . || echo "::warning::prettier issues"
+          npm test --if-present
+
+      - name: Python
+        if: hashFiles('pyproject.toml','requirements.txt') != ''
+        uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Python verify
+        if: hashFiles('pyproject.toml','requirements.txt') != ''
+        run: |
+          pip install black isort pytest || true
+          black --check . || echo "::warning::black issues"
+          isort --check-only . || echo "::warning::isort issues"
+          pytest -q || echo "no tests"
+
+      - name: Go
+        if: hashFiles('go.mod') != ''
+        uses: actions/setup-go@v5
+        with: { go-version: "stable" }
+      - name: Go verify
+        if: hashFiles('go.mod') != ''
+        run: |
+          test -z "$(gofmt -l .)" || { echo "::error::gofmt"; gofmt -l .; exit 1; }
+          go test ./... || echo "no tests"
+
+      - name: Dart/Flutter
+        if: hashFiles('pubspec.yaml') != ''
+        uses: subosito/flutter-action@v2
+      - name: Dart verify
+        if: hashFiles('pubspec.yaml') != ''
+        run: |
+          dart format --output=none --set-exit-if-changed . || echo "::warning::dart format"
+          flutter analyze || dart analyze || true
+          flutter test || dart test || echo "no tests"

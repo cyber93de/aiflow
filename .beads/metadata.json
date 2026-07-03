@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "aiflow",
+  "project_id": "a0238eb9-77d3-41f9-8376-71b5aeaa2425"
+}

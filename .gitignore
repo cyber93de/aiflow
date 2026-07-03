@@ -1,0 +1,10 @@
+# local install artifacts
+bin/aiflow.cmd
+# never commit a real .env if one lands here
+.env
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/

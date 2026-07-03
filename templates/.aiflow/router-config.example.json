@@ -1,0 +1,30 @@
+{
+  "$comment": "claude-code-router config. Copy to ~/.claude-code-router/config.json (Win: %USERPROFILE%\\.claude-code-router\\config.json), fill keys, then 'aiflow shell --router'. Routes easy/background work to cheap or local models, hard reasoning to Opus. Docs: https://github.com/musistudio/claude-code-router",
+  "Providers": [
+    {
+      "name": "anthropic",
+      "api_base_url": "https://api.anthropic.com/v1/messages",
+      "api_key": "sk-ant-REPLACE_ME",
+      "models": ["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+    },
+    {
+      "name": "deepseek",
+      "api_base_url": "https://api.deepseek.com/chat/completions",
+      "api_key": "YOUR_DEEPSEEK_KEY",
+      "models": ["deepseek-chat", "deepseek-reasoner"]
+    },
+    {
+      "name": "ollama",
+      "api_base_url": "http://localhost:11434/v1/chat/completions",
+      "api_key": "ollama",
+      "models": ["qwen2.5-coder:7b"]
+    }
+  ],
+  "Router": {
+    "default":     "anthropic,claude-sonnet-4-6",
+    "background":  "ollama,qwen2.5-coder:7b",
+    "think":       "anthropic,claude-opus-4-8",
+    "longContext": "anthropic,claude-sonnet-4-6",
+    "webSearch":   "anthropic,claude-sonnet-4-6"
+  }
+}

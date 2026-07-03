@@ -1,0 +1,45 @@
+# aiflow
+
+> aiflow turns any repository into a governed, AI-driven software-delivery pipeline for Claude Code:
+> durable Beads task memory, a code knowledge graph (graphify) plus semantic RAG (cocoindex-code),
+> context7 live docs, specialist agents, Ollama local models, model routing, team collaboration over
+> a shared Dolt issue graph, and token savings via caveman and rtk. One command, project-scoped,
+> vendor-neutral, MIT-licensed. Owner: Cyber93de.
+
+## Docs
+- [Home](https://cyber93de.github.io/aiflow/): overview and advantages
+- [Installation](https://cyber93de.github.io/aiflow/installation): Linux, macOS, Windows
+- [Quick Start](https://cyber93de.github.io/aiflow/getting-started): first project
+- [Features & advantages](https://cyber93de.github.io/aiflow/features)
+- [Memory: graph + RAG](https://cyber93de.github.io/aiflow/memory): graphify + cocoindex + context7
+- [Token optimization](https://cyber93de.github.io/aiflow/token-optimization): caveman, rtk, routing
+- [Team collaboration](https://cyber93de.github.io/aiflow/team): shared Dolt issues, atomic claim
+- [Command reference](https://cyber93de.github.io/aiflow/commands)
+- [Configuration](https://cyber93de.github.io/aiflow/configuration)
+- [Remote hosts](https://cyber93de.github.io/aiflow/remotes): GitHub, GitLab, Bitbucket, Forgejo, Gitea
+- [Models & context7](https://cyber93de.github.io/aiflow/models): Claude auth, Ollama, more models
+- [Agents](https://cyber93de.github.io/aiflow/agents)
+- [Workflows & CI/CD](https://cyber93de.github.io/aiflow/workflows)
+- [config.json schema](https://cyber93de.github.io/aiflow/config-schema)
+- [Environment variables](https://cyber93de.github.io/aiflow/environment-variables)
+- [MCP servers](https://cyber93de.github.io/aiflow/mcp-servers)
+- [Project layout](https://cyber93de.github.io/aiflow/project-layout)
+- [FAQ](https://cyber93de.github.io/aiflow/faq)
+- [Troubleshooting](https://cyber93de.github.io/aiflow/troubleshooting)
+- [Changelog](https://cyber93de.github.io/aiflow/changelog)
+
+## For AIs
+- [llms-full.txt](https://cyber93de.github.io/aiflow/llms-full.txt): full self-contained reference
+- [sitemap.xml](https://cyber93de.github.io/aiflow/sitemap.xml): all doc URLs for crawlers
+
+## Source
+- [Repository](https://github.com/Cyber93de/aiflow)
+- [Issues](https://github.com/Cyber93de/aiflow/issues)
+- [CHANGELOG](https://github.com/Cyber93de/aiflow/blob/main/CHANGELOG.md)
+- [Third-party licenses](https://github.com/Cyber93de/aiflow/blob/main/THIRD_PARTY_LICENSES.md)
+
+## Keywords
+Claude Code, Anthropic Claude, AI coding agent, agentic software delivery, MCP, Model Context Protocol,
+Beads, Dolt, graphify, code knowledge graph, CocoIndex, cocoindex-code, semantic code search, RAG,
+Context7, Ollama, local LLM, claude-code-router, rtk, caveman, token optimization, Ralph loop,
+gitflow, Conventional Commits, GitHub, GitLab, Bitbucket, Forgejo, Gitea.

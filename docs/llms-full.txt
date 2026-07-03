@@ -1,0 +1,92 @@
+# aiflow — full reference for LLMs
+
+> Self-contained explanation of what aiflow is and how it works, for AI assistants and context7.
+> aiflow turns any repository into a governed, AI-driven software-delivery pipeline for Claude Code.
+> Version 0.1.0 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
+
+## What aiflow is
+A cross-platform CLI (POSIX bash + a Windows PowerShell launcher) that bootstraps and governs
+Claude Code projects. It wires Claude Code to durable task memory, two-layer code memory, specialist
+agents, team collaboration, and token savings — with one command. It is project-scoped (secrets and
+settings live in the project, never globally), token-based (never OAuth for git hosts), and
+vendor-neutral (your own Anthropic API key or Claude Code OAuth token). It vendors nothing; it
+installs/invokes external tools.
+
+## How it works (the pipeline)
+1. `aiflow init` (or `change-settings`) runs an interactive Q&A and writes `.aiflow/config.json` —
+   the single source of truth.
+2. `lib/apply.sh` reads that config and idempotently RENDERS: `.mcp.json` (enabled MCP servers +
+   the git-host MCP for your remote), git branching + hooks (git only), the Beads↔host sync config,
+   `.claude/memory/*` (project-aim, dev-environment, memory-policy), `.aiflow/router-config.json`
+   (Ollama/cost providers), `.aiflow/team-prefs.json`, and `.aiflow/bd-close-sync.sh`.
+3. `lib/install-deps.sh` installs only the enabled tools (user-space).
+
+## Code memory (the differentiator)
+Two complementary indexes plus durable task memory. The agent routes each question to the cheapest
+source that answers it (written to `.claude/memory/memory-policy.md`):
+- Beads (`bd`) — current task, dependencies, decisions, session state (Dolt-backed, survives compaction).
+- memory files — durable prose facts.
+- graphify (MCP) — STRUCTURAL code graph: where a symbol is defined, who calls it, dependency direction.
+- cocoindex-code / `ccc` (MCP) — SEMANTIC RAG: "find code about concept X"; AST-aware, local
+  embeddings (sentence-transformers, no API key), ~70% fewer tokens than reading files; incremental.
+- context7 (MCP) — external, version-correct library/framework docs.
+Rule: never scan whole files first; use graph + RAG to locate the few relevant chunks, then open only
+those. `aiflow index` refreshes BOTH indexes (graphify build + ccc index).
+
+## Remote hosts (token-based)
+`remote.type` ∈ github | github-enterprise | gitlab | gitlab-self | bitbucket | forgejo | gitea |
+custom | none. The matching host MCP is wired automatically with the base URL threaded in
+(GITHUB_HOST / GITLAB_API_URL / GITEA_URL). Token comes from `.env` via `remote.tokenEnv`
+(e.g. GITHUB_TOKEN, GITLAB_TOKEN, GIT_REMOTE_TOKEN). No OAuth for git hosts.
+
+## Models
+- Claude access: `claude.auth` = apikey (ANTHROPIC_API_KEY) or oauth (CLAUDE_CODE_OAUTH_TOKEN).
+- Ollama: local models, no key; `aiflow ollama add|pull|list`; qwen3-coder recommended. Selected
+  models are written into `.aiflow/router-config.json` and used via `aiflow shell --router`.
+- More/cloud models via claude-code-router (~/.claude-code-router/config.json): DeepSeek, OpenRouter, Gemini.
+
+## Team collaboration
+Beads issues live in a shared Dolt database synced over `refs/dolt/data` on the git remote — one issue
+graph, no extra server. Rules: session-start auto-pull (`bd dolt pull` hook), atomic claiming
+(`bd ready --claim` / `bd update --claim`, prevents double-grab), pull-before-push
+(`aiflow sync`, `aiflow close-sync`), never force-push, conflicts resolved via `bd dolt pull`.
+
+## Agents
+Delivery: architect, planner, implementer, reviewer, tester. Audit (file Beads issues):
+security-advisor, quality-check, dependency-auditor, test-gap-advisor, performance-advisor, docs-sync,
+requirements-check. Brownfield: onboarder. Slash skills: /intake-issue, /decompose, /plan-epic,
+/implement, /review-ac, /arch, the audit commands, /onboard, /explain, /standup. Autonomy: the Ralph
+loop (interactive / headless `aiflow ralph` / CI).
+
+## Quality, git, releases
+Google style for all languages; Conventional Commits; pre-commit/commit-msg/pre-push enforcement
+hooks. Branching models: simple | gitflow | none, PR-only, auto-release, SemVer/CalVer; enforced by
+hooks + `aiflow protect` + `aiflow release`.
+
+## Token optimization
+caveman (terse output, ~75% fewer output tokens; code/commits/security stay normal) and rtk
+(CLI-output filtering, 60–90% fewer) are ON by default; graph/RAG retrieval; cheap/local model
+routing. Measure with `aiflow cost` (ccusage).
+
+## Containers & CI/CD
+Headless container runs via `docker/run.sh` using Podman OR Docker (auto-detected; `AIFLOW_CONTAINER`
+override). CI/CD is GitHub Actions: `ci.yml` (validate + dry-run build), `release.yml` (tag + per-OS
+archives on VERSION bump), `pages.yml` (deploy docs). No Dagger.
+
+## Key commands
+init · install-deps · change-settings · shell [--router] · sync [pull|push|both] · close-sync <id> ·
+ollama [pull|add|list] · index · ralph "<prompt|bead>" · onboard · security-check / quality-check /
+requirements-check / dependency-check / test-gap / perf-check / docs-check · release [--push] ·
+protect · cost · doctor · upgrade · version.
+
+## Config schema (essentials)
+.aiflow/config.json fields: caveman{enabled,mode}, rtk{enabled}, router{enabled}, graphify{enabled},
+taskmaster{enabled}, mcp{filesystem,context7,cocoindex}, memory{enabled,graph,intensity=off|light|
+normal|aggressive}, claude{auth}, vcs{system=git|svn|none}, remote{type,baseUrl,api,tokenEnv,mcp},
+sync{askOnClose,pullOnStart}, ollama{enabled,url,models}, teamPrefs{enabled,codeStyle},
+project{aim,architecture}, dev{os,ide}, git{model,strict,prOnly,autoRelease,versionStrategy,releaseTags,chore}.
+
+## Attribution
+aiflow builds on Claude Code (Anthropic), Beads, Dolt, graphify, CocoIndex/cocoindex-code, Context7,
+claude-task-master, claude-code-router, Ollama, rtk, ccusage, jq, uv, and the MCP servers ecosystem.
+See THIRD_PARTY_LICENSES.md. aiflow is independent and not affiliated with or endorsed by them.

@@ -1,0 +1,58 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)", "Bash(git add:*)", "Bash(git commit:*)",
+      "Bash(git diff:*)", "Bash(git log:*)", "Bash(git checkout:*)",
+      "Bash(git branch:*)", "Bash(git switch:*)", "Bash(git push:*)", "Bash(git pull:*)",
+      "Bash(git stash:*)", "Bash(git fetch:*)", "Bash(git restore:*)", "Bash(git show:*)",
+
+      "Bash(bd:*)",
+      "Bash(rtk:*)", "Bash(caveman:*)",
+      "Bash(task-master:*)", "Bash(graphify:*)", "Bash(ccr:*)",
+      "Bash(aiflow:*)", "Bash(ccusage:*)", "Bash(npx ccusage:*)",
+
+      "Bash(gh issue:*)", "Bash(gh pr:*)", "Bash(gh api:*)", "Bash(gh repo view:*)",
+      "Bash(glab issue:*)", "Bash(glab mr:*)",
+
+      "Bash(ls:*)", "Bash(cat:*)", "Bash(pwd)", "Bash(echo:*)", "Bash(grep:*)",
+      "Bash(rg:*)", "Bash(find:*)", "Bash(head:*)", "Bash(tail:*)", "Bash(wc:*)",
+      "Bash(which:*)", "Bash(tree:*)", "Bash(jq:*)", "Bash(env)",
+
+      "Bash(npm test:*)", "Bash(npm run:*)", "Bash(npm ci:*)", "Bash(npm install:*)",
+      "Bash(pnpm:*)", "Bash(yarn:*)", "Bash(pytest:*)", "Bash(go test:*)", "Bash(go build:*)",
+      "Bash(go vet:*)", "Bash(dart test:*)", "Bash(flutter test:*)", "Bash(flutter analyze:*)",
+      "Bash(dart analyze:*)", "Bash(mvn test:*)", "Bash(gradle test:*)",
+
+      "Bash(black:*)", "Bash(isort:*)", "Bash(ruff:*)", "Bash(prettier:*)",
+      "Bash(eslint:*)", "Bash(gofmt:*)", "Bash(goimports:*)", "Bash(dart format:*)",
+      "Bash(clang-format:*)", "Bash(shfmt:*)", "Bash(google-java-format:*)",
+
+      "mcp__github", "mcp__gitlab", "mcp__bitbucket", "mcp__gitea", "mcp__forgejo",
+      "mcp__filesystem", "mcp__graphify", "mcp__cocoindex-code", "mcp__context7", "mcp__task-master"
+    ],
+    "deny": [
+      "Bash(git push --force:*)", "Bash(git push -f:*)",
+      "Bash(rm -rf:*)",
+      "Read(./.env)", "Read(./.env.*)",
+      "Bash(cat ./.env:*)", "Bash(cat .env:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/caveman.sh" },
+          { "type": "command", "command": "bash .claude/hooks/beads-sync.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/format.sh" }
+        ]
+      }
+    ]
+  }
+}

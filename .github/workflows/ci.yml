@@ -1,0 +1,84 @@
+name: CI
+
+# Validate the toolchain on every push / PR: shell syntax, JSON templates, PowerShell parse.
+# Keeps the bootstrapper installable and the generated configs well-formed.
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  shell:
+    name: Shell scripts (syntax + shellcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash -n (syntax) on all scripts
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r f; do
+            bash -n "$f" || { echo "::error file=$f::bash syntax error"; fail=1; }
+          done < <(find bin lib templates install.sh -type f \( -name '*.sh' -o -name 'aiflow' \) 2>/dev/null)
+          exit $fail
+
+      - name: shellcheck (advisory)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q shellcheck
+          # advisory: don't fail the build on style, only on real errors (-S error)
+          find bin lib templates install.sh -type f \( -name '*.sh' -o -name 'aiflow' \) -print0 \
+            | xargs -0 shellcheck -S error || true
+
+  json:
+    name: JSON / template validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: jq-validate all JSON
+        run: |
+          set -euo pipefail
+          sudo apt-get update -q && sudo apt-get install -y -q jq
+          fail=0
+          while IFS= read -r f; do
+            jq empty "$f" || { echo "::error file=$f::invalid JSON"; fail=1; }
+          done < <(find . -path ./.git -prune -o -name '*.json' -print)
+          exit $fail
+
+  powershell:
+    name: PowerShell parse
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse .ps1 files
+        shell: pwsh
+        run: |
+          $fail = 0
+          Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object {
+            $errs = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errs) | Out-Null
+            if ($errs.Count -gt 0) { Write-Error "Parse errors in $($_.FullName)"; $fail = 1 }
+          }
+          exit $fail
+
+  build:
+    name: Build archives (dry-run)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage + package (no publish)
+        run: |
+          set -euo pipefail
+          ver="$(tr -d ' \t\r\n' < VERSION)"
+          stage="aiflow-$ver"; mkdir -p "dist/$stage"
+          cp -r bin lib templates install.sh install.ps1 README.md README.de.md LICENSE VERSION "dist/$stage/"
+          cd dist
+          command -v zip >/dev/null 2>&1 || sudo apt-get -y -q install zip
+          tar -czf "aiflow-$ver-linux.tar.gz" "$stage"
+          zip -qr "aiflow-$ver-windows.zip" "$stage"
+          ls -la
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aiflow-dist
+          path: dist/*.tar.gz
+          retention-days: 7

@@ -1,0 +1,59 @@
+title: aiflow
+tagline: AI software-delivery pipeline for Claude Code
+description: >-
+  aiflow turns any repository into a governed, AI-driven software-delivery pipeline for
+  Claude Code — durable Beads task memory, a code knowledge graph (graphify) plus semantic
+  RAG (cocoindex), context7 live docs, specialist agents, Ollama local models, model routing,
+  team collaboration, and token savings via caveman and rtk. One command, project-scoped,
+  vendor-neutral, MIT-licensed.
+remote_theme: just-the-docs/just-the-docs
+
+url: https://cyber93de.github.io
+baseurl: /aiflow
+
+# --- SEO / discoverability ---
+author: Cyber93de
+lang: en
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+# keywords are surfaced in page bodies + descriptions; jekyll-seo-tag emits meta + Open Graph tags.
+
+# --- just-the-docs ---
+color_scheme: dark
+search_enabled: true
+search:
+  heading_level: 3
+  previews: 3
+  rel_url: true
+heading_anchors: true
+nav_sort: case_insensitive
+
+aux_links:
+  aiflow on GitHub:
+    - https://github.com/Cyber93de/aiflow
+aux_links_new_tab: true
+
+nav_external_links:
+  - title: GitHub repository
+    url: https://github.com/Cyber93de/aiflow
+  - title: Report a bug
+    url: https://github.com/Cyber93de/aiflow/issues
+  - title: Discussions
+    url: https://github.com/Cyber93de/aiflow/discussions
+
+footer_content: >-
+  aiflow · MIT License · Copyright (c) 2026 Cyber93de. aiflow is an independent integration
+  and is not affiliated with the projects it builds on (Claude Code, Beads, graphify, CocoIndex,
+  Context7, Ollama, rtk, and others).
+
+# GitHub Pages / Jekyll
+markdown: kramdown
+kramdown:
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor

@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# aiflow - agentic software-delivery bootstrapper for Claude Code (vendor-neutral)
+set -euo pipefail
+
+# Resolve install home (follow symlinks)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+AIFLOW_HOME="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
+export AIFLOW_HOME
+
+load_env() {
+  if [ -f .env ]; then
+    set -a; # shellcheck disable=SC1091
+    source .env; set +a
+  fi
+}
+
+cmd="${1:-help}"; shift || true
+
+case "$cmd" in
+  init)    bash "$AIFLOW_HOME/lib/init.sh" "$@" ;;
+  doctor)  bash "$AIFLOW_HOME/lib/doctor.sh" "$@" ;;
+  change-settings|settings) bash "$AIFLOW_HOME/lib/settings.sh" "$@" ;;
+  install-deps|setup) bash "$AIFLOW_HOME/lib/install-deps.sh" "$@" ;;
+  upgrade) bash "$AIFLOW_HOME/lib/upgrade.sh" "$@" ;;
+  shell)
+    load_env
+    if [ "${1:-}" = "--router" ]; then
+      shift
+      command -v ccr >/dev/null 2>&1 || { echo "claude-code-router not installed: npm i -g @musistudio/claude-code-router" >&2; exit 1; }
+      exec ccr code "$@"      # route easy/background tasks to cheap/local models
+    fi
+    exec claude "$@"
+    ;;
+  cost)    exec npx -y ccusage@latest "$@" ;;          # baseline: measure token spend first
+  sync)                                                # team sync: pull (then optionally push) code + Beads issues
+    dir="pull"; case "${1:-}" in push) dir=push;; pull) dir=pull;; both|"") dir=both;; esac
+    if [ -d .git ]; then
+      [ "$dir" != push ] && { echo ">> git pull --rebase"; git pull --rebase || echo "  ! git pull failed"; }
+    fi
+    if command -v bd >/dev/null 2>&1 && [ -d .beads ]; then
+      [ "$dir" != push ] && { echo ">> bd dolt pull"; bd dolt pull || echo "  ! bd dolt pull failed (resolve conflicts)"; }
+      if [ "$dir" = push ] || [ "$dir" = both ]; then
+        echo ">> bd dolt push"; bd dolt pull >/dev/null 2>&1 || true; bd dolt push || echo "  ! bd dolt push failed"
+        [ -d .git ] && { echo ">> git push"; git push || echo "  ! git push failed"; }
+      fi
+    fi
+    ;;
+  ollama)  bash "$AIFLOW_HOME/lib/ollama.sh" "$@" ;;    # manage local Ollama models (pull/add/list)
+  close-sync|bd-sync)                                  # on Beads issue close: prompt push + dolt-sync
+    if [ -x ".aiflow/bd-close-sync.sh" ]; then bash ".aiflow/bd-close-sync.sh" "$@";
+    else echo "No .aiflow/bd-close-sync.sh (enable sync-on-close via 'aiflow change-settings')." >&2; exit 1; fi ;;
+  index)                                               # refresh ALL code memory: structural graph + semantic RAG
+    did=0
+    if command -v graphify >/dev/null 2>&1; then
+      echo ">> graphify (structural graph)"; graphify build . || graphify . || true; did=1
+    else echo "  graphify not installed: uv tool install graphifyy && graphify install (or /graphify . in Claude)" >&2; fi
+    if command -v ccc >/dev/null 2>&1; then
+      echo ">> cocoindex-code (semantic RAG index)"; ccc index || true; did=1
+    else echo "  cocoindex-code not installed: uv tool install 'cocoindex-code[full]'" >&2; fi
+    [ "$did" = 1 ] || { echo "no index tool installed (graphify / cocoindex-code)" >&2; exit 1; }
+    ;;
+  ralph)
+    load_env
+    if [ -x ".aiflow/ralph-headless.sh" ]; then
+      bash ".aiflow/ralph-headless.sh" "$@"
+    else
+      echo "No .aiflow/ralph-headless.sh in this project. Run 'aiflow init' first." >&2
+      exit 1
+    fi
+    ;;
+  security-check)
+    load_env
+    if [ -f ".aiflow/security-check.sh" ]; then
+      bash ".aiflow/security-check.sh" "$@"
+    else
+      echo "No .aiflow/security-check.sh in this project. Run 'aiflow init' first." >&2
+      exit 1
+    fi
+    ;;
+  requirements-check|req-check)
+    load_env
+    if [ -f ".aiflow/requirements-check.sh" ]; then
+      bash ".aiflow/requirements-check.sh" "$@"
+    else
+      echo "No .aiflow/requirements-check.sh in this project. Run 'aiflow init' first." >&2
+      exit 1
+    fi
+    ;;
+  quality-check|refactor-check)
+    load_env
+    if [ -f ".aiflow/quality-check.sh" ]; then
+      bash ".aiflow/quality-check.sh" "$@"
+    else
+      echo "No .aiflow/quality-check.sh in this project. Run 'aiflow init' first." >&2
+      exit 1
+    fi
+    ;;
+  release) load_env; bash ".aiflow/release.sh" "$@" ;;
+  protect) load_env; bash ".aiflow/protect.sh" "$@" ;;
+  dependency-check|deps-check) load_env; bash ".aiflow/run-agent.sh" dependency-auditor "$@" ;;
+  test-gap)                    load_env; bash ".aiflow/run-agent.sh" test-gap-advisor  "$@" ;;
+  perf-check)                  load_env; bash ".aiflow/run-agent.sh" performance-advisor "$@" ;;
+  docs-check)                  load_env; bash ".aiflow/run-agent.sh" docs-sync         "$@" ;;
+  onboard)                     load_env; bash ".aiflow/run-agent.sh" onboarder         "$@" ;;
+  version|-v|--version) echo "aiflow $(cat "$AIFLOW_HOME/VERSION" 2>/dev/null || echo 0.0.0)" ;;
+  help|-h|--help|*)
+    cat <<'EOF'
+aiflow - bootstrap agentic delivery into any project (Claude Code + Beads + Ralph + GitHub)
+
+USAGE
+  aiflow init [path] [--force] [--no-git] [--no-beads] [--yes]
+  aiflow install-deps [--all]  install missing tools (enabled in config; --all = full set)
+  aiflow change-settings   re-adjust this project's config (alias: settings)
+  aiflow shell [--router]  load .env then launch Claude Code (--router = via claude-code-router)
+  aiflow ralph [...]       run the headless Ralph loop in this project
+  aiflow security-check    full-project security audit -> files Beads issues per finding
+  aiflow requirements-check  advisory audit of issue quality/completeness (report only)
+  aiflow quality-check     code quality/refactoring audit -> files [technical issue] Beads
+  aiflow dependency-check  deps audit (vulns/outdated/unused/license) -> [dependency] Beads
+  aiflow test-gap          untested critical paths -> [test gap] Beads
+  aiflow perf-check        performance audit -> [performance] Beads
+  aiflow docs-check        doc/code drift -> [docs] Beads
+  aiflow onboard           learn an existing codebase into memory + CLAUDE.md + arc42
+  aiflow release [--push]  cut a release per the branching model (version bump + tag)
+  aiflow protect           apply server-side branch protection (GitHub)
+  aiflow sync [pull|push|both]  team sync: git + Beads(dolt) pull/push (default pull at start)
+  aiflow ollama [pull|add <m>|list]  manage local Ollama models (from config)
+  aiflow close-sync <id>   on Beads issue close: prompt to push + dolt-sync the remote
+  aiflow cost [...]        token/cost baseline via ccusage
+  aiflow index             refresh code memory: graphify (structural graph) + cocoindex (RAG)
+  aiflow upgrade           update the bundled toolchain (beads, rtk, graphify, ...) to latest
+  aiflow doctor            check prerequisites
+  aiflow version
+
+EXAMPLES
+  aiflow init                 # bootstrap current dir (asks a few questions)
+  aiflow init . --yes         # accept all defaults (CI-friendly)
+  aiflow change-settings      # toggle caveman/rtk/router/graphify, set aim, etc.
+  aiflow shell                # source .env, start interactive Claude
+EOF
+    ;;
+esac

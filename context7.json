@@ -1,0 +1,34 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "aiflow",
+  "description": "aiflow turns any repository into a governed, AI-driven software-delivery pipeline for Claude Code: one command wires durable Beads task memory, a code knowledge graph (graphify) plus semantic RAG (cocoindex-code), context7 live docs, specialist agents, Ollama local models, model routing, team collaboration over a shared Dolt issue graph, and token savings via caveman and rtk. Project-scoped, token-based, vendor-neutral, MIT-licensed.",
+  "folders": [
+    "docs"
+  ],
+  "excludeFolders": [
+    ".beads",
+    ".claude",
+    ".git",
+    ".github",
+    "templates/.claude",
+    "templates/.aiflow",
+    "node_modules",
+    "dist",
+    "vendor"
+  ],
+  "excludeFiles": [
+    "CHANGELOG.md",
+    "THIRD_PARTY_LICENSES.md"
+  ],
+  "rules": [
+    "aiflow is a CLI that bootstraps Claude Code projects; it does not vendor the tools it installs.",
+    "The single source of truth is .aiflow/config.json; `aiflow init`/`change-settings` write it and `apply.sh` renders .mcp.json, hooks, memory, branching from it (idempotent).",
+    "Two-layer code memory: graphify = structural graph (who calls what); cocoindex-code (ccc) = semantic RAG (find code by meaning). `aiflow index` refreshes both. context7 = external library docs.",
+    "Git hosts are token-based, never OAuth: github, github-enterprise, gitlab, gitlab-self, bitbucket, forgejo, gitea, or custom; the matching host MCP is wired automatically.",
+    "Claude access is API key or OAuth token (claude.auth). Ollama runs local models with no key; qwen3-coder is recommended.",
+    "Team collaboration uses Beads issues in a shared Dolt database synced over the git remote (refs/dolt/data): session-start auto-pull, atomic `bd --claim`, pull-before-push.",
+    "Token savings: caveman (terse output) and rtk (CLI-output filtering) are on by default; graph/RAG retrieval avoids reading whole files.",
+    "Containers use Podman or Docker (docker/run.sh, auto-detected); CI/CD is GitHub Actions. Dagger is not used.",
+    "Key commands: aiflow init, change-settings, install-deps, shell [--router], sync, close-sync, ollama, index, ralph, onboard, doctor, release. Full reference in docs/commands.md."
+  ]
+}

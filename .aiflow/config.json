@@ -1,0 +1,36 @@
+{
+  "caveman":   { "enabled": true, "mode": "full" },
+  "rtk":       { "enabled": true },
+  "router":    { "enabled": false },
+  "graphify":  { "enabled": true },
+  "taskmaster":{ "enabled": false },
+  "mcp":       { "filesystem": true, "context7": true, "cocoindex": true },
+  "memory":    { "enabled": true, "graph": true, "intensity": "aggressive" },
+  "claude":    { "auth": "oauth" },
+  "vcs":       { "system": "git" },
+  "remote": {
+    "type": "github",
+    "baseUrl": "https://github.com",
+    "api": "github-api",
+    "tokenEnv": "GITHUB_TOKEN",
+    "mcp": "github"
+  },
+  "sync":    { "askOnClose": true, "pullOnStart": true },
+  "ollama":  { "enabled": false, "url": "http://localhost:11434", "models": [] },
+  "teamPrefs": { "enabled": true, "codeStyle": "google" },
+  "project": {
+    "aim": "aiflow: one command turns any repo into a governed, AI-driven delivery pipeline (Claude Code + Beads + graph/RAG memory + agents + team sync).",
+    "architecture": "POSIX bash CLI (bin/aiflow, aiflow.ps1) + lib/*.sh. init/change-settings run interactive Q&A -> write .aiflow/config.json -> apply.sh renders .mcp.json, git hooks, memory, router-config, team-prefs, bd-close-sync. Everything project-scoped; secrets only in .env."
+  },
+  "dev": { "os": "windows", "ide": "vscode" },
+  "git": {
+    "model": "none",
+    "strict": false,
+    "prOnly": false,
+    "autoRelease": false,
+    "versionStrategy": "semver",
+    "releaseTags": true,
+    "chore": true
+  },
+  "templates_search": false
+}

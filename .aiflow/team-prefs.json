@@ -1,0 +1,9 @@
+{
+  "$comment": "Shared, versioned team/user preferences. Committed to the repo so the whole team inherits them. Personal overrides stay local (not here).",
+  "codeStyle": "google",
+  "language": "en",
+  "conventions": {
+    "commits": "conventional-commits",
+    "reviewGate": "/review-ac"
+  }
+}

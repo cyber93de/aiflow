@@ -1,0 +1,100 @@
+name: aiflow-agent
+
+# Headless Ralph loop in CI. Three entry points:
+#  1. Manual dispatch with a custom prompt.
+#  2. Auto-run when an issue gets the `agent` label.
+#  3. Optional nightly maintenance pass.
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: "Task prompt or bead id for the agent"
+        required: true
+        type: string
+  issues:
+    types: [labeled]
+  schedule:
+    - cron: "0 3 * * *"   # nightly 03:00 UTC; remove if not wanted
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: aiflow-agent-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  ralph:
+    # only run the issue path when the label is exactly "agent"
+    if: >
+      github.event_name != 'issues' ||
+      github.event.label.name == 'agent'
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RALPH_MAX_ITERATIONS: "50"
+      RALPH_TIMEOUT_SECONDS: "3000"
+      RALPH_PERMISSION_MODE: "bypassPermissions"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install tools
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          sudo apt-get update && sudo apt-get install -y jq
+          curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/install.sh | bash || true
+
+      - name: Resolve prompt
+        id: p
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "prompt=${{ github.event.inputs.prompt }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "issues" ]; then
+            echo "prompt=Implement GitHub issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "prompt=Nightly maintenance: pick the top ready bead (bd ready) and complete it." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure git
+        run: |
+          git config user.name  "aiflow-agent"
+          git config user.email "aiflow-agent@users.noreply.github.com"
+          git checkout -b "agent/run-${{ github.run_id }}"
+
+      - name: Run Ralph loop
+        id: ralph
+        run: |
+          bash .aiflow/ralph-headless.sh "${{ steps.p.outputs.prompt }}" || true
+          echo "status=$(jq -r '.status // "UNKNOWN"' result.json 2>/dev/null)" >> "$GITHUB_OUTPUT"
+
+      - name: Push branch
+        if: success()
+        run: git push origin "agent/run-${{ github.run_id }}" || echo "nothing to push"
+
+      - name: Open PR
+        if: steps.ralph.outputs.status == 'COMPLETE'
+        run: |
+          gh pr create \
+            --head "agent/run-${{ github.run_id }}" \
+            --title "agent: ${{ steps.p.outputs.prompt }}" \
+            --body "$(jq -r '.summary // "see result.json"' result.json)" || true
+
+      - name: Comment on issue
+        if: github.event_name == 'issues'
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --body "aiflow agent finished with status **${{ steps.ralph.outputs.status }}**.\n\n$(jq -r '.summary // ""' result.json)" || true
+
+      - name: Fail build if blocked/incomplete
+        run: |
+          s="${{ steps.ralph.outputs.status }}"
+          echo "Ralph status: $s"
+          [ "$s" = "COMPLETE" ]

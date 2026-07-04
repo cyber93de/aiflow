@@ -65,6 +65,8 @@ aiflow shell        # loads .env, launches Claude Code with all MCPs wired
 
 ## 3. First feature, end to end
 
+![One feature end to end: bd create, /implement with pre-analysis and PO question, /review-ac PASS, bd close](assets/terminal/workflow.gif)
+
 Inside the session:
 
 ```text

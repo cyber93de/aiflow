@@ -25,18 +25,19 @@ git clone https://github.com/Cyber93de/aiflow.git
 cd aiflow
 ```
 
-**Linux / macOS / Git-Bash:**
+**Windows (PowerShell):**
+```powershell
+./install.ps1            # creates the aiflow shim + adds bin to the user PATH
+```
+
+**Linux / macOS (bash):**
 ```bash
 bash install.sh          # symlinks 'aiflow' onto your PATH
 ```
 
-**Windows (PowerShell):**
-```powershell
-./install.ps1            # adds bin to PATH + creates the aiflow shim
-```
-
-The installer **asks once** whether to also install **git**, **Subversion (svn)**, and **Ollama** —
-so a later `aiflow init` only has to ask *which* Ollama models you want.
+Per-OS details and demo GIFs: [Installation](installation). On every OS the installer **asks once**
+whether to also install **git**, **Subversion (svn)**, and **Ollama** — so a later `aiflow init`
+only has to ask *which* Ollama models you want.
 
 ```bash
 aiflow doctor               # what's present / missing (+ per-project summary)
@@ -99,8 +100,12 @@ bd create "Add health endpoint" -t task --claim   # create + claim a task
 `aiflow init` detects it and offers `aiflow onboard`, which learns the code into `.claude/memory/`,
 `CLAUDE.md`, and arc42 docs so the agent starts informed — and **proposes a project aim** from the
 understanding it built. The proposal is not silently adopted: the onboarder **asks you to confirm
-or correct it** (headless runs mark it `PROPOSED — please confirm` in `project-aim.md`). Build the
-code indexes any time with **`aiflow index`** (graph + RAG).
+or correct it** (headless runs mark it `PROPOSED — please confirm` in `project-aim.md`). Follow up
+with `aiflow modernize-check` for a modernisation report the architect can turn into beads:
+
+![Brownfield onboarding: init detects existing code, onboarder learns it and proposes the project aim for confirmation, then aiflow modernize-check](assets/terminal/onboard.gif)
+
+Build the code indexes any time with **`aiflow index`** (graph + RAG).
 
 ## Next
 

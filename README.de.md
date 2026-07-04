@@ -23,7 +23,8 @@ erprobtes, meinungsstarkes Setup.
 
 > 🇬🇧 This guide is also available in **[English → README.md](README.md)**.
 
-**Version 0.1.1 · MIT-Lizenz · [Changelog](CHANGELOG.md)**
+**Version 0.1.1 · MIT-Lizenz · [Changelog](CHANGELOG.md) ·
+📖 [Doku-Seite](https://cyber93de.github.io/aiflow/)**
 
 ---
 
@@ -123,29 +124,39 @@ jeder Default, erstes Feature end-to-end).
 
 **Voraussetzung:** [Node.js](https://nodejs.org) (LTS). Alles andere kann aiflow für dich installieren.
 
+### Windows (PowerShell)
+```powershell
+git clone https://github.com/Cyber93de/aiflow.git
+cd aiflow
+./install.ps1            # legt den aiflow-Shim an + ergänzt den User-PATH
+aiflow doctor            # funktioniert sofort in diesem Fenster; sonst neues Terminal öffnen
+```
+
+<p align="center"><img src="docs/assets/terminal/install-windows.gif" alt="aiflow unter Windows installieren: clone, install.ps1, aiflow doctor" width="880"></p>
+
+### Linux (bash)
 ```bash
 git clone https://github.com/Cyber93de/aiflow.git
 cd aiflow
+bash install.sh          # verlinkt 'aiflow' in deinen PATH (~/.local/bin oder /usr/local/bin)
+aiflow doctor
 ```
 
-**Linux / macOS / Git-Bash:**
+### macOS (Terminal)
 ```bash
-bash install.sh          # verlinkt 'aiflow' in deinen PATH
+git clone https://github.com/Cyber93de/aiflow.git
+cd aiflow
+bash install.sh          # wie Linux; optionale Tools kommen über Homebrew, wenn vorhanden
+aiflow doctor
 ```
 
-**Windows (PowerShell):**
-```powershell
-./install.ps1            # ergänzt PATH + legt den aiflow-Shim an
-```
+<p align="center"><img src="docs/assets/terminal/install.gif" alt="aiflow unter Linux/macOS installieren: clone, install.sh, aiflow doctor" width="880"></p>
 
-<p align="center"><img src="docs/assets/terminal/install.gif" alt="aiflow installieren: clone, install.sh, aiflow doctor" width="880"></p>
-
-Der Installer **fragt einmalig**, ob zusätzlich **git**, **Subversion (svn)** und **Ollama**
-installiert werden sollen — damit ein späteres `aiflow init` nur noch fragt, *welche* Ollama-Modelle
-du willst. Danach:
+Auf jedem OS **fragt der Installer einmalig**, ob zusätzlich **git**, **Subversion (svn)** und
+**Ollama** installiert werden sollen — damit ein späteres `aiflow init` nur noch fragt, *welche*
+Ollama-Modelle du willst. Danach:
 
 ```bash
-aiflow doctor            # was ist vorhanden / fehlt
 aiflow install-deps --all   # restliche Toolchain (optional; init bietet es auch an)
 ```
 
@@ -207,8 +218,12 @@ bd create "Health-Endpoint" -t task --claim   # Task anlegen + claimen
 lernt den Code in `.claude/memory/`, `CLAUDE.md` und arc42, damit der Agent informiert startet, und
 **schlägt aus dem gebildeten Verständnis ein Projektziel (Aim) vor**. Der Vorschlag wird nicht
 stillschweigend übernommen: Der Onboarder **fragt dich, ob es so stimmt** (Headless-Läufe
-markieren es als `PROPOSED — please confirm` in `project-aim.md`). Code-Indizes jederzeit mit
-**`aiflow index`** bauen (Graph + RAG).
+markieren es als `PROPOSED — please confirm` in `project-aim.md`). Danach lohnt
+`aiflow modernize-check` — ein Modernisierungsbericht, den der Architekt in Beads überführen kann:
+
+<p align="center"><img src="docs/assets/terminal/onboard.gif" alt="Brownfield-Onboarding: aiflow init erkennt Bestandscode, Onboarder lernt ihn und schlägt das Projektziel zur Bestätigung vor, dann aiflow modernize-check" width="880"></p>
+
+Code-Indizes jederzeit mit **`aiflow index`** bauen (Graph + RAG).
 
 ---
 
@@ -338,6 +353,11 @@ Issue (GitHub / GitLab / Bitbucket / …)
                            └─ Commit (Conventional Commits + Bead-ID) ─▶ PR ─▶ Release
                                 └─ aiflow close-sync ─▶ Push + Dolt-Sync der Issues
 ```
+
+Ein Feature end-to-end — Task, Voranalyse, PO-Frage mit festgehaltener Entscheidung, versionierte +
+gesicherte API, Tests + `.http`-Datei, Review-Gate, Close:
+
+<p align="center"><img src="docs/assets/terminal/workflow.gif" alt="aiflow Delivery-Workflow: bd create, /implement mit Voranalyse und PO-Frage, /review-ac PASS, bd close" width="880"></p>
 
 **Branching-Modelle** (`aiflow init` / `change-settings`, nur bei VCS = git). aiflow schreibt
 `.aiflow/branching.json` + lesbares `docs/branching.md`, legt permanente Branches an, seedet

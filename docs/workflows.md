@@ -27,6 +27,11 @@ Issue (GitHub / GitLab / Bitbucket / …)
                                 └─ aiflow close-sync ─▶ push + Dolt-sync issues
 ```
 
+One feature end to end — task, pre-analysis, PO question with recorded decision, versioned +
+secured API, tests + `.http` file, review gate, close:
+
+![aiflow delivery workflow: bd create, /implement with pre-analysis and PO question, /review-ac PASS, bd close](assets/terminal/workflow.gif)
+
 A task is **DONE** only when: acceptance criteria met • tests pass • style/lint clean • review gate
 passed • bead closed • sync gate honoured.
 

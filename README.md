@@ -22,7 +22,8 @@ opinionated setup.
 
 > 🇩🇪 Diese Anleitung gibt es auch auf **[Deutsch → README.de.md](README.de.md)**.
 
-**Version 0.1.1 · MIT License · [Changelog](CHANGELOG.md)**
+**Version 0.1.1 · MIT License · [Changelog](CHANGELOG.md) ·
+📖 [Documentation site](https://cyber93de.github.io/aiflow/)**
 
 ---
 
@@ -122,28 +123,38 @@ question, every default, first feature end-to-end).
 
 **Prerequisites:** [Node.js](https://nodejs.org) (LTS). Everything else aiflow can install for you.
 
+### Windows (PowerShell)
+```powershell
+git clone https://github.com/Cyber93de/aiflow.git
+cd aiflow
+./install.ps1            # creates the aiflow shim + adds bin to the user PATH
+aiflow doctor            # works immediately in this window; other terminals: open a new one
+```
+
+<p align="center"><img src="docs/assets/terminal/install-windows.gif" alt="Installing aiflow on Windows: clone, install.ps1, aiflow doctor" width="880"></p>
+
+### Linux (bash)
 ```bash
 git clone https://github.com/Cyber93de/aiflow.git
 cd aiflow
+bash install.sh          # symlinks 'aiflow' onto your PATH (~/.local/bin or /usr/local/bin)
+aiflow doctor
 ```
 
-**Linux / macOS / Git-Bash:**
+### macOS (Terminal)
 ```bash
-bash install.sh          # symlinks 'aiflow' onto your PATH
+git clone https://github.com/Cyber93de/aiflow.git
+cd aiflow
+bash install.sh          # same as Linux; optional tools install via Homebrew when present
+aiflow doctor
 ```
 
-**Windows (PowerShell):**
-```powershell
-./install.ps1            # adds bin to PATH + creates the aiflow shim
-```
+<p align="center"><img src="docs/assets/terminal/install.gif" alt="Installing aiflow on Linux/macOS: clone, install.sh, aiflow doctor" width="880"></p>
 
-<p align="center"><img src="docs/assets/terminal/install.gif" alt="Installing aiflow: clone, install.sh, aiflow doctor" width="880"></p>
-
-The installer **asks once** whether to also install **git**, **Subversion (svn)**, and **Ollama** —
-so a later `aiflow init` only has to ask *which* Ollama models you want. Then:
+On every OS the installer **asks once** whether to also install **git**, **Subversion (svn)**, and
+**Ollama** — so a later `aiflow init` only has to ask *which* Ollama models you want. Then:
 
 ```bash
-aiflow doctor            # see what's present / missing
 aiflow install-deps --all   # install the rest of the toolchain (optional; init offers it too)
 ```
 
@@ -205,7 +216,10 @@ bd create "Add health endpoint" -t task --claim   # create + claim a task
 learns the code into `.claude/memory/`, `CLAUDE.md`, and arc42 docs so the agent starts informed —
 and **proposes a project aim** from the understanding it built. The proposal is not silently
 adopted: the onboarder **asks you to confirm or correct it** (headless runs mark it
-`PROPOSED — please confirm` in `project-aim.md`). Build the code
+`PROPOSED — please confirm` in `project-aim.md`). Follow up with `aiflow modernize-check` for a
+modernisation report the architect can turn into beads:
+
+<p align="center"><img src="docs/assets/terminal/onboard.gif" alt="Brownfield onboarding: aiflow init detects existing code, onboarder learns it and proposes the project aim for confirmation, then aiflow modernize-check" width="880"></p> Build the code
 indexes any time with **`aiflow index`** (graph + RAG).
 
 ---
@@ -334,6 +348,11 @@ Issue (GitHub / GitLab / Bitbucket / …)
                            └─ commit (Conventional Commits + bead id) ─▶ PR ─▶ release
                                 └─ aiflow close-sync ─▶ push + Dolt-sync issues
 ```
+
+One feature end to end — task, pre-analysis, PO question with recorded decision, versioned +
+secured API, tests + `.http` file, review gate, close:
+
+<p align="center"><img src="docs/assets/terminal/workflow.gif" alt="aiflow delivery workflow: bd create, /implement with pre-analysis and PO question, /review-ac PASS, bd close" width="880"></p>
 
 **Branching models** (`aiflow init` / `change-settings`, only when VCS = git). aiflow writes
 `.aiflow/branching.json` + a readable `docs/branching.md`, creates permanent branches, seeds

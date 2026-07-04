@@ -7,7 +7,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Docs
+- **Per-OS install sections** (Windows · Linux · macOS) with full commands in the READMEs (EN/DE)
+  and `docs/installation.md`, each with its own terminal GIF (new Windows/PowerShell demo).
+- **Two more terminal GIFs:** the delivery **workflow** end to end (task → pre-analysis → PO
+  question with recorded decision → versioned+secured API → tests + `.http` → review PASS → close)
+  and **brownfield onboarding** (init detects existing code → onboarder learns it → proposes the
+  project aim for confirmation → `aiflow modernize-check`); embedded in READMEs, workflows,
+  getting-started, and example-project pages.
+- **Documentation-site link** ([cyber93de.github.io/aiflow](https://cyber93de.github.io/aiflow/))
+  now in the README header line (EN/DE).
 
 ## [0.1.1] — 2026-07-04
 

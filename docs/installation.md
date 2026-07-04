@@ -14,35 +14,48 @@ description: "Install aiflow on Linux, macOS, or Windows for Claude Code. The in
 
 ---
 
-![Installing aiflow: clone, install.sh, aiflow doctor](assets/terminal/install.gif)
-
 ## Prerequisites
 
 [Node.js](https://nodejs.org) (LTS). Everything else — Claude Code, Beads, Dolt, jq, graphify,
 cocoindex-code, Ollama — aiflow can install for you.
 
-## Clone
+## Windows (PowerShell)
+
+```powershell
+git clone https://github.com/Cyber93de/aiflow.git
+cd aiflow
+./install.ps1            # creates the aiflow shim + adds bin to the user PATH
+aiflow doctor            # works immediately in this window; other terminals: open a new one
+```
+
+![Installing aiflow on Windows: clone, install.ps1, aiflow doctor](assets/terminal/install-windows.gif)
+
+VS Code note: the integrated terminal inherits PATH at launch — fully restart VS Code (or
+"Developer: Reload Window") to pick up `aiflow`.
+
+## Linux (bash)
 
 ```bash
 git clone https://github.com/Cyber93de/aiflow.git
 cd aiflow
+bash install.sh          # symlinks 'aiflow' onto your PATH (~/.local/bin or /usr/local/bin)
+aiflow doctor
 ```
 
-## Linux / macOS / Git-Bash
+## macOS (Terminal)
 
 ```bash
-bash install.sh          # symlinks 'aiflow' onto your PATH
+git clone https://github.com/Cyber93de/aiflow.git
+cd aiflow
+bash install.sh          # same as Linux; optional tools install via Homebrew when present
+aiflow doctor
 ```
 
-## Windows (PowerShell)
+![Installing aiflow on Linux/macOS: clone, install.sh, aiflow doctor](assets/terminal/install.gif)
 
-```powershell
-./install.ps1            # adds bin to PATH + creates the aiflow shim
-```
-
-The installer **asks once** whether to also install **git**, **Subversion (svn)**, and **Ollama**
-(via winget/scoop on Windows, Homebrew on macOS, the system package manager or official scripts on
-Linux). That way a later `aiflow init` only has to ask *which* Ollama models to pull.
+On every OS the installer **asks once** whether to also install **git**, **Subversion (svn)**, and
+**Ollama** (via winget/scoop on Windows, Homebrew on macOS, the system package manager or official
+scripts on Linux). That way a later `aiflow init` only has to ask *which* Ollama models to pull.
 
 ## Install the toolchain
 

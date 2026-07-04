@@ -50,7 +50,10 @@ Packaged builds: [github.com/Cyber93de/aiflow/releases](https://github.com/Cyber
 ```bash
 mkdir my-app && cd my-app
 aiflow init                 # interactive Q&A → writes .aiflow/config.json → renders everything
+aiflow init --no-token-saving   # same, but with caveman + rtk off (full, unfiltered output)
 ```
+
+![aiflow init: the interactive Q&A — token saving, memory, Claude auth, git/svn, remote host, Ollama model selection, branching model](assets/terminal/init.gif)
 
 `aiflow init` asks (Enter = the sensible default; token-saving + intensive graph memory are **on**):
 
@@ -66,6 +69,14 @@ aiflow init                 # interactive Q&A → writes .aiflow/config.json →
 9. **Ollama** — set it up? which models? (`qwen3-coder` recommended).
 10. **Shared team preferences** — code style, etc.
 11. **Project aim / architecture / OS / IDE**, and the **git branching model** (if VCS = git).
+
+> **Don't skip the project aim — it's the cheapest quality lever.** The aim tunes Claude to *your*
+> project: every agent reads it before planning or coding. Tell it to aiflow during `init` (question
+> 11) or later via `aiflow change-settings` — or write it manually into
+> **`.claude/memory/project-aim.md`** and **`CLAUDE.md §1`**. A good aim is 2–4 plain sentences:
+> *what* the product does, *for whom*, the *target architecture*, and the *quality bar*. Example:
+> *"Order-management REST API for our internal shops. Hexagonal architecture on PostgreSQL.
+> Correctness and auditability beat raw speed; every endpoint ships fully tested."*
 
 Then fill secrets and start:
 
@@ -83,11 +94,13 @@ bd create "Add health endpoint" -t task --claim   # create + claim a task
 /review-ac                            # reviewer gates it against acceptance criteria
 ```
 
-## Existing codebase?
+## Existing codebase (brownfield)?
 
 `aiflow init` detects it and offers `aiflow onboard`, which learns the code into `.claude/memory/`,
-`CLAUDE.md`, and arc42 docs so the agent starts informed. Build the code indexes any time with
-**`aiflow index`** (graph + RAG).
+`CLAUDE.md`, and arc42 docs so the agent starts informed — and **proposes a project aim** from the
+understanding it built. The proposal is not silently adopted: the onboarder **asks you to confirm
+or correct it** (headless runs mark it `PROPOSED — please confirm` in `project-aim.md`). Build the
+code indexes any time with **`aiflow index`** (graph + RAG).
 
 ## Next
 

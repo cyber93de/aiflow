@@ -5,6 +5,7 @@ result.json
 .aiflow/runs/
 .aiflow/ralph.log
 .aiflow/requirements-report.md
+.aiflow/modernization-report.md
 
 # --- generated indexes / graphs ---
 graphify-out/
@@ -21,6 +22,7 @@ graphify-out/
 *.pem
 *.key
 *.p12
+http-client.private.env.json   # IDE HTTP-client credentials (see http/*.http)
 
 # --- common build/deps ---
 node_modules/

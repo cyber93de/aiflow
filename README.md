@@ -8,6 +8,10 @@ branching model, and first-class **team collaboration** — so an AI agent (or a
 + agents) can take an issue, plan it, write the code in a consistent style, test it, review it
 against acceptance criteria, audit it, and ship it through a real release process.
 
+**Most people struggle to set up their AI project successfully — especially without deep AI
+know-how yet. This tool is built to fix exactly that:** answer a few questions, get a proven,
+opinionated setup.
+
 - **Token-based & vendor-neutral** — your own Anthropic API key *or* Claude Code OAuth token; git
   hosts via **tokens only, never OAuth**. No third-party hub.
 - **Local-first option** — run easy work on **Ollama** models (no key), keep top models for hard
@@ -18,7 +22,7 @@ against acceptance criteria, audit it, and ship it through a real release proces
 
 > 🇩🇪 Diese Anleitung gibt es auch auf **[Deutsch → README.de.md](README.de.md)**.
 
-**Version 0.1.0 · MIT License · [Changelog](CHANGELOG.md)**
+**Version 0.1.1 · MIT License · [Changelog](CHANGELOG.md)**
 
 ---
 
@@ -50,12 +54,33 @@ against acceptance criteria, audit it, and ship it through a real release proces
 24. [Contributing](#24-contributing)
 25. [License](#25-license)
 
-📖 **Full documentation site:** [cyber93de.github.io/aiflow](https://cyber93de.github.io/aiflow/)
+📖 **Full documentation site:** [cyber93de.github.io/aiflow](https://cyber93de.github.io/aiflow/) —
+including **[AI Basics](https://cyber93de.github.io/aiflow/ai-basics)** (Claude Code, agents,
+memory, context windows, skills, hooks — in plain language) and a complete
+**[example-project walk-through](https://cyber93de.github.io/aiflow/example-project)** (every
+question, every default, first feature end-to-end).
 
 ---
 
 ## 1. Why aiflow — the advantages
 
+- **A strong base config beats no config.** Most AI-coding projects start with a blank Claude and
+  re-invent rules, memory, and workflow ad hoc — or never. aiflow's goal is one very good,
+  universal base configuration that works everywhere out of the box and saves you roughly
+  **70–80 % of the configuration effort** compared to starting blank. The agents and rules are
+  deliberately **generic** — customise them to your project (see §7 and §15), but even
+  uncustomised they beat plain Claude.
+- **Production-ready code is the actual goal.** aiflow's agents produce code that is meant to
+  ship: reusable, reliable, secure, built on current standards; they know and respect your
+  architecture, extend it sensibly, look critically at requirements that don't fit it, and
+  propose new layers (caching, search, service seams) where performance or other goals demand
+  them. On demand they also report on **accessibility (WCAG)**, **modernisation potential**, and
+  **security issues**.
+- **Honest about tokens.** Saving tokens is a goal — caveman, rtk, graph/RAG retrieval all attack
+  it — but the many quality rules (tests, reviews, gates) mean it is only **partially** achieved
+  per task. The flip side pays for it: when a requirement is implemented production-ready on the
+  **first** pass, you don't re-prompt, re-explain, and re-sharpen — and *that* is what saves
+  tokens **and time** in the end.
 - **Better memory, fewer hallucinations.** Two complementary code indexes plus durable task memory
   mean the agent *looks things up* instead of guessing or re-reading dozens of files. See §6.
 - **Big token reduction.** caveman (terse output ~75% fewer output tokens), rtk (CLI-output
@@ -84,9 +109,9 @@ against acceptance criteria, audit it, and ship it through a real release proces
 | **Host MCP** | The matching git-host MCP is wired automatically (per remote type) |
 | **Models** | Claude (API key *or* OAuth) + optional **Ollama** local models, selectable & auto-installed |
 | **Model routing** | claude-code-router sends easy/background work to cheap/local models |
-| **Agents** | 5 delivery + 6 audit + 1 brownfield specialist subagents |
+| **Agents** | 5 delivery + 9 audit/checker + 1 brownfield specialist subagents |
 | **Autonomy** | Ralph loop (interactive / headless / containerised / CI) |
-| **Quality** | Google style, conventional commits, format/lint/test git hooks, review gate |
+| **Quality** | Google style, conventional commits, format/lint/test git hooks, architect+quality-gate review, static analysis on every change, objective metric targets (0 new smells/duplicates, 0 warnings), >80 % coverage + BDD E2E gates, leveled logging, `.http` files for REST endpoints, DB rules §3c (3NF+FKs for new schemas, brownfield schemas handled with care) |
 | **Branching** | simple / gitflow / none, PR-only, auto-release, SemVer/CalVer |
 | **Team** | shared issue DB, atomic claim, session-start auto-pull, pull-before-push, shared preferences |
 | **Token savings** | caveman + rtk on by default, graph/RAG retrieval, cost routing |
@@ -112,6 +137,8 @@ bash install.sh          # symlinks 'aiflow' onto your PATH
 ./install.ps1            # adds bin to PATH + creates the aiflow shim
 ```
 
+<p align="center"><img src="docs/assets/terminal/install.gif" alt="Installing aiflow: clone, install.sh, aiflow doctor" width="880"></p>
+
 The installer **asks once** whether to also install **git**, **Subversion (svn)**, and **Ollama** —
 so a later `aiflow init` only has to ask *which* Ollama models you want. Then:
 
@@ -130,7 +157,10 @@ Or grab a packaged build from
 ```bash
 mkdir my-app && cd my-app
 aiflow init                 # interactive Q&A → writes .aiflow/config.json → renders everything
+aiflow init --no-token-saving   # same, but with caveman + rtk off (full, unfiltered output)
 ```
+
+<p align="center"><img src="docs/assets/terminal/init.gif" alt="aiflow init: the interactive Q&A — token saving, memory, Claude auth, git/svn, remote host, Ollama model selection, branching model" width="880"></p>
 
 `aiflow init` asks (Enter = the sensible default; token-saving + intensive graph memory are **on**):
 
@@ -146,6 +176,14 @@ aiflow init                 # interactive Q&A → writes .aiflow/config.json →
 9. **Ollama** — set it up? which models? (`qwen3-coder` recommended).
 10. **Shared team preferences** — code style, etc.
 11. **Project aim / architecture / OS / IDE**, and the **git branching model** (if VCS = git).
+
+> **Don't skip the project aim — it's the cheapest quality lever.** The aim tunes Claude to *your*
+> project: every agent reads it before planning or coding. Tell it to aiflow during `init` (question
+> 11) or later via `aiflow change-settings` — or write it manually into
+> **`.claude/memory/project-aim.md`** and **`CLAUDE.md §1`**. A good aim is 2–4 plain sentences:
+> *what* the product does, *for whom*, the *target architecture*, and the *quality bar*. Example:
+> *"Order-management REST API for our internal shops. Hexagonal architecture on PostgreSQL.
+> Correctness and auditability beat raw speed; every endpoint ships fully tested."*
 
 Then fill secrets and start:
 
@@ -163,8 +201,11 @@ bd create "Add health endpoint" -t task --claim   # create + claim a task
 /review-ac                  # reviewer gates it against acceptance criteria
 ```
 
-**Existing codebase?** `aiflow init` detects it and offers `aiflow onboard`, which learns the code
-into `.claude/memory/`, `CLAUDE.md`, and arc42 docs so the agent starts informed. Build the code
+**Existing codebase (brownfield)?** `aiflow init` detects it and offers `aiflow onboard`, which
+learns the code into `.claude/memory/`, `CLAUDE.md`, and arc42 docs so the agent starts informed —
+and **proposes a project aim** from the understanding it built. The proposal is not silently
+adopted: the onboarder **asks you to confirm or correct it** (headless runs mark it
+`PROPOSED — please confirm` in `project-aim.md`). Build the code
 indexes any time with **`aiflow index`** (graph + RAG).
 
 ---
@@ -223,16 +264,18 @@ aiflow index            # = graphify build  +  ccc index   (incremental)
 ## 7. Agents — the full roster
 
 Specialist subagents live in `.claude/agents/`. Claude picks one by its `description`, or you invoke
-it explicitly. Customise any by editing its markdown (prompt, allowed `tools:`, `model:`).
+it explicitly. The shipped agents are **deliberately generic** — a strong, universal starting point,
+not the finish line: **customise them to your project's needs** by editing their markdown (prompt,
+allowed `tools:`, `model:`) — e.g. your domain language, your review focus, your test stack.
 
 ### Delivery agents (do the work)
 | Agent | Role |
 |-------|------|
 | **architect** | System design — produces ADRs, arc42 updates, and a task breakdown. No feature code. |
 | **planner** | Turns a goal/epic/issue into small Beads tasks with testable acceptance criteria + real dependencies. |
-| **implementer** | Builds exactly one ready bead (code + tests) in Google style; stops as BLOCKED if criteria are unclear. |
-| **reviewer** | The quality gate — reviews a diff against acceptance criteria, correctness, tests, style. Verdict PASS / CHANGES REQUIRED. |
-| **tester** | Writes meaningful tests, hunts edge cases; reports bugs instead of weakening tests. |
+| **implementer** | Senior engineer for exactly one ready bead — pre-analysis (architecture fit, effort, complexity) before code, targeted refactoring when needed, SOLID/DRY/KISS/YAGNI, testable by design (DI, deterministic), proven frameworks/patterns over self-built, PO-level questions with recorded decisions, quality gates (static analysis, >80 % coverage, BDD E2E, logging, `.http` files, metric targets). |
+| **reviewer** | Architect **and** quality gate in one — architecture/design/risk review (layers, module boundaries, SOLID, tech debt, over-/under-engineering, vulnerabilities, concurrency, breaking changes) plus the objective §3a checklist; suggestions persisted as beads for the next loop. Verdict PASS / CHANGES REQUIRED. |
+| **tester** | Test/QA engineer — negative/edge/boundary/exception/invalid-input tests plus test-quality audit (assertions, determinism, independence); runs when the pre-analysis flags high risk/complexity; reports bugs instead of weakening tests. |
 
 ### Audit agents (manual, read-only on code, file prioritised Beads)
 | Agent | Command | Files issues labelled |
@@ -243,12 +286,21 @@ it explicitly. Customise any by editing its markdown (prompt, allowed `tools:`, 
 | **test-gap-advisor** | `aiflow test-gap` | `[test gap]` |
 | **performance-advisor** | `aiflow perf-check` | `[performance]` |
 | **docs-sync** | `aiflow docs-check` | `[docs]` |
+| **accessibility-checker** | `aiflow a11y-check` | `[accessibility]` — strict WCAG 2.2 AA audit of all UI surfaces; also recommends an automated a11y tool for the E2E suite (axe-core/Pa11y/Lighthouse CI). Not part of the delivery loop. |
 | **requirements-check** | `aiflow requirements-check` | *report only* (advisory; grades issue quality vs architecture; no changes) |
+| **modernization-advisor** | `aiflow modernize-check` | *report only* — walks the whole brownfield codebase and proposes modernisation concepts (microservices over monoliths, REST/cloud-native over SOAP/legacy MQ, git over svn, supported stacks, missing unit/BDD/E2E test frameworks) to `.aiflow/modernization-report.md`; the architect reviews and optionally feeds them into Beads. Not part of the delivery loop. |
 
 ### Brownfield agent
 | Agent | Role |
 |-------|------|
-| **onboarder** | Studies an existing codebase and persists what it learns into `.claude/memory/`, `CLAUDE.md`, and arc42 — future sessions start informed. Writes docs/memory only. |
+| **onboarder** | Studies an existing codebase and persists what it learns into `.claude/memory/`, `CLAUDE.md`, and arc42 — future sessions start informed; proposes a project aim and asks you to confirm it. Writes docs/memory only. |
+
+**What every delivery agent has in common:** production-ready output only (careful with
+low-maturity tech — reviewer and tester flag it), small classes / KISS (divide & conquer +
+interfaces instead of giant classes), state-of-the-art by default (legacy choices like SOAP or
+XML-over-REST are questioned, never silently built), monolith avoidance, and deliberate
+data/performance choices (Redis/SQLite/Elasticsearch considered where they pay off). Full
+per-agent detail: [docs → Agents](https://cyber93de.github.io/aiflow/agents).
 
 ---
 
@@ -257,10 +309,13 @@ it explicitly. Customise any by editing its markdown (prompt, allowed `tools:`, 
 Triggerable inside Claude Code (`.claude/commands/`):
 
 - **Delivery:** `/intake-issue <n>` (pull a GitHub/GitLab/Bitbucket issue → Beads),
-  `/decompose <goal|prd>` (task-master → Beads), `/plan-epic`, `/implement [bead]`, `/review-ac`,
-  `/arch "<question>"`.
+  `/decompose <goal|prd>` (task-master → Beads), `/plan-epic`,
+  `/implement [bead] [ralph|no-ralph]` (pre-analysis first; unspecified → the implementer decides
+  **automatically** — or honours a "use the Ralph loop" note written into the issue itself),
+  `/review-ac`, `/arch "<question>"`.
 - **Audits:** `/security-check`, `/quality-check`, `/requirements-check`, `/dependency-check`,
-  `/test-gap`, `/perf-check`, `/docs-check`.
+  `/test-gap`, `/perf-check`, `/docs-check`, `/a11y-check` (strict WCAG), `/modernize-check`
+  (brownfield modernisation report).
 - **Brownfield / orientation:** `/onboard`, `/explain <path>`, `/standup`.
 
 Beads and the Ralph loop also ship as plugin skills (`/beads:ready`, `/beads:decision`, `/ralph-loop`).
@@ -407,8 +462,13 @@ context and fewer wrong turns.
 ## 15. Configuration you should tune
 
 Everything is driven by **`.aiflow/config.json`** (committed, no secrets). Edit it interactively with
-`aiflow change-settings` (re-renders `.mcp.json`, hooks, branching, memory). The files most worth
-tuning:
+`aiflow change-settings` (re-renders `.mcp.json`, hooks, branching, memory) — switch version control
+(git/svn), pick different Ollama models, or turn token saving off entirely with
+`--no-token-saving`:
+
+<p align="center"><img src="docs/assets/terminal/settings.gif" alt="aiflow change-settings: switch vcs, pick Ollama models, disable token saving with --no-token-saving" width="880"></p>
+
+The files most worth tuning:
 
 - **`CLAUDE.md`** — the operating rules every agent reads (project overview, architecture hints, code
   style, task workflow, git rules, the memory/context stack, communication). **Fill the `[EDIT ME]`
@@ -451,9 +511,10 @@ Shape of `config.json`:
 ## 16. Command reference
 
 ```text
-aiflow init [path] [--force] [--no-git] [--no-beads] [--yes]   bootstrap a project
+aiflow init [path] [--force] [--no-git] [--no-beads] [--yes] [--no-token-saving]
+                                   bootstrap a project (--no-token-saving = caveman + rtk off)
 aiflow install-deps [--all]        install missing tools (enabled in config; --all = full set)
-aiflow change-settings             re-adjust config, then re-render everything
+aiflow change-settings [--no-token-saving]   re-adjust config, then re-render everything
 aiflow shell [--router]            load .env then launch Claude Code (--router = cheap/local models)
 aiflow sync [pull|push|both]       team sync: git + Beads(dolt) pull/push
 aiflow close-sync <id>             on issue close: prompt to push + Dolt-sync the remote
@@ -462,7 +523,8 @@ aiflow index                       refresh code memory: graphify (graph) + cocoi
 aiflow ralph "<prompt|bead id>"    run the headless Ralph loop
 aiflow onboard                     learn an existing codebase into memory + CLAUDE.md + arc42
 aiflow security-check | quality-check | requirements-check | dependency-check
-aiflow test-gap | perf-check | docs-check      on-demand audits → Beads issues
+aiflow test-gap | perf-check | docs-check | a11y-check   on-demand audits → Beads issues
+aiflow modernize-check             brownfield modernisation concepts → report for the architect
 aiflow release [--push]            cut a release per the branching model
 aiflow protect                     apply server-side branch protection (GitHub)
 aiflow cost [...]                  token/cost baseline via ccusage
@@ -475,8 +537,16 @@ aiflow version
 
 ## 17. Token & cost optimisation
 
+**Set expectations first:** token saving is a real goal, but aiflow's many quality rules (tests,
+coverage gates, static analysis, architect review) deliberately spend tokens on getting things
+right. The net win comes from **not having to ask twice**: a requirement that ships
+production-ready on the first pass needs no re-prompting and no rework — that saves more tokens
+(and time) than any output filter. The levers below then trim what's left:
+
 - **caveman** — terse output mode (~75% fewer output tokens; code/commits/security stay normal). On by default.
 - **rtk** — filters/compresses verbose command output before it enters context (60–90% fewer). On by default.
+- **Prefer full output?** `aiflow init --no-token-saving` / `aiflow change-settings --no-token-saving`
+  switches caveman + rtk off in one flag.
 - **graph + RAG retrieval** — answer from graphify/cocoindex instead of reading whole files (~70% fewer).
 - **model routing** — send easy/background steps to cheap or local (Ollama) models via `aiflow shell --router`.
 - **measure first** — `aiflow cost` (ccusage) shows real spend so you optimise what matters.

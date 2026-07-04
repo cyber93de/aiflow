@@ -9,6 +9,157 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 _Nothing yet._
 
+## [0.1.1] — 2026-07-04
+
+Quality-focused agent upgrade: the implementer now works like a senior engineer (strategy before
+code), the reviewer reviews like an architect, and every implementation passes explicit quality
+gates — static analysis, coverage, BDD tests, logging, and IDE-testable REST interfaces.
+
+### Agents
+- **implementer → senior engineer.** Mandatory **pre-analysis before any code**: current
+  architecture, how it changes, effort, complexity, risks; missing information is gathered *before*
+  implementation. Questions whether the requirement fits the existing architecture and performs
+  **targeted refactoring** when it doesn't (or escalates to the architect). Prefers **established
+  open-source frameworks and design patterns over self-implementations**, avoids duplicated code,
+  designs for reuse and generic solutions, and always watches overall quality, performance, and
+  security.
+- **PO-level clarification + recorded decisions.** Functional questions are phrased so a product
+  owner understands the hurdle (plain language, options with consequences); the user picks, and
+  every decision is **recorded** (`/beads:decision` / `bd update --design`).
+- **Design principles codified.** The implementer builds by SOLID, DRY, KISS, YAGNI, high
+  cohesion/low coupling, no cyclic dependencies, small methods/classes, robust error/input/null
+  handling, thread safety where relevant, and testability by design (DI, no hidden dependencies,
+  deterministic, mockable).
+- **reviewer → architect *and* quality gate in one agent.** Architect hat: architecture integrity
+  (does the change break the architecture? was an adaptation necessary — and done sensibly +
+  recorded as ADR?), design (SOLID, clean architecture, domain model, abstraction level),
+  maintainability (technical debt, over-/under-engineering), risks (vulnerabilities, performance,
+  concurrency, API breaking changes, backward compatibility). Quality-gate hat: an objective
+  release checklist (findings addressed, tests green, no new smells/violations, metrics met,
+  docs/changelog updated, requirement fully implemented) — verdict PASS (release) or CHANGES
+  REQUIRED (back to the implementer). Out-of-scope improvement ideas are persisted as
+  `[suggestion]` beads so the next loop picks them up.
+- **tester → test/QA engineer.** Systematic coverage (happy path, negative, edge, boundary,
+  exceptions, invalid inputs) plus a test-quality audit (meaningful assertions, deterministic,
+  independent, understandable); enforces the coverage gates and the BDD pyramid. Runs **adaptively**
+  — when the implementer's pre-analysis flags high risk/complexity, or on demand.
+- **Objective metric targets** (new table in CLAUDE.md §3a): low cognitive/cyclomatic complexity,
+  0 % new duplication, no new code smells, ≥ 80 % coverage of changed logic, 0 architecture
+  violations, 0 linter/compiler warnings, 0 high/critical security findings, breaking changes only
+  with recorded justification.
+
+### Quality gates (new CLAUDE.md §3a — mandatory on every implementation)
+- **Static code analysis, always:** use the project's tool (e.g. SonarQube) when available;
+  otherwise the agent performs the analysis itself. Code smells are never shipped.
+- **Coverage:** > 80 % line coverage on touched code; **every non-static method tested**.
+- **Test pyramid:** unit + end-to-end tests always mandatory; integration/system tests where they
+  add signal (skips must be justified). **BDD (Given/When/Then)** is mandatory for end-to-end,
+  system, and acceptance tests.
+- **Logging is quality:** no-logging is a defect; correct levels (`debug`/`info`/`warn`/`error`),
+  standard logging frameworks, never secrets in logs.
+
+### Database modelling rules (new CLAUDE.md §3c)
+- **New data models** follow 20 explicit design rules (R1–R20): ≥ 3rd normal form (denormalisation
+  only documented + measured), no redundant data, m:n via junction tables, real foreign keys (no
+  soft references), no needless surrogate keys, `NOT NULL` by default, business rules as `CHECK`
+  constraints, `UNIQUE` on natural keys, precise data types, no magic values, only necessary
+  indexes, smallest sufficient types, large objects outside the DB, no overly wide tables, one
+  naming convention, no cryptic abbreviations, lookup tables over status numbers, referential
+  integrity everywhere, cascades only deliberately, soft delete/history where the domain needs it.
+- **Brownfield caution (B1–B8): existing schemas are handled with care.** They may be shared by
+  other applications and must support rollback to older app versions — so restructuring, re-keying,
+  adding constraints, changing types, merging/splitting tables, or late normalisation never happen
+  as a side effect of a feature task. Improvement potential is **documented as recommendation
+  beads**; a commissioned schema change is treated as high-risk work (external-consumer check,
+  backward-compatibility/rollback plan, versioned migration). The reviewer blocks uncommissioned
+  structural changes smuggled into a diff.
+
+### REST interfaces (new CLAUDE.md §3b)
+- **Versioned and secured by default:** every REST API carries a version from day one
+  (`/api/v1/…`; breaking changes → new version with a deprecation window) and real
+  authentication — **Basic Auth is insufficient**: OAuth 2.x / OpenID Connect, short-lived JWT
+  bearer tokens, or managed API keys with rotation; mTLS for service-to-service where warranted;
+  authorisation checked per endpoint. The reviewer's gate checklist enforces both.
+- Every new/changed REST endpoint ships a matching **`.http` file** (`http/<resource>.http`,
+  IntelliJ HTTP Client / VS Code REST Client) covering happy path + auth + error case.
+- Host, port, test user, and password come from **`.env`** (`APP_HOST`, `APP_PORT`,
+  `TEST_USERNAME`, `TEST_PASSWORD` — seeded in `.env.example`); the agent may read `.env` to fill
+  them. IntelliJ credentials go into the now-gitignored `http-client.private.env.json`.
+
+### Ralph loop
+- The implementer **decides automatically** from its pre-analysis (architecture impact, effort,
+  complexity) whether the Ralph loop is worthwhile, and states the decision with its reason.
+  Manual triggers win: `/implement <bead> ralph|no-ralph` in the session, or a directive written
+  **into the issue itself** ("use the Ralph loop").
+
+### CLI
+- **`--no-token-saving`** for `aiflow init` and `aiflow change-settings` — switches **caveman and
+  rtk off** in one flag for full, unfiltered output.
+
+### Production readiness & architecture hygiene (CLAUDE.md §3a)
+- **Production-ready awareness for all agents:** every implementation targets production; agents
+  are very careful with low-maturity technology (experimental, pre-1.0, unmaintained), and the
+  **reviewer and tester must flag it**.
+- **Class size & KISS:** classes ballooning into hundreds of lines trigger **divide & conquer** —
+  split responsibilities, encapsulate behind interfaces (introduced layer structures must be
+  coherent with the rest of the codebase); accepted exception: utility libraries offering method
+  overloads for flexible call sites.
+- **State-of-the-art check:** legacy requests (SOAP instead of REST, XML-over-REST instead of
+  JSON, 1980s-style MQ patterns instead of modern brokers/cloud-native eventing) are **questioned
+  as PO-level decisions**, never silently built — EOL/unsupported technology is flagged as a
+  maintainability *and* security risk.
+- **Monolith avoidance:** modular boundaries and service-ready seams even when microservices
+  aren't explicitly required.
+- **Deliberate data/performance choices:** agents evaluate whether in-memory stores (**Redis**,
+  **SQLite**) or a search/caching layer (**Elasticsearch**, which also decouples the database from
+  the application) bring a measurable win — proposed to the PO, decision recorded.
+
+### New on-demand checker agents (not part of the delivery loop)
+- **accessibility-checker** (`aiflow a11y-check` / `/a11y-check`) — strict **WCAG 2.2 AA** audit
+  of all UI surfaces (perceivable/operable/understandable/robust: alternatives, semantics,
+  contrast, keyboard, focus, labels, ARIA); files `[accessibility]` beads and recommends an
+  automated a11y tool for the E2E suite (axe-core with Playwright/Cypress, Pa11y, Lighthouse CI).
+- **modernization-advisor** (`aiflow modernize-check` / `/modernize-check`) — walks the entire
+  brownfield codebase and proposes modernisation **concepts as a report**
+  (`.aiflow/modernization-report.md`) for the architect to review manually and optionally feed
+  into Beads: EOL/unsupported stacks first (maintainability + security lead), monolith →
+  **microservice** extraction candidates (strangler-fig), SOAP/XML/legacy MQ → **REST/JSON +
+  cloud-native eventing**, **svn → git**, containerisation/CI/observability gaps, and concrete
+  **unit/BDD/E2E test frameworks** when the project lacks them. Report only — no code changes,
+  no beads.
+
+### Docs (agents)
+- READMEs and the docs site now describe **precisely what each agent does and watches for**
+  (detailed per-agent sections in docs → Agents, shared ground rules called out).
+
+### Onboarding & project aim
+- **onboarder proposes the project aim** on brownfield projects — derived from the understanding it
+  built, written to `project-aim.md`, and **confirmed by the user** (interactive: asks directly;
+  headless: marked `PROPOSED — please confirm`). Never adopted silently.
+- **Project-aim guidance** in the READMEs, docs, and the CLAUDE.md template: where to set it
+  (`aiflow init` / `change-settings`, or manually in `.claude/memory/project-aim.md` +
+  `CLAUDE.md §1`) and how to write it (2–4 sentences: what, for whom, target architecture,
+  quality bar) — it tunes Claude to the project and is the cheapest quality lever.
+
+### Docs
+- **Positioning made explicit:** aiflow ships one very good, **universal base configuration** —
+  deliberately **generic agents** meant to be customised per project — because a strong base config
+  beats the blank-Claude start most AI projects begin with (~70–80 % less configuration effort).
+- **Terminal GIFs** (install · init Q&A incl. Ollama model selection and git/svn · change-settings)
+  embedded in the READMEs (EN/DE) and the docs site; reproducible sources in
+  `docs/assets/terminal/` (`make-casts.mjs` + agg).
+- **New docs pages:** **AI Basics** (plain-language primer for beginners: Claude Code, agents,
+  memory, context windows, skills, hooks, MCP, tokens) and an **example-project walk-through**
+  (every init question with its default, what gets generated, and a first feature built
+  end-to-end).
+- **Honest token framing** in READMEs and docs: token saving is a goal but only partially achieved
+  per task because of the quality rules — the net win is that production-ready-first-pass work
+  needs no re-prompting or rework, which saves tokens *and* time.
+- **Positioning hook:** "Most people struggle to set up their AI project successfully — this tool
+  is built to fix exactly that." Production-ready code as the stated project goal (reusable,
+  reliable, secure, current standards, architecture-aware, with optional accessibility /
+  modernisation / security reports).
+
 ## [0.1.0] — 2026-07-03
 
 First public release. aiflow turns any repository into a governed, AI-driven software-delivery
@@ -103,5 +254,6 @@ release process. Everything is project-scoped; secrets never leave the project.
 - **GitHub Pages documentation site** under `docs/` (just-the-docs).
 - **MIT License**; **no funding / donation prompts** — feedback, a ⭐, and bug reports are the ask.
 
-[Unreleased]: https://github.com/Cyber93de/aiflow/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Cyber93de/aiflow/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Cyber93de/aiflow/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Cyber93de/aiflow/releases/tag/v0.1.0

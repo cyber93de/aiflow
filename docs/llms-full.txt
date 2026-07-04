@@ -2,7 +2,7 @@
 
 > Self-contained explanation of what aiflow is and how it works, for AI assistants and context7.
 > aiflow turns any repository into a governed, AI-driven software-delivery pipeline for Claude Code.
-> Version 0.1.0 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
+> Version 0.1.1 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
 
 ## What aiflow is
 A cross-platform CLI (POSIX bash + a Windows PowerShell launcher) that bootstraps and governs
@@ -52,15 +52,53 @@ graph, no extra server. Rules: session-start auto-pull (`bd dolt pull` hook), at
 (`aiflow sync`, `aiflow close-sync`), never force-push, conflicts resolved via `bd dolt pull`.
 
 ## Agents
-Delivery: architect, planner, implementer, reviewer, tester. Audit (file Beads issues):
-security-advisor, quality-check, dependency-auditor, test-gap-advisor, performance-advisor, docs-sync,
-requirements-check. Brownfield: onboarder. Slash skills: /intake-issue, /decompose, /plan-epic,
-/implement, /review-ac, /arch, the audit commands, /onboard, /explain, /standup. Autonomy: the Ralph
-loop (interactive / headless `aiflow ralph` / CI).
+Delivery: architect, planner, implementer (senior engineer: mandatory pre-analysis of architecture
+fit/effort/complexity before code, targeted refactoring, SOLID/DRY/KISS/YAGNI, testable by design,
+proven frameworks + design patterns over self-built, PO-level questions with recorded decisions),
+reviewer (architect AND quality gate in one: architecture integrity + ADRs, design, tech debt,
+vulnerabilities, concurrency, breaking changes, plus an objective release checklist; PASS/CHANGES
+REQUIRED; suggestions persisted as beads), tester (test/QA engineer: negative/edge/boundary/
+exception/invalid-input + test-quality audit; runs adaptively on high risk/complexity).
+All delivery agents: production-ready output only (low-maturity tech flagged by reviewer+tester),
+small classes/KISS (divide & conquer + interfaces; utility-lib overloads excepted), monolith
+avoidance (service-ready seams), state-of-the-art check (SOAP-vs-REST, XML-vs-JSON, legacy MQ
+questioned as PO decisions), deliberate Redis/SQLite/Elasticsearch consideration for perf/search.
+Audit (file Beads issues): security-advisor, quality-check, dependency-auditor, test-gap-advisor,
+performance-advisor, docs-sync, accessibility-checker (aiflow a11y-check: strict WCAG 2.2 AA ->
+[accessibility] beads + recommends axe-core/Pa11y/Lighthouse CI for the E2E suite; not in the
+loop), requirements-check (report only), modernization-advisor (aiflow modernize-check: brownfield
+modernisation concepts as report .aiflow/modernization-report.md for the architect — EOL stacks,
+monolith->microservices strangler-fig, legacy->REST/JSON+cloud-native eventing, svn->git, missing
+unit/BDD/E2E frameworks; report only, not in the loop). Brownfield: onboarder (learns the codebase into
+memory/CLAUDE.md/arc42 and proposes a project aim from its understanding — user must confirm it).
+Shipped agents are deliberately generic (strong universal base config, ~70-80% less setup than
+blank Claude); customise them per project in .claude/agents/*.md. The project aim
+(.claude/memory/project-aim.md + CLAUDE.md §1, set via init/change-settings) tunes Claude to the
+project — 2-4 sentences: what, for whom, target architecture, quality bar. Slash skills:
+/intake-issue, /decompose, /plan-epic, /implement [bead] [ralph|no-ralph], /review-ac, /arch, the
+audit commands, /onboard, /explain, /standup. Autonomy: the Ralph loop (interactive / headless
+`aiflow ralph` / CI); if not specified, the implementer decides from its pre-analysis.
 
 ## Quality, git, releases
 Google style for all languages; Conventional Commits; pre-commit/commit-msg/pre-push enforcement
-hooks. Branching models: simple | gitflow | none, PR-only, auto-release, SemVer/CalVer; enforced by
+hooks. Quality gates on every implementation: static analysis (tool or agent-performed — no code
+smells), >80 % line coverage + all non-static methods tested, unit + BDD end-to-end tests always
+(integration/system where sensible; BDD for E2E/system/acceptance), leveled logging mandatory;
+REST APIs are versioned from day one (/api/v1/...; breaking -> new version + deprecation window)
+and properly secured — Basic Auth is insufficient: OAuth2/OIDC, short-lived JWT, or managed API
+keys with rotation; authorisation per endpoint. REST endpoints ship IDE-testable .http files
+(host/port/test credentials from .env). Ralph loop: implementer decides automatically from its
+pre-analysis; manual triggers win (/implement <bead> ralph|no-ralph, or a directive written into
+the issue itself). Token framing: saving is a goal but partially achieved per task due to quality
+rules; net win = production-ready on first pass, no re-prompting/rework. Database
+rules (CLAUDE.md §3c): NEW data models >=3NF, real foreign keys, junction tables for m:n, NOT NULL
+default, CHECK/UNIQUE constraints, precise types, no magic values, only necessary indexes, lookup
+tables, deliberate cascades, soft delete where needed (R1-R20); EXISTING schemas are handled with
+care (B1-B8 cautionary guidance): they may be shared by other projects and must support rollback
+to older app versions — never restructure/re-key/re-type/merge/split/normalise as a side effect;
+note improvement potential as recommendation beads; commissioned schema changes are high-risk work
+(external-consumer check, backward-compat/rollback plan, versioned migration). Uncommissioned
+structural changes in a feature diff = review BLOCKER. Branching models: simple | gitflow | none, PR-only, auto-release, SemVer/CalVer; enforced by
 hooks + `aiflow protect` + `aiflow release`.
 
 ## Token optimization

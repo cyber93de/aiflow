@@ -15,7 +15,14 @@ description: "Cut Claude Code token cost with aiflow: caveman terse output, rtk 
 ---
 
 Context is the budget. aiflow attacks token cost from four directions — the first two are **on by
-default**.
+default**. Prefer full, unfiltered output instead? Initialise or reconfigure with
+`aiflow init --no-token-saving` / `aiflow change-settings --no-token-saving` — it switches
+**caveman and rtk off** in one go.
+
+**Honest expectation:** aiflow's quality rules (tests, coverage gates, static analysis, architect
+review) deliberately *spend* tokens on getting things right — so per-task savings are only partial.
+The net win is that a requirement implemented **production-ready on the first pass** needs no
+re-prompting, no re-sharpening, and no rework: that saves more tokens *and time* than any filter.
 
 ## caveman — terse output
 

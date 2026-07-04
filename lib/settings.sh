@@ -7,15 +7,29 @@ CFG=".aiflow/config.json"
 command -v jq >/dev/null 2>&1 || { echo "jq required" >&2; exit 1; }
 j() { jq -r "$1 // empty" "$CFG"; }
 
+NO_TOKENSAVE=0
+for a in "$@"; do
+  case "$a" in
+    --no-token-saving) NO_TOKENSAVE=1;;
+    *) echo "unknown flag: $a" >&2; exit 2;;
+  esac
+done
+
 TTY=/dev/tty; [ -r /dev/tty ] || TTY=/dev/stdin
 ask()    { local p="$1" d="$2" a; printf "  %s [%s]: " "$p" "$d" >&2; read -r a <"$TTY" || a=""; echo "${a:-$d}"; }
 ask_yn() { local p="$1" d="$2" a; printf "  %s (y/n) [%s]: " "$p" "$d" >&2; read -r a <"$TTY" || a=""; a="${a:-$d}"; case "$a" in [Yy]*) echo true;; [Nn]*) echo false;; true|false) echo "$a";; *) echo "$d";; esac; }
 dyn() { [ "$1" = true ] && echo y || echo n; }
 
 echo "Change settings (Enter keeps current):"
-CAVE_ON="$(ask_yn 'caveman (terse output)?' "$(dyn "$(j .caveman.enabled)")")"
-CAVE_MODE="$(ask 'caveman mode (full/lite/ultra)' "$(j .caveman.mode)")"
-RTK_ON="$(ask_yn 'rtk CLI-output filtering?' "$(dyn "$(j .rtk.enabled)")")"
+if [ "$NO_TOKENSAVE" = 1 ]; then
+  echo "  --no-token-saving: caveman + rtk switched OFF (full, unfiltered output)."
+  CAVE_ON=false; CAVE_MODE="$(j .caveman.mode)"; [ -z "$CAVE_MODE" ] && CAVE_MODE=full
+  RTK_ON=false
+else
+  CAVE_ON="$(ask_yn 'caveman (terse output)?' "$(dyn "$(j .caveman.enabled)")")"
+  CAVE_MODE="$(ask 'caveman mode (full/lite/ultra)' "$(j .caveman.mode)")"
+  RTK_ON="$(ask_yn 'rtk CLI-output filtering?' "$(dyn "$(j .rtk.enabled)")")"
+fi
 GRAPHIFY_ON="$(ask_yn 'graphify structural code graph?' "$(dyn "$(j .graphify.enabled)")")"
 COCO_ON="$(ask_yn 'cocoindex-code semantic RAG search?' "$(dyn "$(j .mcp.cocoindex)")")"
 TM_ON="$(ask_yn 'claude-task-master?' "$(dyn "$(j .taskmaster.enabled)")")"

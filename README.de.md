@@ -9,6 +9,10 @@ erstklassiger **Teamarbeit** — damit ein KI-Agent (oder ein ganzes Team aus Me
 Issue nehmen, planen, den Code in konsistentem Stil schreiben, testen, gegen Akzeptanzkriterien
 prüfen, auditieren und über einen echten Release-Prozess ausliefern kann.
 
+**Die meisten scheitern daran, ihr KI-Projekt erfolgreich aufzusetzen — gerade ohne tiefes
+KI-Know-how. Genau dafür ist dieses Tool gebaut:** ein paar Fragen beantworten, fertig ist ein
+erprobtes, meinungsstarkes Setup.
+
 - **Token-basiert & anbieterneutral** — dein eigener Anthropic-API-Key *oder* Claude-Code-OAuth-Token;
   Git-Hosts **nur über Tokens, nie OAuth**. Kein Dritt-Hub.
 - **Local-First-Option** — leichte Arbeit auf **Ollama**-Modellen (kein Key), Top-Modelle fürs
@@ -19,7 +23,7 @@ prüfen, auditieren und über einen echten Release-Prozess ausliefern kann.
 
 > 🇬🇧 This guide is also available in **[English → README.md](README.md)**.
 
-**Version 0.1.0 · MIT-Lizenz · [Changelog](CHANGELOG.md)**
+**Version 0.1.1 · MIT-Lizenz · [Changelog](CHANGELOG.md)**
 
 ---
 
@@ -51,12 +55,33 @@ prüfen, auditieren und über einen echten Release-Prozess ausliefern kann.
 24. [Mitwirken](#24-mitwirken)
 25. [Lizenz](#25-lizenz)
 
-📖 **Vollständige Doku-Seite:** [cyber93de.github.io/aiflow](https://cyber93de.github.io/aiflow/)
+📖 **Vollständige Doku-Seite:** [cyber93de.github.io/aiflow](https://cyber93de.github.io/aiflow/) —
+inkl. **[AI Basics](https://cyber93de.github.io/aiflow/ai-basics)** (Claude Code, Agents, Memory,
+Context-Windows, Skills, Hooks — einfach erklärt) und einem kompletten
+**[Beispielprojekt-Walk-through](https://cyber93de.github.io/aiflow/example-project)** (jede Frage,
+jeder Default, erstes Feature end-to-end).
 
 ---
 
 ## 1. Warum aiflow — die Vorteile
 
+- **Eine starke Grundkonfig schlägt keine Konfig.** Die meisten KI-Coding-Projekte starten mit
+  blankem Claude und erfinden Regeln, Memory und Workflow ad hoc — oder nie. Ziel von aiflow ist
+  **eine sehr gute, universelle Grundkonfiguration**, die überall sofort funktioniert und dir rund
+  **70–80 % des Konfigurationsaufwands** gegenüber dem Blank-Start spart. Die Agenten und Regeln
+  sind bewusst **generisch** — passe sie an dein Projekt an (siehe §7 und §15), aber selbst
+  unangepasst schlagen sie blankes Claude.
+- **Production-Ready-Code ist das eigentliche Ziel.** Die Agenten erzeugen Code, der ausgeliefert
+  werden soll: wiederverwendbar, zuverlässig, sicher, auf aktuellen Standards; sie kennen und
+  respektieren deine Architektur, erweitern sie sinnvoll, betrachten Unpassendes kritisch und
+  schlagen neue Layer vor (Caching, Suche, Service-Schnitte), wo Performance oder andere Ziele es
+  verlangen. Auf Wunsch liefern sie zusätzlich Auswertungen zu **Barrierefreiheit (WCAG)**,
+  **Modernisierungspotential** und **Security-Issues**.
+- **Ehrlich bei Tokens.** Token-Sparen ist ein Ziel — caveman, rtk, Graph-/RAG-Retrieval zahlen
+  darauf ein —, wird aber wegen der vielen Qualitätsregeln (Tests, Reviews, Gates) pro Aufgabe nur
+  **bedingt** erreicht. Die Gegenrechnung: Wer Anforderungen nicht mehrfach stellen und
+  nachschärfen muss, weil sie beim **ersten** Durchlauf production-ready umgesetzt werden, spart
+  am Ende Tokens **und Zeit**.
 - **Besseres Gedächtnis, weniger Halluzinationen.** Zwei komplementäre Code-Indizes plus dauerhaftes
   Task-Memory: Der Agent *schlägt nach*, statt zu raten oder Dutzende Dateien neu zu lesen. Siehe §6.
 - **Starke Token-Reduktion.** caveman (knappe Ausgabe, ~75 % weniger Output-Tokens), rtk
@@ -85,9 +110,9 @@ prüfen, auditieren und über einen echten Release-Prozess ausliefern kann.
 | **Host-MCP** | Der passende Git-Host-MCP wird automatisch verdrahtet (je Remote-Typ) |
 | **Modelle** | Claude (API-Key *oder* OAuth) + optionale **Ollama**-Modelle, wählbar & auto-installiert |
 | **Model-Routing** | claude-code-router schickt leichte/Hintergrund-Arbeit an günstige/lokale Modelle |
-| **Agenten** | 5 Delivery- + 6 Audit- + 1 Brownfield-Spezialist-Subagenten |
+| **Agenten** | 5 Delivery- + 9 Audit-/Checker- + 1 Brownfield-Spezialist-Subagenten |
 | **Autonomie** | Ralph-Schleife (interaktiv / headless / containerisiert / CI) |
-| **Qualität** | Google-Stil, Conventional Commits, Format-/Lint-/Test-Git-Hooks, Review-Gate |
+| **Qualität** | Google-Stil, Conventional Commits, Format-/Lint-/Test-Git-Hooks, Architekt+Quality-Gate-Review, statische Analyse bei jeder Änderung, objektive Metrik-Ziele (0 neue Smells/Duplikate, 0 Warnings), >80 % Coverage + BDD-E2E-Gates, Logging mit Leveln, `.http`-Dateien für REST-Endpunkte, DB-Regeln §3c (3NF+FKs für neue Schemata, Brownfield-Schemata mit Vorsicht) |
 | **Branching** | simple / gitflow / none, PR-only, Auto-Release, SemVer/CalVer |
 | **Team** | geteilte Issue-DB, atomares Claim, Session-Start-Auto-Pull, Pull-vor-Push, geteilte Preferences |
 | **Token-Ersparnis** | caveman + rtk standardmäßig an, Graph-/RAG-Retrieval, Cost-Routing |
@@ -113,6 +138,8 @@ bash install.sh          # verlinkt 'aiflow' in deinen PATH
 ./install.ps1            # ergänzt PATH + legt den aiflow-Shim an
 ```
 
+<p align="center"><img src="docs/assets/terminal/install.gif" alt="aiflow installieren: clone, install.sh, aiflow doctor" width="880"></p>
+
 Der Installer **fragt einmalig**, ob zusätzlich **git**, **Subversion (svn)** und **Ollama**
 installiert werden sollen — damit ein späteres `aiflow init` nur noch fragt, *welche* Ollama-Modelle
 du willst. Danach:
@@ -132,7 +159,10 @@ Oder ein fertiges Build von
 ```bash
 mkdir my-app && cd my-app
 aiflow init                 # interaktives Q&A → schreibt .aiflow/config.json → rendert alles
+aiflow init --no-token-saving   # dito, aber caveman + rtk aus (volle, ungefilterte Ausgabe)
 ```
+
+<p align="center"><img src="docs/assets/terminal/init.gif" alt="aiflow init: das interaktive Q&A — Token-Sparen, Memory, Claude-Auth, git/svn, Remote-Host, Ollama-Modellauswahl, Branching-Modell" width="880"></p>
 
 `aiflow init` fragt (Enter = sinnvoller Default; Token-Sparen + intensives Graph-Memory sind **an**):
 
@@ -148,6 +178,14 @@ aiflow init                 # interaktives Q&A → schreibt .aiflow/config.json 
 9. **Ollama** — einrichten? welche Modelle? (`qwen3-coder` empfohlen).
 10. **Geteilte Team-Preferences** — Code-Stil etc.
 11. **Projektziel / Architektur / OS / IDE** und das **Git-Branching-Modell** (falls VCS = git).
+
+> **Das Projektziel (Aim) nicht überspringen — der günstigste Qualitätshebel.** Das Aim stimmt
+> Claude auf *dein* Projekt ab: Jeder Agent liest es vor Planung und Code. Nenne es aiflow beim
+> `init` (Frage 11) oder später via `aiflow change-settings` — oder pflege es manuell in
+> **`.claude/memory/project-aim.md`** und **`CLAUDE.md §1`**. Ein gutes Aim sind 2–4 klare Sätze:
+> *was* das Produkt tut, *für wen*, die *Zielarchitektur* und der *Qualitätsanspruch*. Beispiel:
+> *„REST-API für Auftragsverwaltung unserer internen Shops. Hexagonale Architektur auf PostgreSQL.
+> Korrektheit und Nachvollziehbarkeit schlagen Tempo; jeder Endpunkt wird vollständig getestet."*
 
 Dann Secrets füllen und starten:
 
@@ -165,9 +203,12 @@ bd create "Health-Endpoint" -t task --claim   # Task anlegen + claimen
 /review-ac                  # reviewer prüft gegen Akzeptanzkriterien
 ```
 
-**Bestehende Codebasis?** `aiflow init` erkennt sie und bietet `aiflow onboard` an — lernt den Code
-in `.claude/memory/`, `CLAUDE.md` und arc42, damit der Agent informiert startet. Code-Indizes
-jederzeit mit **`aiflow index`** bauen (Graph + RAG).
+**Bestehende Codebasis (Brownfield)?** `aiflow init` erkennt sie und bietet `aiflow onboard` an —
+lernt den Code in `.claude/memory/`, `CLAUDE.md` und arc42, damit der Agent informiert startet, und
+**schlägt aus dem gebildeten Verständnis ein Projektziel (Aim) vor**. Der Vorschlag wird nicht
+stillschweigend übernommen: Der Onboarder **fragt dich, ob es so stimmt** (Headless-Läufe
+markieren es als `PROPOSED — please confirm` in `project-aim.md`). Code-Indizes jederzeit mit
+**`aiflow index`** bauen (Graph + RAG).
 
 ---
 
@@ -225,16 +266,19 @@ aiflow index            # = graphify build  +  ccc index   (inkrementell)
 ## 7. Agenten — die volle Übersicht
 
 Spezialisierte Subagenten liegen in `.claude/agents/`. Claude wählt anhand der `description` oder du
-rufst sie explizit auf. Anpassbar über das jeweilige Markdown (Prompt, `tools:`, `model:`).
+rufst sie explizit auf. Die mitgelieferten Agenten sind **bewusst generisch** — ein starker,
+universeller Startpunkt, nicht das Ziel: **passe sie an die Bedürfnisse deines Projekts an**
+(Markdown editieren: Prompt, `tools:`, `model:` — z. B. deine Fachsprache, dein Review-Fokus,
+dein Test-Stack).
 
 ### Delivery-Agenten (machen die Arbeit)
 | Agent | Rolle |
 |-------|-------|
 | **architect** | Systemdesign — ADRs, arc42-Updates, Task-Aufschlüsselung. Kein Feature-Code. |
 | **planner** | Wandelt Ziel/Epic/Issue in kleine Beads-Tasks mit testbaren Akzeptanzkriterien + echten Abhängigkeiten. |
-| **implementer** | Baut genau einen bereiten Bead (Code + Tests) im Google-Stil; stoppt als BLOCKED bei unklaren Kriterien. |
-| **reviewer** | Das Qualitäts-Gate — prüft ein Diff gegen Akzeptanzkriterien, Korrektheit, Tests, Stil. PASS / CHANGES REQUIRED. |
-| **tester** | Schreibt sinnvolle Tests, jagt Edge-Cases; meldet Bugs, statt Tests zu schwächen. |
+| **implementer** | Senior Engineer für genau einen bereiten Bead — Voranalyse (Architektur-Fit, Aufwand, Komplexität) vor dem Code, zielgenaues Refactoring wenn nötig, SOLID/DRY/KISS/YAGNI, testbar by design (DI, deterministisch), bewährte Frameworks/Patterns statt Eigenbau, PO-verständliche Rückfragen mit festgehaltenen Entscheidungen, Quality Gates (statische Analyse, >80 % Coverage, BDD-E2E, Logging, `.http`-Dateien, Metrik-Ziele). |
+| **reviewer** | Architekt **und** Quality Gate in einem — Architektur-/Design-/Risiko-Review (Layer, Modulgrenzen, SOLID, technische Schulden, Over-/Underengineering, Schwachstellen, Concurrency, Breaking Changes) plus die objektive §3a-Checkliste; Suggestions werden als Beads für die nächste Loop festgehalten. PASS / CHANGES REQUIRED. |
+| **tester** | Test-/QA-Engineer — Negativ-/Edge-/Boundary-/Exception-/Invalid-Input-Tests plus Testqualitäts-Audit (Assertions, Determinismus, Unabhängigkeit); läuft, wenn die Voranalyse hohes Risiko/Komplexität meldet; meldet Bugs, statt Tests zu schwächen. |
 
 ### Audit-Agenten (manuell, read-only auf Code, legen priorisierte Beads an)
 | Agent | Kommando | Issue-Label |
@@ -245,12 +289,21 @@ rufst sie explizit auf. Anpassbar über das jeweilige Markdown (Prompt, `tools:`
 | **test-gap-advisor** | `aiflow test-gap` | `[test gap]` |
 | **performance-advisor** | `aiflow perf-check` | `[performance]` |
 | **docs-sync** | `aiflow docs-check` | `[docs]` |
+| **accessibility-checker** | `aiflow a11y-check` | `[accessibility]` — strikte WCAG-2.2-AA-Prüfung aller UI-Oberflächen; empfiehlt zudem ein automatisiertes A11y-Tool für die E2E-Suite (axe-core/Pa11y/Lighthouse CI). Nicht Teil der Delivery-Loop. |
 | **requirements-check** | `aiflow requirements-check` | *nur Bericht* (bewertet Issue-Qualität vs. Architektur; ändert nichts) |
+| **modernization-advisor** | `aiflow modernize-check` | *nur Bericht* — geht komplett über den Brownfield-Code und schlägt Modernisierungskonzepte vor (Microservices statt Monolith, REST/Cloud-Native statt SOAP/Legacy-MQ, git statt svn, supportete Stacks, fehlende Unit-/BDD-/E2E-Test-Frameworks) → `.aiflow/modernization-report.md`; der Architekt reviewt manuell und füttert akzeptierte Konzepte optional als Beads. Nicht Teil der Delivery-Loop. |
 
 ### Brownfield-Agent
 | Agent | Rolle |
 |-------|-------|
-| **onboarder** | Studiert eine bestehende Codebasis und persistiert Gelerntes in `.claude/memory/`, `CLAUDE.md` und arc42 — künftige Sessions starten informiert. Schreibt nur Docs/Memory. |
+| **onboarder** | Studiert eine bestehende Codebasis und persistiert Gelerntes in `.claude/memory/`, `CLAUDE.md` und arc42 — künftige Sessions starten informiert; schlägt ein Projektziel (Aim) vor und fragt dich, ob es stimmt. Schreibt nur Docs/Memory. |
+
+**Was alle Delivery-Agenten gemeinsam haben:** nur Production-Ready-Output (Vorsicht bei Technologie
+mit geringem Reifegrad — Reviewer und Tester bemängeln sie), kleine Klassen / KISS (Divide & Conquer
++ Interfaces statt Riesenklassen), State-of-the-Art als Default (Legacy-Wünsche wie SOAP oder
+XML-über-REST werden hinterfragt, nie stillschweigend gebaut), Monolithen-Vermeidung und bewusste
+Daten-/Performance-Entscheidungen (Redis/SQLite/Elasticsearch geprüft, wo sie sich lohnen).
+Volle Details pro Agent: [Docs → Agents](https://cyber93de.github.io/aiflow/agents).
 
 ---
 
@@ -259,10 +312,13 @@ rufst sie explizit auf. Anpassbar über das jeweilige Markdown (Prompt, `tools:`
 In Claude Code auslösbar (`.claude/commands/`):
 
 - **Delivery:** `/intake-issue <n>` (GitHub/GitLab/Bitbucket-Issue → Beads),
-  `/decompose <ziel|prd>` (task-master → Beads), `/plan-epic`, `/implement [bead]`, `/review-ac`,
+  `/decompose <ziel|prd>` (task-master → Beads), `/plan-epic`,
+  `/implement [bead] [ralph|no-ralph]` (Voranalyse zuerst; ohne Angabe entscheidet der implementer
+  **automatisch** — oder folgt einem „use the Ralph loop"-Vermerk direkt im Issue), `/review-ac`,
   `/arch "<Frage>"`.
 - **Audits:** `/security-check`, `/quality-check`, `/requirements-check`, `/dependency-check`,
-  `/test-gap`, `/perf-check`, `/docs-check`.
+  `/test-gap`, `/perf-check`, `/docs-check`, `/a11y-check` (strikt WCAG), `/modernize-check`
+  (Brownfield-Modernisierungsbericht).
 - **Brownfield / Orientierung:** `/onboard`, `/explain <pfad>`, `/standup`.
 
 Beads und die Ralph-Schleife gibt es auch als Plugin-Skills (`/beads:ready`, `/beads:decision`,
@@ -411,8 +467,13 @@ jedes Secret in `.env` (gitignored) legen. Für geprüfte Community-Server:
 ## 15. Konfiguration, die du anpassen solltest
 
 Alles wird von **`.aiflow/config.json`** gesteuert (committet, keine Secrets). Interaktiv mit
-`aiflow change-settings` bearbeiten (rendert `.mcp.json`, Hooks, Branching, Memory neu). Am
-lohnendsten:
+`aiflow change-settings` bearbeiten (rendert `.mcp.json`, Hooks, Branching, Memory neu) —
+Versionskontrolle wechseln (git/svn), andere Ollama-Modelle wählen oder Token-Sparen komplett
+abschalten mit `--no-token-saving`:
+
+<p align="center"><img src="docs/assets/terminal/settings.gif" alt="aiflow change-settings: VCS wechseln, Ollama-Modelle wählen, Token-Sparen mit --no-token-saving abschalten" width="880"></p>
+
+Am lohnendsten:
 
 - **`CLAUDE.md`** — die Betriebsregeln, die jeder Agent liest (Projektüberblick, Architektur-Hinweise,
   Code-Stil, Task-Workflow, Git-Regeln, Memory-/Context-Stack, Kommunikation). **Fülle die
@@ -456,9 +517,10 @@ Form von `config.json`:
 ## 16. Kommando-Referenz
 
 ```text
-aiflow init [pfad] [--force] [--no-git] [--no-beads] [--yes]   Projekt bootstrappen
+aiflow init [pfad] [--force] [--no-git] [--no-beads] [--yes] [--no-token-saving]
+                                   Projekt bootstrappen (--no-token-saving = caveman + rtk aus)
 aiflow install-deps [--all]        fehlende Tools installieren (config-abhängig; --all = voller Satz)
-aiflow change-settings             Config neu justieren, dann alles neu rendern
+aiflow change-settings [--no-token-saving]   Config neu justieren, dann alles neu rendern
 aiflow shell [--router]            .env laden, Claude Code starten (--router = günstige/lokale Modelle)
 aiflow sync [pull|push|both]       Team-Sync: git + Beads(dolt) pull/push
 aiflow close-sync <id>             bei Issue-Close: Push + Dolt-Sync anbieten
@@ -467,7 +529,8 @@ aiflow index                       Code-Memory aktualisieren: graphify (Graph) +
 aiflow ralph "<prompt|bead id>"    die Headless-Ralph-Schleife laufen lassen
 aiflow onboard                     bestehende Codebasis in Memory + CLAUDE.md + arc42 lernen
 aiflow security-check | quality-check | requirements-check | dependency-check
-aiflow test-gap | perf-check | docs-check      On-Demand-Audits → Beads-Issues
+aiflow test-gap | perf-check | docs-check | a11y-check   On-Demand-Audits → Beads-Issues
+aiflow modernize-check             Brownfield-Modernisierungskonzepte → Bericht für den Architekten
 aiflow release [--push]            Release gemäß Branching-Modell schneiden
 aiflow protect                     serverseitigen Branch-Schutz anwenden (GitHub)
 aiflow cost [...]                  Token-/Kosten-Baseline via ccusage
@@ -480,8 +543,17 @@ aiflow version
 
 ## 17. Token- & Kostenoptimierung
 
+**Erwartung zuerst:** Token-Sparen ist ein echtes Ziel, aber die vielen Qualitätsregeln (Tests,
+Coverage-Gates, statische Analyse, Architekten-Review) geben bewusst Tokens dafür aus, es gleich
+richtig zu machen. Der Netto-Gewinn kommt daher, dass man **nicht zweimal fragen muss**: eine
+Anforderung, die beim ersten Durchlauf production-ready ist, braucht kein Re-Prompting und keine
+Nacharbeit — das spart mehr Tokens (und Zeit) als jeder Output-Filter. Die Hebel unten trimmen
+den Rest:
+
 - **caveman** — knapper Ausgabemodus (~75 % weniger Output-Tokens; Code/Commits/Security bleiben normal). Default an.
 - **rtk** — filtert/komprimiert ausführliche Kommando-Ausgaben vor dem Context (60–90 % weniger). Default an.
+- **Lieber volle Ausgabe?** `aiflow init --no-token-saving` / `aiflow change-settings --no-token-saving`
+  schaltet caveman + rtk mit einem Flag ab.
 - **Graph + RAG** — aus graphify/cocoindex antworten statt ganze Dateien lesen (~70 % weniger).
 - **Model-Routing** — leichte/Hintergrund-Schritte an günstige oder lokale (Ollama) Modelle via `aiflow shell --router`.
 - **Erst messen** — `aiflow cost` (ccusage) zeigt echte Ausgaben, damit du das Richtige optimierst.

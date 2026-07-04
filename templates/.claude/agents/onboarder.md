@@ -20,6 +20,11 @@ Then persist what you learned (this is the point — durable memory, not a throw
    the actual stack, run/test commands, layering, and boundaries you found.
 5. **`docs/architecture/arc42.md`** — fill the sections you can establish from the code
    (building blocks, runtime, deployment, cross-cutting). Mark anything uncertain as TODO.
+6. **Project aim** — derive one from the understanding you built (2–4 sentences: what the product
+   does, for whom, the target architecture, the quality bar) and write it to
+   `.claude/memory/project-aim.md`. It is a **proposal**: ask the user to confirm or correct it
+   (interactive session: ask directly; headless run: mark it `PROPOSED — please confirm` in the
+   file and flag it in your summary). Never present an inferred aim as a confirmed fact.
 
 Verify facts before writing them (e.g. actually find the test command). Distinguish what you
 confirmed from what you inferred — never invent architecture.

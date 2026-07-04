@@ -26,9 +26,9 @@ description: "aiflow features: Claude Code automation, Beads task memory, code g
 | **Host MCP** | The matching git-host MCP is wired automatically per remote type |
 | **Models** | Claude (API key *or* OAuth) + optional **Ollama** local models, selectable & auto-installed |
 | **Model routing** | claude-code-router sends easy/background work to cheap/local models |
-| **Agents** | 5 delivery + 6 audit + 1 brownfield specialist subagents |
+| **Agents** | 5 delivery + 9 audit/checker + 1 brownfield specialist subagents |
 | **Autonomy** | Ralph loop (interactive / headless / containerised / CI) |
-| **Quality** | Google style, conventional commits, format/lint/test git hooks, review gate |
+| **Quality** | Google style, conventional commits, format/lint/test git hooks, architect+quality-gate review, static analysis on every change, objective metric targets (0 new smells/duplicates, 0 warnings), >80 % coverage + BDD E2E gates, leveled logging, `.http` files for REST endpoints, DB rules §3c (3NF+FKs for new schemas, brownfield schemas handled with care) |
 | **Branching** | simple / gitflow / none, PR-only, auto-release, SemVer/CalVer |
 | **Team** | shared issue DB, atomic claim, session-start auto-pull, pull-before-push, shared preferences |
 | **Token savings** | caveman + rtk on by default, graph/RAG retrieval, cost routing |

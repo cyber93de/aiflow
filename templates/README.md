@@ -199,7 +199,7 @@ aiflow shell            # loads .env and starts Claude Code
 | Command | Purpose |
 |---------|---------|
 | `aiflow init [--yes] [--force] [--no-git] [--no-beads]` | Bootstrap a project (interactive Q&A). |
-| `aiflow change-settings` | Re-adjust this project's config, then re-apply (alias `settings`). |
+| `aiflow change-settings [--no-token-saving]` | Re-adjust this project's config, then re-apply (alias `settings`); `--no-token-saving` = caveman + rtk off. |
 | `aiflow install-deps [--all]` | Install missing tools (enabled in config; `--all` = full set). |
 | `aiflow doctor` | Check prerequisites + which tokens are set. |
 | `aiflow shell [--router]` | Load `.env`, start Claude Code (`--router` = via claude-code-router). |
@@ -211,6 +211,8 @@ aiflow shell            # loads .env and starts Claude Code
 | `aiflow test-gap` | Untested critical paths → `[test gap]` Beads. |
 | `aiflow perf-check` | Performance audit → `[performance]` Beads. |
 | `aiflow docs-check` | Doc/code drift → `[docs]` Beads. |
+| `aiflow a11y-check` | Strict WCAG 2.2 AA accessibility audit → `[accessibility]` Beads. |
+| `aiflow modernize-check` | Brownfield modernisation concepts → report `.aiflow/modernization-report.md` for the architect. |
 | `aiflow onboard` | Learn an existing codebase into memory + CLAUDE.md + arc42. |
 | `aiflow release [--push]` | Cut a release per the branching model (version bump + tag). |
 | `aiflow protect` | Apply server-side branch protection (GitHub). |
@@ -232,11 +234,18 @@ you invoke it explicitly. Three groups:
 - **architect** — system design; produces ADRs + arc42 updates + a task breakdown. No feature code.
 - **planner** — turns a goal/epic/issue into small Beads tasks with testable acceptance criteria
   and real dependencies.
-- **implementer** — builds exactly one ready bead (code + tests) in Google style; stops as BLOCKED
-  if criteria are unclear.
-- **reviewer** — the quality gate; reviews a diff against acceptance criteria, correctness, tests,
-  and style; verdict PASS / CHANGES REQUIRED.
-- **tester** — writes meaningful tests, hunts edge cases; reports bugs instead of weakening tests.
+- **implementer** — senior engineer for exactly one ready bead: pre-analysis (architecture fit,
+  effort, complexity) before code, targeted refactoring when needed, SOLID/DRY/KISS/YAGNI,
+  testable by design (DI, deterministic), proven frameworks/patterns over self-built, PO-level
+  questions with recorded decisions, quality gates (static analysis, >80 % coverage, BDD E2E,
+  logging, `.http` files, metric targets); stops as BLOCKED if criteria are unclear.
+- **reviewer** — architect **and** quality gate in one: architecture/design/risk review (layers,
+  module boundaries, SOLID, tech debt, over-/under-engineering, vulnerabilities, concurrency,
+  breaking changes) plus the objective §3a checklist; suggestions persisted as `[suggestion]`
+  beads for the next loop; verdict PASS / CHANGES REQUIRED.
+- **tester** — test/QA engineer: negative/edge/boundary/exception/invalid-input tests plus
+  test-quality audit (assertions, determinism, independence); runs when the pre-analysis flags
+  high risk/complexity; reports bugs instead of weakening tests.
 
 **Audit agents** (manual via aiflow, read-only on code, file prioritised Beads — see §11):
 - **security-advisor** → `[security-advisor]`
@@ -245,13 +254,18 @@ you invoke it explicitly. Three groups:
 - **test-gap-advisor** → `[test gap]`
 - **performance-advisor** → `[performance]`
 - **docs-sync** → `[docs]`
+- **accessibility-checker** → `[accessibility]` (strict WCAG 2.2 AA; recommends an automated a11y tool for the E2E suite; `aiflow a11y-check`)
+- **modernization-advisor** → report only: modernisation concepts (microservices, REST/cloud-native, git over svn, supported stacks, missing unit/BDD/E2E frameworks) to `.aiflow/modernization-report.md` for the architect (`aiflow modernize-check`)
 - **requirements-check** — advisory; grades issue quality vs architecture, **report only** (no Beads, no changes).
 
 **Brownfield agent:**
 - **onboarder** — studies an existing codebase and persists what it learns into `.claude/memory/`,
-  `CLAUDE.md`, and arc42, so future sessions start informed. Writes docs/memory only.
+  `CLAUDE.md`, and arc42, so future sessions start informed; **proposes a project aim** from its
+  understanding and asks you to confirm it. Writes docs/memory only.
 
-Customise any agent by editing its markdown (prompt, allowed `tools:`, `model:`). See §21.
+The shipped agents are **deliberately generic** — a strong, universal base, not the finish line:
+**customise them to your project's needs** by editing their markdown (prompt, allowed `tools:`,
+`model:` — e.g. your domain language, review focus, test stack). See §21.
 
 ---
 
@@ -260,10 +274,10 @@ Customise any agent by editing its markdown (prompt, allowed `tools:`, `model:`)
 Triggerable inside Claude Code (`.claude/commands/`):
 
 - **Delivery:** `/intake-issue <n>` (pull a GitHub/GitLab/Bitbucket issue → Beads),
-  `/decompose <goal|prd>` (claude-task-master → Beads), `/plan-epic`, `/implement [bead]`,
+  `/decompose <goal|prd>` (claude-task-master → Beads), `/plan-epic`, `/implement [bead] [ralph|no-ralph]`,
   `/review-ac`, `/arch "<question>"`.
 - **Audits:** `/security-check`, `/quality-check`, `/requirements-check`, `/dependency-check`,
-  `/test-gap`, `/perf-check`, `/docs-check`.
+  `/test-gap`, `/perf-check`, `/docs-check`, `/a11y-check`, `/modernize-check`.
 - **Brownfield / orientation:** `/onboard`, `/explain <path>`, `/standup`.
 
 (Beads and the Ralph loop are also available as their own plugin skills, e.g. `/beads:ready`.)
@@ -354,6 +368,8 @@ recognisable prefix so a human/PO can triage. They never modify code.
 | `aiflow test-gap` | untested critical / high-fan-in paths | `[test gap]` |
 | `aiflow perf-check` | N+1, sync I/O, O(n²), missing pagination/indexes | `[performance]` |
 | `aiflow docs-check` | README/CLAUDE/arc42/API drift | `[docs]` |
+| `aiflow a11y-check` | WCAG 2.2 AA: contrast, keyboard, ARIA, labels (strict) | `[accessibility]` |
+| `aiflow modernize-check` | EOL stacks, monolith→microservices, legacy→REST/cloud-native, svn→git, missing test frameworks | *report only* |
 
 Severity maps to Beads priority (Critical→P0 … Low→P3); findings are de-duplicated against existing
 open issues of the same prefix.
@@ -373,7 +389,17 @@ On by default:
 - **pre-commit hook:** blocks the commit unless format + lint + unit tests pass.
 - **commit-msg hook:** rejects non-**Conventional-Commit** messages.
 - **pre-push hook:** enforces the branching model (§15).
-- **Review gate:** `/review-ac` + the *reviewer* agent check every change against acceptance criteria.
+- **Review gate:** `/review-ac` + the *reviewer* agent — architect **and** quality gate in one:
+  architecture/design/risk review plus an objective release checklist; verdict PASS or CHANGES
+  REQUIRED; out-of-scope suggestions persisted as `[suggestion]` beads for the next loop.
+- **Quality gates (CLAUDE.md §3a):** static analysis on every implementation (tool or the agent
+  itself — no code smells shipped), >80 % coverage of changed logic + all non-static methods
+  tested, unit + BDD end-to-end tests always, leveled logging required, and objective metric
+  targets (0 new duplicates/smells, 0 architecture violations, 0 linter/compiler warnings,
+  0 high/critical security findings).
+- **REST `.http` files (CLAUDE.md §3b):** every new/changed endpoint ships an IDE-testable
+  `.http` file; host/port/test credentials come from `.env` (`APP_HOST`, `APP_PORT`,
+  `TEST_USERNAME`, `TEST_PASSWORD`).
 
 Hooks live in `.githooks/` (wired via `core.hooksPath`, merged with Beads' own hooks). Emergency
 bypasses exist (`AIFLOW_SKIP_VERIFY=1`, `AIFLOW_SKIP_COMMIT_LINT=1`, `AIFLOW_ALLOW_DIRECT_PUSH=1`)

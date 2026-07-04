@@ -14,6 +14,8 @@ description: "Install aiflow on Linux, macOS, or Windows for Claude Code. The in
 
 ---
 
+![Installing aiflow: clone, install.sh, aiflow doctor](assets/terminal/install.gif)
+
 ## Prerequisites
 
 [Node.js](https://nodejs.org) (LTS). Everything else — Claude Code, Beads, Dolt, jq, graphify,

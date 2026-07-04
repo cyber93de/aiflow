@@ -43,5 +43,5 @@
   `release.yml` (VERSION bump → tag + per-OS archives), `pages.yml` (docs deploy).
 
 ## Root
-- `install.sh` / `install.ps1` (offer git/svn/ollama), `VERSION` (0.1.0), `LICENSE` (MIT),
+- `install.sh` / `install.ps1` (offer git/svn/ollama), `VERSION` (0.1.1), `LICENSE` (MIT),
   `CHANGELOG.md`, `README.md` / `README.de.md`.

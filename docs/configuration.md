@@ -15,8 +15,11 @@ description: "Configure aiflow: .aiflow/config.json, CLAUDE.md operating rules, 
 ---
 
 Everything is driven by **`.aiflow/config.json`** (committed, no secrets). Edit it interactively with
-`aiflow change-settings` (re-renders `.mcp.json`, hooks, branching, memory). Secrets always stay in
-`.env` (gitignored, never global).
+`aiflow change-settings` (re-renders `.mcp.json`, hooks, branching, memory) — switch version control
+(git/svn), pick different Ollama models, or turn token saving off entirely with
+`aiflow change-settings --no-token-saving`. Secrets always stay in `.env` (gitignored, never global).
+
+![aiflow change-settings: switch vcs, pick Ollama models, disable token saving with --no-token-saving](assets/terminal/settings.gif)
 
 ## The files most worth tuning
 

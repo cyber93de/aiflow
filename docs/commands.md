@@ -18,9 +18,9 @@ description: "aiflow CLI command reference: init, install-deps, change-settings,
 
 | Command | Does |
 |---------|------|
-| `aiflow init [path] [--force] [--no-git] [--no-beads] [--yes]` | Bootstrap a project (interactive Q&A → renders everything). |
+| `aiflow init [path] [--force] [--no-git] [--no-beads] [--yes] [--no-token-saving]` | Bootstrap a project (interactive Q&A → renders everything). `--no-token-saving` = caveman + rtk off (full, unfiltered output). |
 | `aiflow install-deps [--all]` | Install missing tools enabled in config (`--all` = full set). |
-| `aiflow change-settings` | Re-adjust config, then re-render `.mcp.json`, hooks, branching, memory. |
+| `aiflow change-settings [--no-token-saving]` | Re-adjust config, then re-render `.mcp.json`, hooks, branching, memory. `--no-token-saving` switches caveman + rtk off. |
 | `aiflow doctor` | Check prerequisites + print a per-project summary. |
 | `aiflow upgrade` | Update the bundled toolchain. |
 | `aiflow version` | Print the version. |
@@ -53,6 +53,8 @@ description: "aiflow CLI command reference: init, install-deps, change-settings,
 | `aiflow test-gap` | Untested critical paths → `[test gap]`. |
 | `aiflow perf-check` | Performance hotspots → `[performance]`. |
 | `aiflow docs-check` | Doc/code drift → `[docs]`. |
+| `aiflow a11y-check` | Strict WCAG 2.2 AA accessibility audit → `[accessibility]`. |
+| `aiflow modernize-check` | Brownfield modernisation concepts → report for the architect (`.aiflow/modernization-report.md`). |
 
 ## Release
 

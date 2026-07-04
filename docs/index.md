@@ -18,7 +18,9 @@ process.
 [Get started](getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View on GitHub](https://github.com/Cyber93de/aiflow){: .btn .fs-5 .mb-4 .mb-md-0 }
 
-**Version 0.1.0 · MIT License**
+**Version 0.1.1 · MIT License**
+
+![aiflow init: bootstrap a project in one interactive Q&A](assets/terminal/init.gif)
 
 ---
 
@@ -28,6 +30,23 @@ aiflow wires [Claude Code](https://docs.claude.com/en/docs/claude-code) together
 toolchain so an AI agent — or a whole team of humans + agents — can take an issue, plan it, write the
 code in a consistent style, test it, review it against acceptance criteria, audit it for security and
 quality, and ship it through a governed branching + release model.
+
+**Most people struggle to set up their AI project successfully — especially without deep AI
+know-how yet. aiflow is built to fix exactly that** (start with [AI Basics](ai-basics) if the
+terminology is new to you).
+
+The idea: **a very good, universal base configuration that works everywhere** — because a strong
+base config beats no config, and "no config" is how most AI-coding projects sadly start. Out of the
+box it saves roughly **70–80 % of the configuration effort** versus using Claude blank. The shipped
+agents and rules are deliberately **generic**: customise them to your project (domain language,
+review focus, test stack) — but even uncustomised they beat a blank start.
+
+The actual goal is **production-ready code**: reusable, reliable, secure, on current standards;
+agents that know and respect your architecture, extend it sensibly, push back on requirements that
+don't fit it, and propose new layers (caching, search, service seams) where performance demands —
+plus on-demand reports on **accessibility (WCAG)**, **modernisation potential**, and **security**.
+Token saving remains a goal too, but the quality rules mean it is only partially achieved per
+task — the real saving is **never having to ask twice**.
 
 - **Token-based & vendor-neutral** — your own Anthropic API key *or* Claude Code OAuth token; git
   hosts via **tokens only, never OAuth**.

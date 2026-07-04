@@ -106,6 +106,8 @@ case "$cmd" in
   test-gap)                    load_env; bash ".aiflow/run-agent.sh" test-gap-advisor  "$@" ;;
   perf-check)                  load_env; bash ".aiflow/run-agent.sh" performance-advisor "$@" ;;
   docs-check)                  load_env; bash ".aiflow/run-agent.sh" docs-sync         "$@" ;;
+  a11y-check|accessibility-check) load_env; bash ".aiflow/run-agent.sh" accessibility-checker "$@" ;;
+  modernize-check|modernization-check) load_env; bash ".aiflow/run-agent.sh" modernization-advisor "$@" ;;
   onboard)                     load_env; bash ".aiflow/run-agent.sh" onboarder         "$@" ;;
   version|-v|--version) echo "aiflow $(cat "$AIFLOW_HOME/VERSION" 2>/dev/null || echo 0.0.0)" ;;
   help|-h|--help|*)
@@ -113,9 +115,10 @@ case "$cmd" in
 aiflow - bootstrap agentic delivery into any project (Claude Code + Beads + Ralph + GitHub)
 
 USAGE
-  aiflow init [path] [--force] [--no-git] [--no-beads] [--yes]
+  aiflow init [path] [--force] [--no-git] [--no-beads] [--yes] [--no-token-saving]
   aiflow install-deps [--all]  install missing tools (enabled in config; --all = full set)
-  aiflow change-settings   re-adjust this project's config (alias: settings)
+  aiflow change-settings [--no-token-saving]  re-adjust this project's config (alias: settings)
+                           --no-token-saving = switch caveman + rtk OFF (full output)
   aiflow shell [--router]  load .env then launch Claude Code (--router = via claude-code-router)
   aiflow ralph [...]       run the headless Ralph loop in this project
   aiflow security-check    full-project security audit -> files Beads issues per finding
@@ -125,6 +128,8 @@ USAGE
   aiflow test-gap          untested critical paths -> [test gap] Beads
   aiflow perf-check        performance audit -> [performance] Beads
   aiflow docs-check        doc/code drift -> [docs] Beads
+  aiflow a11y-check        strict WCAG accessibility audit -> [accessibility] Beads
+  aiflow modernize-check   brownfield modernisation concepts -> report for the architect
   aiflow onboard           learn an existing codebase into memory + CLAUDE.md + arc42
   aiflow release [--push]  cut a release per the branching model (version bump + tag)
   aiflow protect           apply server-side branch protection (GitHub)

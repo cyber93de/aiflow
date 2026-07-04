@@ -6,11 +6,12 @@ set -uo pipefail
 AIFLOW_HOME="${AIFLOW_HOME:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 TPL="$AIFLOW_HOME/templates"
 
-TARGET="."; FORCE=0; NO_GIT=0; NO_BEADS=0; YES=0; INSTALL_DEPS=0
+TARGET="."; FORCE=0; NO_GIT=0; NO_BEADS=0; YES=0; INSTALL_DEPS=0; NO_TOKENSAVE=0
 for a in "$@"; do
   case "$a" in
     --force) FORCE=1;; --no-git) NO_GIT=1;; --no-beads) NO_BEADS=1;; --yes|-y) YES=1;;
     --install-deps) INSTALL_DEPS=1;; --no-install-deps) INSTALL_DEPS=-1;;
+    --no-token-saving) NO_TOKENSAVE=1;;
     -*) echo "unknown flag: $a" >&2; exit 2;; *) TARGET="$a";;
   esac
 done
@@ -48,11 +49,16 @@ ask()    { local p="$1" d="$2" a; if [ "$YES" = 1 ]; then echo "$d"; return; fi;
 ask_yn() { local p="$1" d="$2" a; if [ "$YES" = 1 ]; then a="$d"; else printf "  %s (y/n) [%s]: " "$p" "$d" >&2; read -r a <"$TTY" || a=""; a="${a:-$d}"; fi; case "$a" in [Yy]*|true) echo true;; *) echo false;; esac; }
 
 echo; echo "Configure this project (Enter = default):"
-echo "  Token-saving defaults (caveman + rtk) and intensive graph-memory learning are ON by default."
-CAVE_ON="$(ask_yn 'Save tokens with caveman (terse output)?' y)"
-CAVE_MODE=full
-[ "$CAVE_ON" = true ] && CAVE_MODE="$(ask 'caveman mode (full recommended / lite / ultra)' full)"
-RTK_ON="$(ask_yn 'Save tokens by filtering CLI output with rtk?' y)"
+if [ "$NO_TOKENSAVE" = 1 ]; then
+  echo "  --no-token-saving: caveman + rtk are OFF (full, unfiltered output)."
+  CAVE_ON=false; CAVE_MODE=full; RTK_ON=false
+else
+  echo "  Token-saving defaults (caveman + rtk) and intensive graph-memory learning are ON by default."
+  CAVE_ON="$(ask_yn 'Save tokens with caveman (terse output)?' y)"
+  CAVE_MODE=full
+  [ "$CAVE_ON" = true ] && CAVE_MODE="$(ask 'caveman mode (full recommended / lite / ultra)' full)"
+  RTK_ON="$(ask_yn 'Save tokens by filtering CLI output with rtk?' y)"
+fi
 GRAPHIFY_ON="$(ask_yn 'Use graphify (structural code graph: imports/call-graph) for memory?' y)"
 COCO_ON="$(ask_yn 'Use cocoindex-code (semantic code RAG search, local, ~70% fewer tokens)?' y)"
 TM_ON="$(ask_yn 'Use claude-task-master for task decomposition?' y)"

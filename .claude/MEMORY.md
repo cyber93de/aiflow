@@ -17,7 +17,7 @@ informed. Read the relevant file before acting; keep them current (memory.intens
   + learning intensity.
 
 ## Quick facts
-- **Version:** 0.1.0 · **License:** MIT © 2026 Cyber93de · **Repo:** github.com/Cyber93de/aiflow.
+- **Version:** 0.1.1 · **License:** MIT © 2026 Cyber93de · **Repo:** github.com/Cyber93de/aiflow.
 - **Own config:** `.aiflow/config.json` (git remote github, graphify+cocoindex+context7 on, memory
   aggressive, team-prefs google, branching none for the source repo).
 - **Wired MCPs here:** github, filesystem, context7, graphify, cocoindex-code (see `.mcp.json`).

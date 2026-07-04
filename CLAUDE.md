@@ -60,18 +60,54 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 
 ## Build & Test
 
-_Add your build and test commands here_
+No build step — aiflow is Bash + PowerShell + templates. Validate like CI does:
 
 ```bash
-# Example:
-# npm install
-# npm test
+# syntax: every shell script + the CLI entry point
+find . -name '*.sh' -not -path './.git/*' -not -path './.beads/*' -exec bash -n {} +
+bash -n bin/aiflow
+# all JSON templates/configs
+find . -name '*.json' -not -path './.git/*' -not -path './.beads/*' -exec jq empty {} +
+# advisory lint
+shellcheck -S error lib/*.sh bin/aiflow templates/.aiflow/*.sh
+# render test: init into a temp dir and inspect the generated project
+AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no-install-deps
 ```
 
 ## Architecture Overview
 
-_Add a brief overview of your project architecture_
+- **`bin/aiflow`** — CLI dispatcher (Bash); `bin/aiflow.ps1` is a thin PowerShell shim.
+- **`lib/*.sh`** — subcommand implementations (`init`, `apply`, `settings`, `doctor`,
+  `install-deps`, `branching`, `ollama`, `upgrade`). `init.sh` copies `templates/` into a target
+  project, asks the Q&A, writes `.aiflow/config.json`; `apply.sh` renders everything
+  (`.mcp.json`, hooks, memory, branching) from that config — **idempotent**.
+- **`templates/`** — everything a generated project receives: `CLAUDE.md` (operating rules incl.
+  quality gates §3a/§3b/§3c), `.claude/agents|commands|hooks`, `.aiflow/*.sh` helpers, git hooks,
+  CI workflows, docker. **Template changes are the product** — most features land here.
+- **`docs/`** — GitHub Pages site (just-the-docs); `docs/assets/terminal/` holds the GIF sources
+  (`make-casts.mjs` + agg; regenerate after CLI-output changes).
+- Releases: bump `VERSION` + update `CHANGELOG.md`, push to `main` → `release.yml` tags and
+  publishes per-OS archives. A pushed `VERSION` without a matching tag always cuts a release.
 
 ## Conventions & Patterns
 
-_Add your project-specific conventions here_
+- Google Shell Style; scripts start `set -uo pipefail` (CLI: `set -euo pipefail`); user-facing
+  strings terse; no secrets anywhere (tokens only via generated `.env`, gitignored).
+- Cross-platform: everything must work in Git-Bash on Windows, macOS, Linux — no GNU-only flags
+  without fallback; PowerShell shim delegates to Bash.
+- Keep README.md and README.de.md **in sync** (same sections, both languages), and mirror
+  user-visible changes into `docs/` + `CHANGELOG.md` + `docs/changelog.md` + `docs/llms-full.txt`.
+- Conventional Commits referencing the bead id, e.g. `feat: … (aiflow-xyz)`.
+
+## Agents & quality gates (self-hosted aiflow)
+
+This repo runs on its own 0.1.1 agent roster: `.claude/agents/` + `.claude/commands/` mirror
+`templates/.claude/` (keep them in sync when templates change — that is part of shipping a
+template change). Audit helpers live in `.aiflow/` (`aiflow security-check | quality-check |
+requirements-check | a11y-check | modernize-check | ralph` work here).
+
+The full quality-gate definitions (§3a metrics/tests/logging, §3b REST, §3c database) live in
+**`templates/CLAUDE.md`** and apply here *in spirit*, adapted to a Bash/templates codebase:
+static analysis = `bash -n` + shellcheck + `jq empty`; tests = the render test above (init into a
+temp dir and assert the generated project); no REST/database surface. The review gate
+(`/review-ac`) and the recorded-decisions rule apply unchanged.

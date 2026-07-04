@@ -8,3 +8,10 @@ bin/aiflow.cmd
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# aiflow self-hosting (agents/audits running in this repo)
+result.json
+.aiflow/ralph.log
+.aiflow/runs/
+.aiflow/requirements-report.md
+.aiflow/modernization-report.md

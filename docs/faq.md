@@ -54,6 +54,16 @@ Re-run `aiflow change-settings`; check `.env` has the token env named in `remote
 **Windows or macOS or Linux?**
 All three. On Windows, install via `install.ps1`; the CLI also works in Git-Bash.
 
+**How do I update aiflow itself?**
+`aiflow update` — self-updates the install (`git pull` in `AIFLOW_HOME`). It only touches
+the CLI/templates; existing projects don't change until you say so.
+
+**A project isn't picking up the latest aiflow templates — how do I fix that?**
+`aiflow project-update` refreshes its mechanical scripts (`.aiflow/*`, `.claude/hooks/*`,
+`docker/run.*`) from the installed templates. Every project stamps the aiflow version it
+was generated with (`meta.aiflowVersion` in `.aiflow/config.json`); any `aiflow` command
+run in a project whose stamp is behind the installed CLI offers to run this for you.
+
 ## Troubleshooting quick hits
 
 - **`jq is required`** — install jq (`aiflow install-deps` does).

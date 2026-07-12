@@ -107,6 +107,22 @@ with `aiflow modernize-check` for a modernisation report the architect can turn 
 
 Build the code indexes any time with **`aiflow index`** (graph + RAG).
 
+## Staying up to date
+
+```bash
+aiflow update            # self-update the aiflow install itself (git pull)
+aiflow project-update     # refresh THIS project's scripts from the installed templates
+```
+
+`aiflow update` pulls the latest aiflow release into your `AIFLOW_HOME` checkout. It only
+touches the install — existing projects keep running on whatever templates they were
+generated with until you explicitly bring them forward. Each project stamps the aiflow
+version it was created with in `.aiflow/config.json` (`meta.aiflowVersion`); once that
+falls behind the installed CLI, any `aiflow` command run inside the project asks
+(interactively) whether to run `aiflow project-update` right then. It refreshes only the
+mechanical, never-hand-edited scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) and
+re-applies your config — `CLAUDE.md`, agents, docs, and your own settings are untouched.
+
 ## Next
 
 - [Features](features) · [Memory](memory) · [Configuration](configuration) · [Commands](commands)

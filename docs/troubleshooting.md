@@ -47,5 +47,14 @@ Ensure **Podman or Docker** is installed and its daemon/machine is running. Forc
 ## `pre-push` blocks a push
 That's the branching model. Use a proper branch/PR. See [Workflows](workflows).
 
+## A project's hooks/scripts feel out of date, or a fix in a new aiflow release isn't showing up
+Two separate steps: `aiflow update` brings the *installed CLI* (`AIFLOW_HOME`) up to the
+latest release; `aiflow project-update` then refreshes *this project's* mechanical scripts
+(`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) from those templates and re-applies
+config. Updating the CLI alone doesn't touch existing projects — that's deliberate, so a
+project never changes underneath you without asking. Compare the project's stamped
+version (`meta.aiflowVersion` in `.aiflow/config.json`) against `aiflow version`
+(the installed CLI) to check whether it's behind.
+
 Still stuck? Open an [issue](https://github.com/Cyber93de/aiflow/issues) with repro steps, your OS,
 and the relevant `aiflow doctor` output.

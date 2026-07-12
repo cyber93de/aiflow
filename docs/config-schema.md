@@ -42,7 +42,8 @@ live in `.env`.
   "project":  { "aim": "…", "architecture": "…" },
   "dev":      { "os": "windows", "ide": "vscode" },
   "git":      { "model": "gitflow", "strict": true, "prOnly": true,
-                "autoRelease": true, "versionStrategy": "semver", "releaseTags": true, "chore": true }
+                "autoRelease": true, "versionStrategy": "semver", "releaseTags": true, "chore": true },
+  "meta":     { "aiflowVersion": "0.2.0" }                // stamped at init; drives the project-update prompt
 }
 ```
 
@@ -58,6 +59,8 @@ live in `.env`.
 | `teamPrefs.*` | `.aiflow/team-prefs.json` |
 | `sync.askOnClose` | `.aiflow/bd-close-sync.sh`; `sync.pullOnStart` → SessionStart auto-pull |
 | `git.*` | `.aiflow/branching.json` + `docs/branching.md` + enforcement hooks |
+| `dev.os` | which interpreter (`bash`/PowerShell) the rendered Claude Code hook commands use |
+| `meta.aiflowVersion` | compared against the installed CLI on every `aiflow` run; prompts `aiflow project-update` when behind |
 
 ## Back-compat
 

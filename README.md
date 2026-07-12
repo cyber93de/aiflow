@@ -549,6 +549,8 @@ aiflow protect                     apply server-side branch protection (GitHub)
 aiflow cost [...]                  token/cost baseline via ccusage
 aiflow doctor                      check prerequisites + project summary
 aiflow upgrade                     update the bundled toolchain
+aiflow update                      self-update the aiflow install itself (git pull)
+aiflow project-update               refresh THIS project's aiflow scripts from installed templates
 aiflow version
 ```
 

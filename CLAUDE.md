@@ -70,6 +70,15 @@ bash -n bin/aiflow
 find . -name '*.json' -not -path './.git/*' -not -path './.beads/*' -exec jq empty {} +
 # advisory lint
 shellcheck -S error lib/*.sh bin/aiflow templates/.aiflow/*.sh
+# PowerShell twins: parse-only syntax check (no execution)
+powershell -NoProfile -Command '
+  $err=$false
+  Get-ChildItem -Recurse -Filter *.ps1 templates,bin | ForEach-Object {
+    $tokens=$null; $e=$null
+    [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$tokens,[ref]$e)
+    if ($e.Count -gt 0) { $err=$true; "PARSE ERROR: $($_.FullName)"; $e }
+  }
+  if ($err) { exit 1 }'
 # render test: init into a temp dir and inspect the generated project
 AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no-install-deps
 ```
@@ -78,7 +87,10 @@ AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no
 
 - **`bin/aiflow`** — CLI dispatcher (Bash); `bin/aiflow.ps1` is a thin PowerShell shim.
 - **`lib/*.sh`** — subcommand implementations (`init`, `apply`, `settings`, `doctor`,
-  `install-deps`, `branching`, `ollama`, `upgrade`). `init.sh` copies `templates/` into a target
+  `install-deps`, `branching`, `ollama`, `upgrade`, `update`, `project-update`). `update.sh`
+  self-updates the aiflow install (`git pull` in `AIFLOW_HOME`); `project-update.sh` refreshes
+  a single project's mechanical scripts from the installed templates and bumps
+  `.aiflow/config.json`'s `meta.aiflowVersion` stamp. `init.sh` copies `templates/` into a target
   project, asks the Q&A, writes `.aiflow/config.json`; `apply.sh` renders everything
   (`.mcp.json`, hooks, memory, branching) from that config — **idempotent**.
 - **`templates/`** — everything a generated project receives: `CLAUDE.md` (operating rules incl.
@@ -93,8 +105,11 @@ AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no
 
 - Google Shell Style; scripts start `set -uo pipefail` (CLI: `set -euo pipefail`); user-facing
   strings terse; no secrets anywhere (tokens only via generated `.env`, gitignored).
-- Cross-platform: everything must work in Git-Bash on Windows, macOS, Linux — no GNU-only flags
-  without fallback; PowerShell shim delegates to Bash.
+- Cross-platform: the CLI itself (`bin/aiflow` / `lib/*.sh`) requires Git-Bash on Windows —
+  `bin/aiflow.ps1` delegates those to Bash. Everything a project *invokes on its own* (Claude
+  Code hooks, `.aiflow/*` checks, `docker/run.*`) ships as a `.sh` + `.ps1` pair; `apply.sh`
+  picks the interpreter per `dev.os` in `.aiflow/config.json` when it writes
+  `.claude/settings.json`. Keep both twins in sync when editing one.
 - Keep README.md and README.de.md **in sync** (same sections, both languages), and mirror
   user-visible changes into `docs/` + `CHANGELOG.md` + `docs/changelog.md` + `docs/llms-full.txt`.
 - Conventional Commits referencing the bead id, e.g. `feat: … (aiflow-xyz)`.

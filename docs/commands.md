@@ -3,7 +3,7 @@ layout: default
 title: Command reference
 parent: CLI & Configuration
 nav_order: 1
-description: "aiflow CLI command reference: init, install-deps, change-settings, shell, sync, close-sync, ollama, index, ralph, onboard, audits, release, doctor."
+description: "aiflow CLI command reference: init, install-deps, change-settings, shell, sync, close-sync, ollama, index, ralph, onboard, audits, release, doctor, update, project-update."
 ---
 
 # Command reference
@@ -23,6 +23,8 @@ description: "aiflow CLI command reference: init, install-deps, change-settings,
 | `aiflow change-settings [--no-token-saving]` | Re-adjust config, then re-render `.mcp.json`, hooks, branching, memory. `--no-token-saving` switches caveman + rtk off. |
 | `aiflow doctor` | Check prerequisites + print a per-project summary. |
 | `aiflow upgrade` | Update the bundled toolchain. |
+| `aiflow update` | Self-update the aiflow install itself (`git pull` in `AIFLOW_HOME`) to the latest release. |
+| `aiflow project-update` | Refresh THIS project's mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) from the installed templates and re-apply config. Never touches `CLAUDE.md`, agents, docs, or your own config. You're prompted for this automatically when a project's stamped version falls behind the installed CLI. |
 | `aiflow version` | Print the version. |
 
 ## Working

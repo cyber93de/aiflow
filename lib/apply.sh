@@ -252,6 +252,43 @@ EOF
   echo "  team-prefs.json present (codeStyle=$TP_STYLE) — shared across users/teams"
 fi
 
+# ---------- OS-aware Claude Code hook commands (bash on mac/linux, PowerShell on Windows) ----------
+if [ -f .claude/settings.json ]; then
+  case "$OS" in
+    windows)
+      HOOK_FMT='powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/format.ps1'
+      HOOK_CAVE='powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/caveman.ps1'
+      HOOK_BEADS='powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/beads-sync.ps1'
+      ;;
+    *)
+      HOOK_FMT='bash .claude/hooks/format.sh'
+      HOOK_CAVE='bash .claude/hooks/caveman.sh'
+      HOOK_BEADS='bash .claude/hooks/beads-sync.sh'
+      ;;
+  esac
+  jq --arg fmt "$HOOK_FMT" --arg cave "$HOOK_CAVE" --arg beads "$HOOK_BEADS" '
+    .hooks.SessionStart = [ { hooks: [ {type:"command", command:$cave}, {type:"command", command:$beads} ] } ] |
+    .hooks.PostToolUse  = [ { matcher:"Edit|Write", hooks: [ {type:"command", command:$fmt} ] } ]
+  ' .claude/settings.json > .claude/settings.json.tmp && mv .claude/settings.json.tmp .claude/settings.json
+  echo "  settings.json hooks wired for OS=${OS:-unknown} ($([ "$OS" = windows ] && echo powershell || echo bash))"
+fi
+
+# ---------- README: "Built with aiflow" badge (idempotent; never touches the rest of the file) ----------
+BADGE='[![Built with aiflow](https://img.shields.io/badge/built%20with-aiflow-6b46c1)](https://github.com/cyber93de/aiflow)'
+inject_badge() {
+  local rf="$1"
+  [ -f "$rf" ] || return 0
+  grep -q "built%20with-aiflow" "$rf" && return 0
+  if head -n1 "$rf" | grep -q '^# '; then
+    { head -n1 "$rf"; echo ""; echo "$BADGE"; tail -n +2 "$rf"; } > "$rf.tmp" && mv "$rf.tmp" "$rf"
+  else
+    { echo "$BADGE"; echo ""; cat "$rf"; } > "$rf.tmp" && mv "$rf.tmp" "$rf"
+  fi
+  echo "  $rf: added 'Built with aiflow' badge"
+}
+inject_badge README.md
+inject_badge README.de.md
+
 # ---------- Beads close -> push + dolt sync rule ----------
 # Wire a helper the agent/user runs to honour the 'ask on close' rule. Non-automatic: it prompts.
 if [ "$SYNC_ONCLOSE" = "true" ]; then

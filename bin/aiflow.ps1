@@ -20,6 +20,26 @@ function Import-DotEnv {
 $cmd = if ($args.Count -gt 0) { $args[0] } else { 'help' }
 $rest = if ($args.Count -gt 1) { $args[1..($args.Count-1)] } else { @() }
 
+function Test-VersionOlder($a, $b) {
+  if ($a -eq $b) { return $false }
+  try { return ([version]($a -replace '[^0-9.]','')) -lt ([version]($b -replace '[^0-9.]','')) }
+  catch { return $a -ne $b }
+}
+
+$skipCheck = @('init','update','project-update','help','-h','--help','version','-v','--version')
+if (($skipCheck -notcontains $cmd) -and (Test-Path '.aiflow/config.json') -and [Environment]::UserInteractive) {
+  try {
+    $projCfg = Get-Content '.aiflow/config.json' -Raw | ConvertFrom-Json
+    $projVer = if ($projCfg.meta.aiflowVersion) { $projCfg.meta.aiflowVersion } else { '0.0.0' }
+    $toolVer = if (Test-Path (Join-Path $AIFLOW_HOME 'VERSION')) { (Get-Content (Join-Path $AIFLOW_HOME 'VERSION') -TotalCount 1).Trim() } else { '0.0.0' }
+    if (Test-VersionOlder $projVer $toolVer) {
+      $ans = Read-Host "This project is on aiflow $projVer, installed aiflow is $toolVer. Upgrade project templates now? (y/n) [n]"
+      if ($ans -match '^[Yy]') { & bash "$AIFLOW_HOME/lib/project-update.sh" }
+      else { Write-Output "  (skipped - run 'aiflow project-update' anytime)" }
+    }
+  } catch {}
+}
+
 switch ($cmd) {
   'init'    { & bash "$AIFLOW_HOME/lib/init.sh" @rest }
   'doctor'  { & bash "$AIFLOW_HOME/lib/doctor.sh" @rest }
@@ -82,6 +102,8 @@ switch ($cmd) {
     }
   }
   'ollama'     { & bash "$AIFLOW_HOME/lib/ollama.sh" @rest }
+  'update'     { & bash "$AIFLOW_HOME/lib/update.sh" @rest }
+  'project-update' { & bash "$AIFLOW_HOME/lib/project-update.sh" @rest }
   { $_ -in 'close-sync','bd-sync' } {
     if (Test-Path '.aiflow/bd-close-sync.sh') { & bash '.aiflow/bd-close-sync.sh' @rest }
     else { Write-Error "No .aiflow/bd-close-sync.sh (enable sync-on-close via 'aiflow change-settings')." }
@@ -117,6 +139,8 @@ USAGE
   aiflow cost [...]        token/cost baseline via ccusage
   aiflow index             refresh code memory: graphify (structural graph) + cocoindex (RAG)
   aiflow upgrade           update the bundled toolchain to latest
+  aiflow update            self-update the aiflow install itself (git pull) to the latest release
+  aiflow project-update    refresh THIS project's aiflow scripts from the installed templates
   aiflow doctor            check prerequisites
   aiflow version
 '@ | Write-Output

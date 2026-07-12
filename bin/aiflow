@@ -21,6 +21,29 @@ load_env() {
 
 cmd="${1:-help}"; shift || true
 
+# ---- offer to upgrade this project's aiflow templates if the tool moved on ----
+is_older() { # $1 < $2  (version compare via sort -V)
+  [ "$1" = "$2" ] && return 1
+  [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -n1)" = "$1" ]
+}
+case "$cmd" in
+  init|update|project-update|help|-h|--help|version|-v|--version) : ;;
+  *)
+    if [ -f .aiflow/config.json ] && command -v jq >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
+      PROJ_VER="$(jq -r '.meta.aiflowVersion // "0.0.0"' .aiflow/config.json 2>/dev/null)"
+      TOOL_VER="$(cat "$AIFLOW_HOME/VERSION" 2>/dev/null || echo 0.0.0)"
+      if is_older "$PROJ_VER" "$TOOL_VER"; then
+        printf "This project is on aiflow %s, installed aiflow is %s. Upgrade project templates now? (y/n) [n]: " "$PROJ_VER" "$TOOL_VER"
+        read -r ans || ans=""
+        case "$ans" in
+          [Yy]*) bash "$AIFLOW_HOME/lib/project-update.sh" ;;
+          *) echo "  (skipped - run 'aiflow project-update' anytime)" ;;
+        esac
+      fi
+    fi
+    ;;
+esac
+
 case "$cmd" in
   init)    bash "$AIFLOW_HOME/lib/init.sh" "$@" ;;
   doctor)  bash "$AIFLOW_HOME/lib/doctor.sh" "$@" ;;
@@ -51,6 +74,8 @@ case "$cmd" in
     fi
     ;;
   ollama)  bash "$AIFLOW_HOME/lib/ollama.sh" "$@" ;;    # manage local Ollama models (pull/add/list)
+  update)  bash "$AIFLOW_HOME/lib/update.sh" "$@" ;;    # self-update the aiflow install (git pull)
+  project-update) bash "$AIFLOW_HOME/lib/project-update.sh" "$@" ;;  # refresh this project's aiflow scripts from the installed templates
   close-sync|bd-sync)                                  # on Beads issue close: prompt push + dolt-sync
     if [ -x ".aiflow/bd-close-sync.sh" ]; then bash ".aiflow/bd-close-sync.sh" "$@";
     else echo "No .aiflow/bd-close-sync.sh (enable sync-on-close via 'aiflow change-settings')." >&2; exit 1; fi ;;
@@ -139,6 +164,8 @@ USAGE
   aiflow cost [...]        token/cost baseline via ccusage
   aiflow index             refresh code memory: graphify (structural graph) + cocoindex (RAG)
   aiflow upgrade           update the bundled toolchain (beads, rtk, graphify, ...) to latest
+  aiflow update            self-update the aiflow install itself (git pull) to the latest release
+  aiflow project-update    refresh THIS project's aiflow scripts from the installed templates
   aiflow doctor            check prerequisites
   aiflow version
 

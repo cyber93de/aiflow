@@ -193,7 +193,8 @@ cat > .aiflow/config.json <<EOF
     "releaseTags": $GIT_TAGS,
     "chore": $GIT_CHORE
   },
-  "templates_search": $TPL_SEARCH
+  "templates_search": $TPL_SEARCH,
+  "meta": { "aiflowVersion": "$(esc "$(cat "$AIFLOW_HOME/VERSION" 2>/dev/null || echo 0.0.0)")" }
 }
 EOF
 echo "  wrote .aiflow/config.json"

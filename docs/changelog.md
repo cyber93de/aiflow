@@ -3,7 +3,7 @@ layout: default
 title: Changelog
 parent: Support
 nav_order: 4
-description: "aiflow changelog and release history: 0.1.1 quality-gate release and the 0.1.0 first public release."
+description: "aiflow changelog and release history: 0.2.0 cross-platform scripts + self-update, 0.1.1 quality-gate release, and the 0.1.0 first public release."
 ---
 
 # Changelog
@@ -12,6 +12,25 @@ description: "aiflow changelog and release history: 0.1.1 quality-gate release a
 aiflow follows [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/). The authoritative, always-current changelog lives in the
 repository: **[CHANGELOG.md](https://github.com/Cyber93de/aiflow/blob/main/CHANGELOG.md)**.
+
+## 0.2.0 — cross-platform scripts, self-update, no more broken nightly agent
+
+Highlights:
+
+- **Removed the nightly `aiflow-agent` workflow** — it ran an unattended Ralph loop on a cron
+  in every scaffolded project and always failed without a configured token. Dropped from the
+  templates; `aiflow init` no longer generates it.
+- **Every invoked project script now ships as a `.sh` + `.ps1` pair** — hooks
+  (`format`/`caveman`/`beads-sync`), audits (`security-check`/`quality-check`/
+  `requirements-check`), `ralph-headless`, `run-agent`, `release`/`version`/`protect`,
+  `bd-close-sync`, and `docker/run`. `apply.sh` writes the OS-correct interpreter into
+  `.claude/settings.json`'s hook commands based on `dev.os` — Windows projects no longer need
+  Git-Bash to run their own hooks/checks.
+- **`aiflow update`** self-updates the CLI install; **`aiflow project-update`** refreshes a
+  single project's mechanical scripts from the installed templates. Projects now stamp the
+  aiflow version they were generated with and get prompted to upgrade when it falls behind.
+- **"Built with aiflow" README badge** inserted idempotently on `apply` — visible provenance
+  without ever overwriting an existing README.
 
 ## 0.1.1 — quality gates & senior-engineer agents
 

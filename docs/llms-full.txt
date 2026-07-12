@@ -2,7 +2,7 @@
 
 > Self-contained explanation of what aiflow is and how it works, for AI assistants and context7.
 > aiflow turns any repository into a governed, AI-driven software-delivery pipeline for Claude Code.
-> Version 0.1.1 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
+> Version 0.2.0 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
 
 ## What aiflow is
 A cross-platform CLI (POSIX bash + a Windows PowerShell launcher) that bootstraps and governs
@@ -20,6 +20,13 @@ installs/invokes external tools.
    `.claude/memory/*` (project-aim, dev-environment, memory-policy), `.aiflow/router-config.json`
    (Ollama/cost providers), `.aiflow/team-prefs.json`, and `.aiflow/bd-close-sync.sh`.
 3. `lib/install-deps.sh` installs only the enabled tools (user-space).
+
+Every script a project invokes on its own (Claude Code hooks, `.aiflow/*` checks, `docker/run.*`)
+ships as a `.sh` + `.ps1` pair; `apply.sh` picks the interpreter per `dev.os` when writing
+`.claude/settings.json`'s hook commands — Windows projects need no Git-Bash for their own
+hooks/checks. `aiflow update` self-updates the CLI install; `aiflow project-update` refreshes one
+project's mechanical scripts from the installed templates (each project stamps the aiflow version
+it was generated with in `meta.aiflowVersion` and is prompted to upgrade when it falls behind).
 
 ## Code memory (the differentiator)
 Two complementary indexes plus durable task memory. The agent routes each question to the cheapest
@@ -115,14 +122,16 @@ archives on VERSION bump), `pages.yml` (deploy docs). No Dagger.
 init · install-deps · change-settings · shell [--router] · sync [pull|push|both] · close-sync <id> ·
 ollama [pull|add|list] · index · ralph "<prompt|bead>" · onboard · security-check / quality-check /
 requirements-check / dependency-check / test-gap / perf-check / docs-check · release [--push] ·
-protect · cost · doctor · upgrade · version.
+protect · cost · doctor · upgrade · update · project-update · version.
 
 ## Config schema (essentials)
 .aiflow/config.json fields: caveman{enabled,mode}, rtk{enabled}, router{enabled}, graphify{enabled},
 taskmaster{enabled}, mcp{filesystem,context7,cocoindex}, memory{enabled,graph,intensity=off|light|
 normal|aggressive}, claude{auth}, vcs{system=git|svn|none}, remote{type,baseUrl,api,tokenEnv,mcp},
 sync{askOnClose,pullOnStart}, ollama{enabled,url,models}, teamPrefs{enabled,codeStyle},
-project{aim,architecture}, dev{os,ide}, git{model,strict,prOnly,autoRelease,versionStrategy,releaseTags,chore}.
+project{aim,architecture}, dev{os,ide}, git{model,strict,prOnly,autoRelease,versionStrategy,releaseTags,chore},
+meta{aiflowVersion} (stamped at init; compared against the installed CLI's VERSION to offer
+`aiflow project-update`).
 
 ## Attribution
 aiflow builds on Claude Code (Anthropic), Beads, Dolt, graphify, CocoIndex/cocoindex-code, Context7,

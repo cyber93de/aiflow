@@ -7,7 +7,37 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Docs
+## [0.2.0] — 2026-07-12
+
+### Fixed
+- **Removed the nightly `aiflow-agent` GitHub Actions workflow** from `templates/.github/workflows/`.
+  It ran an unattended Ralph loop on a `0 3 * * *` cron in every scaffolded project and always
+  failed there without a configured token — `aiflow init` no longer generates it. Existing
+  projects: drop `.github/workflows/agent.yml` manually or run `aiflow project-update`.
+
+### Added
+- **Every invoked project script now ships as a cross-platform pair** (`.sh` for macOS/Linux,
+  `.ps1` for Windows): `.aiflow/{version,release,protect,security-check,requirements-check,
+  quality-check,ralph-headless,run-agent,bd-close-sync}.{sh,ps1}`,
+  `.claude/hooks/{format,caveman,beads-sync}.{sh,ps1}`, `docker/run.{sh,ps1}`. `apply.sh` now
+  reads `.aiflow/config.json`'s `dev.os` and writes the OS-correct interpreter into the
+  Claude Code hook commands in `.claude/settings.json` — Windows gets `powershell -File
+  ...ps1`, macOS/Linux get `bash ...sh`. No project needs Git-Bash on Windows to run its
+  hooks/checks anymore (the aiflow CLI itself still requires Git-Bash on Windows).
+- **`aiflow update`** — self-updates the aiflow install (`git pull --ff-only` in `AIFLOW_HOME`)
+  to the latest release. Refuses on a dirty tree or a non-git install.
+- **`aiflow project-update`** — refreshes only the mechanical, never-hand-edited scripts
+  (`.aiflow/*.sh`+`.ps1`, `.claude/hooks/*.sh`+`.ps1`, `docker/run.*`) in the CURRENT project
+  from the installed templates, re-applies config, and stamps the new version. Never touches
+  `CLAUDE.md`, agents, docs, or your own config.
+- **Version-aware upgrade prompt.** Every project now stamps the aiflow version it was
+  generated with in `.aiflow/config.json` (`meta.aiflowVersion`). When you run any `aiflow`
+  command in a project whose stamp is older than the installed CLI, you're asked (interactively
+  only) whether to run `aiflow project-update` right now.
+- **"Built with aiflow" README badge.** `apply.sh` idempotently inserts a
+  `[Built with aiflow]` badge + link under the first `# ` heading of `README.md` /
+  `README.de.md` if it isn't already there — without touching the rest of the file (unlike the
+  template copy step, which never overwrites an existing README).
 - **Per-OS install sections** (Windows · Linux · macOS) with full commands in the READMEs (EN/DE)
   and `docs/installation.md`, each with its own terminal GIF (new Windows/PowerShell demo).
 - **Two more terminal GIFs:** the delivery **workflow** end to end (task → pre-analysis → PO

@@ -556,6 +556,8 @@ aiflow protect                     serverseitigen Branch-Schutz anwenden (GitHub
 aiflow cost [...]                  Token-/Kosten-Baseline via ccusage
 aiflow doctor                      Voraussetzungen + Projekt-Zusammenfassung prüfen
 aiflow upgrade                     gebündelte Toolchain aktualisieren
+aiflow update                      aiflow-Installation selbst aktualisieren (git pull)
+aiflow project-update               aiflow-Skripte DIESES Projekts aus installierten Templates auffrischen
 aiflow version
 ```
 

@@ -9,12 +9,12 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Auto-detect stack and run style + tests. Extend per project.
       - name: Node
         if: hashFiles('package.json') != ''
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with: { node-version: "22" }
       - name: Node verify
         if: hashFiles('package.json') != ''
@@ -25,7 +25,7 @@ jobs:
 
       - name: Python
         if: hashFiles('pyproject.toml','requirements.txt') != ''
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with: { python-version: "3.12" }
       - name: Python verify
         if: hashFiles('pyproject.toml','requirements.txt') != ''
@@ -37,7 +37,7 @@ jobs:
 
       - name: Go
         if: hashFiles('go.mod') != ''
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with: { go-version: "stable" }
       - name: Go verify
         if: hashFiles('go.mod') != ''

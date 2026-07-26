@@ -1,65 +1,48 @@
-# Headless Ralph Wiggum loop: iterate Claude Code until COMPLETE or BLOCKED.
-# Usage: aiflow ralph "<prompt or bead id>"
-#        powershell -File .aiflow/ralph-headless.ps1 "<prompt>"
-# Reads tokens/tuning from env (.env is loaded by `aiflow ralph`).
+# Headless Ralph Wiggum loop via open-ralph-wiggum (github.com/Th0rgal/open-ralph-wiggum) -
+# agent-agnostic: works with Claude Code, OpenAI Codex CLI, or GitHub Copilot CLI through a
+# single --agent flag. ralph itself owns the outer loop (iterations, restart, promise
+# detection, .ralph/ralph-history.json) - this script just builds the task prompt and picks a
+# default agent from .aiflow/config.json's agents.* if the caller didn't pass --agent.
+# Usage: aiflow ralph "<prompt or bead id>" [ralph flags..., e.g. --agent codex --tasks]
 $ErrorActionPreference = 'Continue'
 
-$prompt = ($args -join " ").Trim()
-if (-not $prompt) { Write-Error 'usage: aiflow ralph "<prompt or bead id>"'; exit 2 }
+if ($args.Count -lt 1 -or -not $args[0]) { Write-Error 'usage: aiflow ralph "<prompt or bead id>" [ralph flags...]'; exit 2 }
+$prompt = $args[0]
+$rest = if ($args.Count -gt 1) { $args[1..($args.Count - 1)] } else { @() }
 
-$max = if ($env:RALPH_MAX_ITERATIONS) { [int]$env:RALPH_MAX_ITERATIONS } else { 50 }
-$timeout = if ($env:RALPH_TIMEOUT_SECONDS) { [int]$env:RALPH_TIMEOUT_SECONDS } else { 3600 }
-$mode = if ($env:RALPH_PERMISSION_MODE) { $env:RALPH_PERMISSION_MODE } else { "acceptEdits" }
-$result = "result.json"
-$start = Get-Date
+if (-not (Get-Command ralph -ErrorAction SilentlyContinue)) {
+  Write-Error "ERROR: 'ralph' CLI not found - npm i -g @th0rgal/ralph-wiggum (needs Bun: https://bun.sh)"
+  exit 3
+}
 
-if (-not (Get-Command claude -ErrorAction SilentlyContinue)) { Write-Error "ERROR: 'claude' CLI not found"; exit 3 }
-if (-not $env:CLAUDE_CODE_OAUTH_TOKEN -and -not $env:ANTHROPIC_API_KEY) {
-  Write-Output "note: no token in env; relying on stored Claude login. For CI set a token (see .env)."
+$max = if ($env:RALPH_MAX_ITERATIONS) { $env:RALPH_MAX_ITERATIONS } else { "50" }
+
+# Default --agent from .aiflow/config.json's agents.* (claude > codex > copilot priority)
+# unless the caller already passed --agent explicitly.
+$agentFlag = @()
+if ($rest -notcontains "--agent") {
+  if (Test-Path ".aiflow/config.json") {
+    try {
+      $cfg = Get-Content ".aiflow/config.json" -Raw | ConvertFrom-Json
+      if ($null -eq $cfg.agents.claude -or $cfg.agents.claude) { $agentFlag = @("--agent", "claude-code") }
+      elseif ($cfg.agents.codex)   { $agentFlag = @("--agent", "codex") }
+      elseif ($cfg.agents.copilot) { $agentFlag = @("--agent", "copilot") }
+    } catch {}
+  } else {
+    $agentFlag = @("--agent", "claude-code")
+  }
 }
 
 $guard = @'
 
---- RALPH LOOP PROTOCOL ---
-You run unattended in a loop. Each iteration:
-1. If result.json exists, read it to recover where you left off.
-2. Make concrete progress toward the task. Respect AGENTS.md (architecture, Google style,
-   acceptance criteria, tests). Use Beads (bd) to track state.
-3. Before finishing THIS iteration, OVERWRITE result.json (valid JSON) with:
-   { "status": "IN_PROGRESS" | "COMPLETE" | "BLOCKED",
-     "summary": "<what changed this iteration>",
-     "next": "<what to do next, or empty>",
-     "blocker": "<why blocked, only if BLOCKED>" }
-Rules: COMPLETE only when ALL acceptance criteria are met, tests pass, style/lint clean,
-and the review gate would pass. BLOCKED if you need a human decision or missing access.
-Never invent scope beyond the acceptance criteria. Commit your work (reference bead ids).
+--- AIFLOW CONTEXT (ralph's own prompt template adds the completion-promise instruction -
+don't duplicate it here, that only confuses where the tag ends up) ---
+You run unattended in a loop; each iteration you see your own previous work in files and git
+history. Make concrete progress toward the task, respecting AGENTS.md (architecture, Google
+style, acceptance criteria, tests). Use Beads (bd) to track state; commit your work referencing
+bead ids. Never invent scope beyond the acceptance criteria.
 '@
 
-$status = "IN_PROGRESS"
-for ($i = 1; $i -le $max; $i++) {
-  $elapsed = ((Get-Date) - $start).TotalSeconds
-  if ($elapsed -ge $timeout) {
-    '{"status":"BLOCKED","blocker":"timeout after ' + $timeout + 's"}' | Set-Content $result
-    $status = "BLOCKED"; break
-  }
-
-  Write-Output ">> Ralph iteration $i/$max  (elapsed $([int]$elapsed)s)"
-  & claude -p "TASK: $prompt`n$guard" --permission-mode $mode --output-format json *> $null 2>>".aiflow/ralph.log"
-
-  if (Test-Path $result) {
-    try {
-      $r = Get-Content $result -Raw | ConvertFrom-Json
-      $status = if ($r.status) { $r.status } else { "IN_PROGRESS" }
-    } catch { $status = "IN_PROGRESS" }
-  }
-  Write-Output "   status=$status"
-  if ($status -eq "COMPLETE" -or $status -eq "BLOCKED") { break }
-}
-
-Write-Output "== Ralph finished: $status =="
-if (Test-Path $result) { Get-Content $result }
-switch ($status) {
-  "COMPLETE" { exit 0 }
-  "BLOCKED"  { exit 1 }
-  default    { exit 2 }
-}
+Write-Output ">> ralph (open-ralph-wiggum): $(if ($agentFlag) { $agentFlag[1] } else { 'default agent from config' }), max $max iterations"
+& ralph "TASK: $prompt`n$guard" --completion-promise COMPLETE --abort-promise BLOCKED --max-iterations $max @agentFlag @rest
+exit $LASTEXITCODE

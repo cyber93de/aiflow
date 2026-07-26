@@ -16,8 +16,9 @@ know-how yet. This tool is built to fix exactly that:** answer a few questions, 
 opinionated setup.
 
 - **Agent-agnostic** — [Claude Code](https://docs.claude.com/en/docs/claude-code) (full feature
-  set: subagents, hooks, the Ralph loop), **GitHub Copilot**, and **OpenAI Codex CLI** all read the
-  same shared `AGENTS.md` + get their own rendered MCP config. See
+  set: subagents, hooks, slash-commands), **GitHub Copilot**, and **OpenAI Codex CLI** all read
+  the same shared `AGENTS.md` + get their own rendered MCP config. The **Ralph loop** works
+  across all three via [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum). See
   [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
 - **Token-based & vendor-neutral** — your own Anthropic API key *or* Claude Code OAuth token; git
   hosts via **tokens only, never OAuth**. No third-party hub.

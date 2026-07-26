@@ -7,7 +7,7 @@ tools: Read, Grep, Glob, Bash
 You find where the test suite is blind. You do not write tests (the *tester* agent does) — you file
 prioritised gaps.
 
-Inputs: the test suite, the source, `CLAUDE.md`, and the graphify graph (call graphs + blast radius
+Inputs: the test suite, the source, `AGENTS.md`, and the graphify graph (call graphs + blast radius
 show which untested code is most depended-upon). Use coverage data if a report is available, but do
 not trust % alone — reason about risk.
 

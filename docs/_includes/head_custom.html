@@ -1,0 +1,35 @@
+<!-- just-the-docs custom head include: favicon + structured data (SEO). -->
+<link rel="icon" type="image/svg+xml" href="{{ '/assets/favicon.svg' | relative_url }}">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "aiflow",
+  "url": "{{ site.url }}{{ site.baseurl }}/",
+  "description": "{{ site.description | strip_newlines | strip }}",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Windows, Linux, macOS",
+  "softwareVersion": "0.3.0",
+  "license": "https://github.com/{{ site.author }}/aiflow/blob/main/LICENSE",
+  "codeRepository": "https://github.com/{{ site.author }}/aiflow",
+  "author": {
+    "@type": "Person",
+    "name": "{{ site.author }}"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "aiflow",
+  "url": "{{ site.url }}{{ site.baseurl }}/"
+}
+</script>

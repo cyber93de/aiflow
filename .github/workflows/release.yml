@@ -47,7 +47,7 @@ jobs:
           ver="${{ steps.ver.outputs.version }}"
           stage="aiflow-$ver"
           mkdir -p "dist/$stage"
-          cp -r bin lib templates install.sh install.ps1 README.md README.de.md LICENSE VERSION "dist/$stage/"
+          cp -r bin lib templates release-workflows install.sh install.ps1 README.md README.de.md LICENSE VERSION "dist/$stage/"
           cd dist
           command -v zip >/dev/null 2>&1 || sudo apt-get -y -q install zip
           tar -czf "aiflow-$ver-linux.tar.gz" "$stage"

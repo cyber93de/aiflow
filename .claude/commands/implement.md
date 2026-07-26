@@ -17,7 +17,7 @@ Implement bead **$ARGUMENTS** (if no id, run `/beads:ready` and take the top tas
 5. Create branch `task/bd-<id>-<slug>`.
 6. Use the **implementer** agent: architecture-fit check (targeted refactoring if needed),
    SOLID/DRY/KISS/YAGNI, proven frameworks/patterns over self-built, no duplication, testable by
-   design (DI, deterministic), CLAUDE.md §2 architecture + §3 Google style + §3a quality gates
+   design (DI, deterministic), AGENTS.md §2 architecture + §3 Google style + §3a quality gates
    (static analysis, unit + BDD E2E tests, >80 % coverage of changed logic, all non-static methods
    tested, leveled logging, metric targets) + §3b `.http` files for REST changes + §3c database
    rules (new models ≥3NF with real FKs/constraints; existing schemas handled with care — no

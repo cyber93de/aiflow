@@ -31,7 +31,7 @@ What to examine across the whole repository:
 5. **Test foundation** — if the project lacks them, name concrete **unit, BDD, and E2E test
    frameworks that fit the stack** (e.g. JUnit/pytest/vitest · Cucumber/behave/SpecFlow ·
    Playwright/Cypress) and where to start.
-6. **Data layer** — schema risks (per CLAUDE.md §3c, document only), caching/search decoupling
+6. **Data layer** — schema risks (per AGENTS.md §3c, document only), caching/search decoupling
    opportunities (Redis, Elasticsearch) where read load or search justifies it.
 
 Report format (`.aiflow/modernization-report.md`), per concept:

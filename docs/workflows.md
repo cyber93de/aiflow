@@ -41,16 +41,26 @@ Configured at `aiflow init` / `change-settings` (only when VCS = git). aiflow wr
 `.aiflow/branching.json` + a readable `docs/branching.md`, creates permanent branches, seeds
 `VERSION`, and installs enforcement.
 
-- **Model** — `simple` (main + develop) · `gitflow` (`feature/*` from develop, `hotfix/*` from main) · `none`.
+- **Model** — `simple` (main + develop) · `gitflow` (`feature/*`/`bugfix/*` from develop, `hotfix/*`
+  from main) · `none`.
+- **main is restricted (gitflow)** — only `develop`, `hotfix/*`, or `chore/*` may ever land on
+  `main`; `feature/*`/`bugfix/*` always merge to `develop`. Doc-only and CI/workflow-file-only
+  changes count as `chore/*`.
 - **Strict rules** — enforce branch sources/targets and naming.
 - **PR-only** — no direct push to main/develop; merge only via a validated PR.
-- **Auto-release** — merging develop → main cuts a release.
+- **Auto-release** — develop carries `X.Y.0-SNAPSHOT`; merging into main strips it (minor
+  release). `aiflow hotfix <name>` carries `X.Y.(Z+1)-HOTFIX`; merging into main strips it (patch
+  release) and also merges into develop. `chore/*` → main never releases, and `main` is never
+  allowed to carry a `-SNAPSHOT`/`-HOTFIX` version. Releasing always needs explicit human
+  confirmation — never automatic.
 - **Version strategy** — SemVer or CalVer; optional release tags.
 - **chore/\*** — chore branches independent of feature/hotfix rules.
 
-Enforcement: the `pre-push` hook blocks direct pushes to protected branches; `aiflow protect` applies
-real server-side branch protection on GitHub; `aiflow release [--push]` bumps the version, tags, and
-bumps develop.
+Enforcement: the `pre-push` hook blocks direct pushes to protected branches, blocks
+`feature/*`/`bugfix/*` merges onto `main`, and rejects any push to `main` with a
+`-SNAPSHOT`/`-HOTFIX` version; `aiflow protect` applies real server-side branch protection on
+GitHub; `aiflow release [--yes] [--push]` prints a dry run, and only bumps the version, tags, and
+bumps develop once run with `--yes`.
 
 ## Autonomous work: the Ralph loop
 

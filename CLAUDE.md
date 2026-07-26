@@ -93,9 +93,13 @@ AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no
   `.aiflow/config.json`'s `meta.aiflowVersion` stamp. `init.sh` copies `templates/` into a target
   project, asks the Q&A, writes `.aiflow/config.json`; `apply.sh` renders everything
   (`.mcp.json`, hooks, memory, branching) from that config — **idempotent**.
-- **`templates/`** — everything a generated project receives: `CLAUDE.md` (operating rules incl.
-  quality gates §3a/§3b/§3c), `.claude/agents|commands|hooks`, `.aiflow/*.sh` helpers, git hooks,
-  CI workflows, docker. **Template changes are the product** — most features land here.
+- **`templates/`** — everything a generated project receives: `AGENTS.md` (agent-agnostic operating
+  rules incl. quality gates §3a/§3b/§3c; `CLAUDE.md` there is a one-line `@AGENTS.md` import),
+  `.github/copilot-instructions.md`, `.claude/agents|commands|hooks`, `.aiflow/*.sh` helpers, git
+  hooks, CI workflows, docker. **Template changes are the product** — most features land here.
+- **`release-workflows/`** — per-host release-publish CI (github/gitlab/gitea/forgejo/bitbucket),
+  deliberately kept **outside** `templates/` (which is blindly copied into every project) so
+  `apply.sh` can copy only the one matching the chosen `remote.type`.
 - **`docs/`** — GitHub Pages site (just-the-docs); `docs/assets/terminal/` holds the GIF sources
   (`make-casts.mjs` + agg; regenerate after CLI-output changes).
 - Releases: bump `VERSION` + update `CHANGELOG.md`, push to `main` → `release.yml` tags and
@@ -116,13 +120,18 @@ AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no
 
 ## Agents & quality gates (self-hosted aiflow)
 
-This repo runs on its own 0.1.1 agent roster: `.claude/agents/` + `.claude/commands/` mirror
+This repo runs on its own agent roster: `.claude/agents/` + `.claude/commands/` mirror
 `templates/.claude/` (keep them in sync when templates change — that is part of shipping a
 template change). Audit helpers live in `.aiflow/` (`aiflow security-check | quality-check |
 requirements-check | a11y-check | modernize-check | ralph` work here).
 
 The full quality-gate definitions (§3a metrics/tests/logging, §3b REST, §3c database) live in
-**`templates/CLAUDE.md`** and apply here *in spirit*, adapted to a Bash/templates codebase:
+**`templates/AGENTS.md`** and apply here *in spirit*, adapted to a Bash/templates codebase:
 static analysis = `bash -n` + shellcheck + `jq empty`; tests = the render test above (init into a
 temp dir and assert the generated project); no REST/database surface. The review gate
 (`/review-ac`) and the recorded-decisions rule apply unchanged.
+
+This repo is itself agent-agnostic-capable (`.aiflow/config.json → agents.*`), though it develops
+via Claude Code only (`agents.claude: true`) — see `templates/AGENTS.md` §"Agents" and
+[docs/multi-agent.md](docs/multi-agent.md) for what that means for a project that enables
+Copilot/Codex too.

@@ -1,0 +1,31 @@
+# Created by aiflow — publishes a Gitea Release whenever a version tag is pushed
+# (the tag `aiflow release --push` creates). Does not bump versions; that stays a
+# local, human-confirmed step (`aiflow release --yes`). Uses the Gitea REST API
+# directly (no third-party action) via the auto-provided GITHUB_TOKEN-compatible
+# token. Verify the token/context names against your Gitea version if this fails —
+# Gitea Actions' built-in secret has been named GITHUB_TOKEN for GitHub-Actions
+# compatibility on most versions.
+name: publish release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - '[0-9]*.[0-9]*'   # CalVer YYYY.MM, if versionStrategy=calver
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Gitea release via API
+        env:
+          GITEA_SERVER: ${{ gitea.server_url }}
+          GITEA_REPO: ${{ gitea.repository }}
+          GITEA_TAG: ${{ gitea.ref_name }}
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -fsSL -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag_name\":\"${GITEA_TAG}\",\"name\":\"${GITEA_TAG}\",\"body\":\"Release ${GITEA_TAG}. See CHANGELOG.md for details.\"}" \
+            "${GITEA_SERVER}/api/v1/repos/${GITEA_REPO}/releases"

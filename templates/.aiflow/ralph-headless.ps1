@@ -23,7 +23,7 @@ $guard = @'
 --- RALPH LOOP PROTOCOL ---
 You run unattended in a loop. Each iteration:
 1. If result.json exists, read it to recover where you left off.
-2. Make concrete progress toward the task. Respect CLAUDE.md (architecture, Google style,
+2. Make concrete progress toward the task. Respect AGENTS.md (architecture, Google style,
    acceptance criteria, tests). Use Beads (bd) to track state.
 3. Before finishing THIS iteration, OVERWRITE result.json (valid JSON) with:
    { "status": "IN_PROGRESS" | "COMPLETE" | "BLOCKED",

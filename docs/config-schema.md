@@ -27,6 +27,7 @@ live in `.env`.
   "taskmaster": { "enabled": false },                    // claude-task-master decomposition
   "mcp":      { "filesystem": true, "context7": true, "cocoindex": true },
   "memory":   { "enabled": true, "graph": true, "intensity": "aggressive" }, // off|light|normal|aggressive
+  "agents":   { "claude": true, "copilot": false, "codex": false }, // which coding agent(s) to render for
   "claude":   { "auth": "apikey" },                      // apikey | oauth (OAuth wins if both env set)
   "vcs":      { "system": "git" },                       // git | svn | none
   "remote": {
@@ -36,6 +37,7 @@ live in `.env`.
     "tokenEnv": "GITHUB_TOKEN",
     "mcp": "github"         // github|gitlab|bitbucket|forgejo|gitea|none (host MCP to wire)
   },
+  "gitkraken": { "enabled": false },                     // GitKraken MCP (client, not a host — alongside remote.*)
   "sync":     { "askOnClose": true, "pullOnStart": true },
   "ollama":   { "enabled": false, "url": "http://localhost:11434", "models": [] },
   "teamPrefs":{ "enabled": false, "codeStyle": "google" },
@@ -51,8 +53,9 @@ live in `.env`.
 
 | Field | Renders |
 |-------|---------|
-| `mcp.*` + `remote.mcp` | the servers in `.mcp.json` |
-| `remote.*` | host MCP env (`GITHUB_HOST` / `GITLAB_API_URL` / `GITEA_URL`) + Beads owner/repo |
+| `agents.*` | which per-agent files get rendered: `.mcp.json`/`.claude/*` (claude), `.vscode/mcp.json`+`.github/copilot-instructions.md` (copilot), `.codex/config.toml` (codex) |
+| `mcp.*` + `remote.mcp` + `gitkraken.enabled` | the servers in `.mcp.json` (and the enabled agents' equivalents) |
+| `remote.*` | host MCP env (`GITHUB_HOST` / `GITLAB_API_URL` / `GITEA_URL`) + Beads owner/repo + the matching predefined release-publish workflow (`.github/workflows/release.yml`, `.gitlab-ci.yml`, `.gitea/workflows/release.yml`, `.forgejo/workflows/release.yml`, `bitbucket-pipelines.yml`) |
 | `vcs.system` | git init / git hooks / branching (git only) |
 | `memory.*` | `.claude/memory/memory-policy.md` (routing + learning intensity) |
 | `ollama.*` + `router` | `.aiflow/router-config.json` (provider + background route) |

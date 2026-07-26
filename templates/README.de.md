@@ -1,8 +1,10 @@
 # aiflow
 
 **aiflow macht aus jedem Repository mit einem Befehl eine gesteuerte, KI-getriebene
-Software-Lieferstrecke.** Es verbindet [Claude Code](https://docs.claude.com/en/docs/claude-code)
-mit dauerhaftem Task-Tracking, autonomen Arbeits-Loops, einem Code-Wissensgraphen, spezialisierten
+Software-Lieferstrecke.** Es verbindet [Claude Code](https://docs.claude.com/en/docs/claude-code) —
+optional zusätzlich **GitHub Copilot** und **OpenAI Codex CLI**, agent-agnostisch über eine
+gemeinsame `AGENTS.md` — mit dauerhaftem Task-Tracking, autonomen Arbeits-Loops, einem
+Code-Wissensgraphen, spezialisierten
 Review-/Audit-Agenten, Kostenkontrolle, erzwungener Code-Qualität und einem konfigurierbaren
 Git-Branching-Modell — damit ein KI-Agent ein Issue annehmen, planen, in einheitlichem Stil
 implementieren, testen, gegen Akzeptanzkriterien reviewen, auf Security/Qualität auditieren und über
@@ -24,7 +26,7 @@ Einstellungen liegen im Projekt, nie global.
 4. [Projekt einrichten](#4-projekt-einrichten)
 5. [Befehlsreferenz](#5-befehlsreferenz)
 6. [Agenten](#6-agenten)
-7. [Slash-Command-Skills](#7-slash-command-skills)
+7. [Slash-Commands and Skills](#7-slash-commands-and-skills)
 8. [Die mitgelieferte Toolchain & warum jedes Teil](#8-die-mitgelieferte-toolchain--warum-jedes-teil)
 9. [Der Liefer-Workflow](#9-der-liefer-workflow)
 10. [Autonomes Arbeiten: der Ralph-Loop](#10-autonomes-arbeiten-der-ralph-loop)
@@ -82,7 +84,9 @@ Eine Erklärung in einfachen Worten. Überspringen, wenn du Claude Code kennst.
   **Claude-Code-OAuth-Token** (`claude setup-token`, nutzt dein Abo). Beides unterstützt; in `.env`
   (nie committet).
 - **Agent:** ein fokussierter KI-Arbeiter mit Rolle + System-Prompt (z. B. *reviewer*, *implementer*).
-- **Skill / Slash-Command:** wiederverwendbare Anweisung, ausgelöst mit `/name` (z. B. `/implement`).
+- **Slash-Command:** wiederverwendbare Anweisung, explizit ausgelöst mit `/name` (z. B. `/implement`).
+- **Skill:** wiederverwendbare Anweisung, die der Agent von sich aus anbietet, wenn sie zum
+  aktuellen Kontext passt (z. B. eine SEO-Prüfung beim Bearbeiten von Webseiten) — kein `/name` nötig.
 - **Hook:** Script, das die Umgebung automatisch bei Ereignissen ausführt (nach Edit, bei
   Sitzungsstart, vor Push). aiflow nutzt Hooks für Auto-Format, Erzwingung, Output-Stil.
 - **Memory:** dauerhafte Fakten in Dateien (`.claude/memory/`) plus Beads-Task-Store und
@@ -221,7 +225,7 @@ aiflow shell            # lädt .env und startet Claude Code
 | `aiflow upgrade` | Mitgelieferte Toolchain (beads, rtk, graphify, …) aktualisieren. |
 | `aiflow version` | Version ausgeben. |
 
-In Claude Code zusätzlich die Slash-Command-Skills aus §7.
+In Claude Code zusätzlich die Slash-Commands und automatisch angebotenen Skills aus §7.
 
 ---
 
@@ -271,9 +275,9 @@ Ziel: **passe sie an die Bedürfnisse deines Projekts an** (Markdown editieren: 
 
 ---
 
-## 7. Slash-Command-Skills
+## 7. Slash-Commands and Skills
 
-In Claude Code auslösbar (`.claude/commands/`):
+**Slash-Commands** — auslösbar in Claude Code (`.claude/commands/`):
 
 - **Lieferung:** `/intake-issue <n>` (GitHub/GitLab/Bitbucket-Issue → Beads), `/decompose <ziel|prd>`
   (claude-task-master → Beads), `/plan-epic`, `/implement [bead] [ralph|no-ralph]`, `/review-ac`, `/arch "<frage>"`.
@@ -281,7 +285,13 @@ In Claude Code auslösbar (`.claude/commands/`):
   `/test-gap`, `/perf-check`, `/docs-check`, `/a11y-check`, `/modernize-check`.
 - **Brownfield / Orientierung:** `/onboard`, `/explain <pfad>`, `/standup`.
 
-(Beads und der Ralph-Loop sind zudem als eigene Plugin-Skills verfügbar, z. B. `/beads:ready`.)
+(Beads und der Ralph-Loop sind zudem als eigene Plugin-Commands verfügbar, z. B. `/beads:ready`.)
+
+**Skills** — automatisch angeboten, `.claude/skills/<name>/SKILL.md`: Claude Code gleicht die
+`description` des Skills gegen den aktuellen Kontext ab und bietet ihn an. Mitgeliefert:
+**seo-optimization** (SEO für jedes webbasierte Projekt/Framework — Meta-Tags, Open Graph, JSON-LD
+Structured Data, robots.txt/sitemap.xml, GitHub-Pages-Spezifika; endet mit SEO-Bericht). Eigene
+Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen.
 
 ---
 
@@ -446,20 +456,28 @@ oder „auth/security-Code → Top-Modell" — so nutzt **Coding automatisch hö
 leitet ein Governance-Modell in **`.aiflow/branching.json`** + ein lesbares **`docs/branching.md`** ab,
 legt die permanenten Branches an, seedet `VERSION` und installiert die Durchsetzung.
 
-- **Modell** — `simple` (main + develop; temporäre Branches beliebig) · `gitflow` (`feature/*` aus
-  develop, `hotfix/*` aus main) · `none`.
+- **Modell** — `simple` (main + develop; temporäre Branches beliebig) · `gitflow` (`feature/*`/
+  `bugfix/*` aus develop, `hotfix/*` aus main) · `none`.
+- **main ist eingeschränkt (gitflow)** — nur `develop`, `hotfix/*` oder `chore/*` dürfen je auf
+  `main` landen; `feature/*`/`bugfix/*` gehen immer auf `develop`, nie auf `main`. Reine Doku- und
+  CI/Workflow-Datei-Änderungen zählen als `chore/*`.
 - **Strikte Regeln** — Branch-Quellen/-Ziele und Benennung erzwingen (gitflow).
 - **PR-only** — kein direkter Push auf main/develop; Merge nur über validierten Pull Request.
-- **Auto-Release** — ein Merge develop → main erzeugt ein Release.
-- **Versionsstrategie** — **SemVer** (`X.Y.0-SNAPSHOT` → `X.Y.0`, dann develop → `X.(Y+1).0-SNAPSHOT`)
-  oder **CalVer** (`YYYY.MM`, develop auf nächsten Monat).
+- **Auto-Release** — ein Merge develop → main (minor) oder `hotfix/*` → main (patch) erzeugt ein
+  Release; `chore/*` → main nie.
+- **Versionsstrategie** — **SemVer**: develop trägt `X.Y.0-SNAPSHOT`, `aiflow hotfix <name>` trägt
+  `X.Y.(Z+1)-HOTFIX`; beim Release wird das Suffix gestrichen, danach bumpt develop auf
+  `X.(Y+1).0-SNAPSHOT`. `main` selbst darf nie eine `-SNAPSHOT`/`-HOTFIX`-Version tragen (von
+  `pre-push` erzwungen). Oder **CalVer** (`YYYY.MM`, develop auf nächsten Monat).
 - **Release-Tags** — jedes Release taggen (`v1.2.0` / `2026.06`).
 - **chore/\*** — chore-Branches (von/nach develop oder main), unabhängig von Feature/Hotfix.
 
-Durchsetzung: der **`pre-push`-Hook** blockt direkte Pushes auf geschützte Branches und lehnt (strikt
-gitflow) nicht-konforme Namen ab; **`aiflow protect`** setzt echten server-seitigen Branch-Schutz auf
-GitHub (PR + CI erforderlich); **`aiflow release [--push]`** bumpt die Version, taggt und hebt develop
-an. Agenten lesen das Modell und befolgen es (CLAUDE.md §7).
+Durchsetzung: der **`pre-push`-Hook** blockt direkte Pushes auf geschützte Branches, lehnt (strikt
+gitflow) nicht-konforme Namen ab, blockt `feature/*`/`bugfix/*`-Merges auf `main` und weist jeden
+Push auf `main` mit `-SNAPSHOT`/`-HOTFIX`-Version zurück; **`aiflow protect`** setzt echten
+server-seitigen Branch-Schutz auf GitHub (PR + CI erforderlich); **`aiflow release [--yes]
+[--push]`** zeigt erst einen Dry-Run und bumpt Version, taggt und hebt develop erst mit `--yes` an.
+Agenten lesen das Modell und befolgen es (CLAUDE.md §7).
 
 ---
 

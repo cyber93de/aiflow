@@ -17,7 +17,7 @@ What to look for:
 - **Duplication** — copy-pasted logic that should be extracted; parallel implementations of the
   same thing.
 - **Complexity** — long/deeply-nested functions, high cyclomatic complexity, god objects, mixed
-  responsibilities; code that fights the architecture in CLAUDE.md §2.
+  responsibilities; code that fights the architecture in AGENTS.md §2.
 - **Inconsistency** — divergent naming/patterns for the same concept, stale comments/docs.
 - **Unused dependencies / config**; obsolete TODOs.
 

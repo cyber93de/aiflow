@@ -7,7 +7,7 @@ tools: Read, Grep, Glob, Bash
 You convert intent into a backlog that the implementer and the Ralph loop can execute without
 guessing.
 
-Read first: `.claude/memory/project-aim.md` and `CLAUDE.md §2` (architecture) so tasks fit the
+Read first: `.claude/memory/project-aim.md` and `AGENTS.md §2` (architecture) so tasks fit the
 intended design.
 
 How you work:

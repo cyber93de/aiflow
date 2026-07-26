@@ -1,0 +1,106 @@
+{
+  "model": "gitflow",
+  "strict": false,
+  "permanentBranches": [
+    "main",
+    "develop"
+  ],
+  "branchTypes": [
+    "feature/*",
+    "bugfix/*",
+    "hotfix/*",
+    "chore/*"
+  ],
+  "allowedCreations": [
+    {
+      "type": "feature/*",
+      "from": [
+        "develop"
+      ]
+    },
+    {
+      "type": "bugfix/*",
+      "from": [
+        "develop"
+      ]
+    },
+    {
+      "type": "hotfix/*",
+      "from": [
+        "main"
+      ]
+    },
+    {
+      "type": "chore/*",
+      "from": [
+        "develop",
+        "main"
+      ]
+    }
+  ],
+  "allowedMerges": [
+    {
+      "from": "develop",
+      "to": "main"
+    },
+    {
+      "from": "main",
+      "to": "develop"
+    },
+    {
+      "from": "feature/*",
+      "to": "develop"
+    },
+    {
+      "from": "bugfix/*",
+      "to": "develop"
+    },
+    {
+      "from": "hotfix/*",
+      "to": "main"
+    },
+    {
+      "from": "hotfix/*",
+      "to": "develop"
+    },
+    {
+      "from": "chore/*",
+      "to": "develop"
+    },
+    {
+      "from": "chore/*",
+      "to": "main"
+    }
+  ],
+  "mainRestricted": {
+    "onlyFrom": [
+      "develop",
+      "hotfix/*",
+      "chore/*"
+    ],
+    "forbidden": [
+      "feature/*",
+      "bugfix/*"
+    ]
+  },
+  "pullRequests": {
+    "required": false
+  },
+  "release": {
+    "auto": true,
+    "manualConfirm": true,
+    "triggers": [
+      "merge develop -> main (minor release, strips -SNAPSHOT)",
+      "merge hotfix/* -> main (patch release)"
+    ],
+    "excludesTrigger": [
+      "chore/* -> main"
+    ],
+    "versionStrategy": "semver",
+    "tag": {
+      "enabled": true,
+      "format": "v{version}"
+    }
+  },
+  "branchNaming": "not enforced (temporary branches may use any name)"
+}

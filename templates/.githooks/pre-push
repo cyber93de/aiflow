@@ -21,6 +21,7 @@ PRONLY="$(jq -r '.pullRequests.required // false' "$MODEL")"
 PROTECTED="$(jq -r '(.pullRequests.protectedBranches // ["main","develop"]) | join(" ")' "$MODEL")"
 STRICT="$(jq -r 'if .branchNaming=="enforced" then "true" else "false" end' "$MODEL")"
 TYPES="$(jq -r '(.permanentBranches + ([.branchTypes[] | sub("/\\*$";"/")])) | join(" ")' "$MODEL")"
+MAINFORBID="$(jq -r '(.mainRestricted.forbidden // [] | [.[] | sub("/\\*$";"/")]) | join(" ")' "$MODEL")"
 
 fail() { echo "✗ pre-push (branching): $1" >&2; echo "  see docs/branching.md — bypass with AIFLOW_ALLOW_DIRECT_PUSH=1 (discouraged)" >&2; exit 1; }
 
@@ -46,6 +47,34 @@ while read -r lref lsha rref rsha; do
       esac
     done
     [ "$ok" = true ] || fail "branch name '$branch' does not match an allowed type ($TYPES)"
+  fi
+
+  # main is restricted: only chore/*, hotfix/*, or a develop merge may ever reach main.
+  # feature/* and bugfix/* must never land on main directly. Detected from merge-commit
+  # subjects ("Merge branch '<name>'") for merges newly pushed to main.
+  if [ "$branch" = main ] && [ -n "$MAINFORBID" ] && [ "$rsha" != "0000000000000000000000000000000000000000" ]; then
+    while read -r csha; do
+      [ -z "$csha" ] && continue
+      subj="$(git log -1 --format=%s "$csha" 2>/dev/null)"
+      src="$(printf '%s' "$subj" | sed -n "s/^Merge branch '\([^']*\)'.*/\1/p")"
+      [ -z "$src" ] && continue
+      for f in $MAINFORBID; do
+        case "$f" in
+          */) [[ "$src" == ${f}* ]] && fail "merge of '$src' into main is not allowed (only develop, hotfix/*, or chore/* may target main)" ;;
+          *)  [ "$src" = "$f" ] && fail "merge of '$src' into main is not allowed" ;;
+        esac
+      done
+    done < <(git rev-list --merges "$rsha..$lsha" 2>/dev/null)
+  fi
+
+  # main must never carry an in-progress version: -SNAPSHOT (develop) or -HOTFIX (hotfix/*)
+  # only ever belong on develop / hotfix/* respectively; 'aiflow release' strips them.
+  if [ "$branch" = main ]; then
+    ver="$(git show "${lsha}:VERSION" 2>/dev/null || true)"
+    case "$ver" in
+      *-SNAPSHOT) fail "VERSION on main is '$ver' - run 'aiflow release --yes' before pushing main (SNAPSHOT must never land on main)" ;;
+      *-HOTFIX)   fail "VERSION on main is '$ver' - run 'aiflow release --yes' before pushing main (HOTFIX must never land on main)" ;;
+    esac
   fi
 done
 exit 0

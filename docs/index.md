@@ -2,7 +2,7 @@
 layout: default
 title: Home
 nav_order: 1
-description: "aiflow: a governed, AI-driven software-delivery pipeline for Claude Code — Beads task memory, code knowledge graph (graphify) + semantic RAG (cocoindex), context7, agents, Ollama, team sync, and token savings with caveman and rtk. One command, MIT."
+description: "aiflow: a governed, AI-driven software-delivery pipeline, agent-agnostic across Claude Code, GitHub Copilot, and OpenAI Codex CLI — Beads task memory, code knowledge graph (graphify) + semantic RAG (cocoindex), context7, agents, gitflow release automation, Ollama, team sync, and token savings with caveman and rtk. One command, MIT."
 permalink: /
 ---
 
@@ -18,7 +18,7 @@ process.
 [Get started](getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View on GitHub](https://github.com/Cyber93de/aiflow){: .btn .fs-5 .mb-4 .mb-md-0 }
 
-**Version 0.1.1 · MIT License**
+**Version 0.3.0 · MIT License**
 
 ![aiflow init: bootstrap a project in one interactive Q&A](assets/terminal/init.gif)
 
@@ -29,7 +29,10 @@ process.
 aiflow wires [Claude Code](https://docs.claude.com/en/docs/claude-code) together with a curated
 toolchain so an AI agent — or a whole team of humans + agents — can take an issue, plan it, write the
 code in a consistent style, test it, review it against acceptance criteria, audit it for security and
-quality, and ship it through a governed branching + release model.
+quality, and ship it through a governed branching + release model. It's **agent-agnostic**: the
+same project rules (`AGENTS.md`) and MCP tool config also render for **GitHub Copilot** and
+**OpenAI Codex CLI** — see [Multi-Agent Support](multi-agent) — though Claude Code keeps the
+deepest feature set (subagents, hooks, the Ralph loop).
 
 **Most people struggle to set up their AI project successfully — especially without deep AI
 know-how yet. aiflow is built to fix exactly that** (start with [AI Basics](ai-basics) if the

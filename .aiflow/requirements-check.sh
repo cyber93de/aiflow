@@ -17,7 +17,7 @@ read -r -d '' PROMPT <<EOF || true
 Act as the requirements-check agent (see .claude/agents/requirements-check.md). Audit the Beads
 backlog for description completeness and quality. Target: ${TARGET}.
 
-Read the issues (bd list / bd show), .claude/memory/project-aim.md, CLAUDE.md §2, and
+Read the issues (bd list / bd show), .claude/memory/project-aim.md, AGENTS.md §2, and
 docs/architecture/. For each issue grade A/B/C/D with per-dimension scores (goal clarity,
 acceptance criteria, scope, architecture fit, undescribed cases, dependencies), list concrete
 missing items and undescribed cases (compare against the existing architecture/code), and give

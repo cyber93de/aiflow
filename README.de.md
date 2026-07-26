@@ -1,18 +1,25 @@
 # aiflow
 
+[![Built with aiflow](https://img.shields.io/badge/built%20with-aiflow-6b46c1)](https://github.com/cyber93de/aiflow)
+
 **aiflow macht aus jedem Repository mit einem Befehl eine gesteuerte, KI-getriebene
-Software-Delivery-Pipeline.** Es verbindet [Claude Code](https://docs.claude.com/en/docs/claude-code)
-mit dauerhaftem Task-Tracking, einem zweischichtigen Code-Gedächtnis (struktureller **Graph** +
-semantisches **RAG**), autonomen Arbeitsschleifen, spezialisierten Review-/Audit-Agenten,
-Token-/Kostenkontrolle, erzwungenem Code-Stil, einem konfigurierbaren Git-Branching-Modell und
-erstklassiger **Teamarbeit** — damit ein KI-Agent (oder ein ganzes Team aus Menschen + Agenten) ein
-Issue nehmen, planen, den Code in konsistentem Stil schreiben, testen, gegen Akzeptanzkriterien
-prüfen, auditieren und über einen echten Release-Prozess ausliefern kann.
+Software-Delivery-Pipeline.** Es verbindet **Claude Code, GitHub Copilot und OpenAI Codex CLI** —
+agent-agnostisch, beliebig kombinierbar — mit dauerhaftem Task-Tracking, einem zweischichtigen
+Code-Gedächtnis (struktureller **Graph** + semantisches **RAG**), autonomen Arbeitsschleifen,
+spezialisierten Review-/Audit-Agenten, Token-/Kostenkontrolle, erzwungenem Code-Stil, einem
+konfigurierbaren Git-Branching-Modell mit automatisierten Release-Workflows und erstklassiger
+**Teamarbeit** — damit ein KI-Coding-Agent (oder ein ganzes Team aus Menschen + Agenten) ein Issue
+nehmen, planen, den Code in konsistentem Stil schreiben, testen, gegen Akzeptanzkriterien prüfen,
+auditieren und über einen echten Release-Prozess ausliefern kann.
 
 **Die meisten scheitern daran, ihr KI-Projekt erfolgreich aufzusetzen — gerade ohne tiefes
 KI-Know-how. Genau dafür ist dieses Tool gebaut:** ein paar Fragen beantworten, fertig ist ein
 erprobtes, meinungsstarkes Setup.
 
+- **Agent-agnostisch** — [Claude Code](https://docs.claude.com/en/docs/claude-code) (volles
+  Feature-Set: Subagenten, Hooks, Ralph-Loop), **GitHub Copilot** und **OpenAI Codex CLI** lesen
+  alle dieselbe gemeinsame `AGENTS.md` + bekommen je eigene gerenderte MCP-Config. Siehe
+  [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
 - **Token-basiert & anbieterneutral** — dein eigener Anthropic-API-Key *oder* Claude-Code-OAuth-Token;
   Git-Hosts **nur über Tokens, nie OAuth**. Kein Dritt-Hub.
 - **Local-First-Option** — leichte Arbeit auf **Ollama**-Modellen (kein Key), Top-Modelle fürs
@@ -23,7 +30,7 @@ erprobtes, meinungsstarkes Setup.
 
 > 🇬🇧 This guide is also available in **[English → README.md](README.md)**.
 
-**Version 0.1.1 · MIT-Lizenz · [Changelog](CHANGELOG.md) ·
+**Version 0.3.0 · MIT-Lizenz · [Changelog](CHANGELOG.md) ·
 📖 [Doku-Seite](https://cyber93de.github.io/aiflow/)**
 
 ---
@@ -37,7 +44,7 @@ erprobtes, meinungsstarkes Setup.
 5. [Die Tools, die aiflow installiert](#5-die-tools-die-aiflow-installiert)
 6. [Memory: warum Graph *und* RAG](#6-memory-warum-graph-und-rag)
 7. [Agenten — die volle Übersicht](#7-agenten--die-volle-übersicht)
-8. [Slash-Command-Skills](#8-slash-command-skills)
+8. [Slash-Commands and Skills](#8-slash-commands-and-skills)
 9. [Delivery-Workflow & Branching-Modelle](#9-delivery-workflow--branching-modelle)
 10. [Teamarbeit (mehrere Mitglieder)](#10-teamarbeit-mehrere-mitglieder)
 11. [Remote-Host konfigurieren (GitHub / GitLab / Custom)](#11-remote-host-konfigurieren)
@@ -322,10 +329,11 @@ Volle Details pro Agent: [Docs → Agents](https://cyber93de.github.io/aiflow/ag
 
 ---
 
-## 8. Slash-Command-Skills
+## 8. Slash-Commands and Skills
 
-In Claude Code auslösbar (`.claude/commands/`):
+Zwei verschiedene Claude-Code-Mechanismen, beide dabei:
 
+**Slash-Commands** — explizit ausgelöst, `.claude/commands/`:
 - **Delivery:** `/intake-issue <n>` (GitHub/GitLab/Bitbucket-Issue → Beads),
   `/decompose <ziel|prd>` (task-master → Beads), `/plan-epic`,
   `/implement [bead] [ralph|no-ralph]` (Voranalyse zuerst; ohne Angabe entscheidet der implementer
@@ -336,8 +344,22 @@ In Claude Code auslösbar (`.claude/commands/`):
   (Brownfield-Modernisierungsbericht).
 - **Brownfield / Orientierung:** `/onboard`, `/explain <pfad>`, `/standup`.
 
-Beads und die Ralph-Schleife gibt es auch als Plugin-Skills (`/beads:ready`, `/beads:decision`,
+Beads und die Ralph-Schleife gibt es auch als Plugin-Commands (`/beads:ready`, `/beads:decision`,
 `/ralph-loop`).
+
+**Skills** — automatisch angeboten, `.claude/skills/<name>/SKILL.md`, Claude Code gleicht die
+`description` des Skills gegen den aktuellen Kontext ab und bietet ihn an (vor größeren Änderungen
+wird nachgefragt):
+- **seo-optimization** — SEO für jedes webbasierte Projekt (HTML, GitHub Pages, statische Seiten,
+  Doku-Seiten, Landing Pages, Blogs, Next.js, Astro, Hugo, Jekyll, VuePress, VitePress, React,
+  Vue, Svelte, Angular, …): Meta-Tags, Open Graph/Twitter Cards, JSON-LD Structured Data,
+  robots.txt/sitemap.xml, Canonical URLs, Überschriften-Hierarchie, Alt-Texte, Core Web Vitals,
+  GitHub-Pages-Spezifika (Base-URL, 404, Social Preview, RSS). Bietet sich automatisch an, wenn
+  Web-Inhalte vorhanden sind/entstehen; endet mit SEO-Bericht (umgesetzt / offen / Priorität /
+  Empfehlungen).
+
+Eigene Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen — siehe das mitgelieferte für
+das erwartete Frontmatter (`name`, `description`) und die Struktur.
 
 ---
 
@@ -363,16 +385,27 @@ gesicherte API, Tests + `.http`-Datei, Review-Gate, Close:
 `.aiflow/branching.json` + lesbares `docs/branching.md`, legt permanente Branches an, seedet
 `VERSION` und installiert die Durchsetzung:
 
-- **Modell** — `simple` (main + develop) · `gitflow` (`feature/*` aus develop, `hotfix/*` aus main) · `none`.
+- **Modell** — `simple` (main + develop) · `gitflow` (`feature/*`/`bugfix/*` aus develop, `hotfix/*`
+  aus main) · `none`.
+- **main ist eingeschränkt (gitflow)** — nur `develop`, `hotfix/*` oder `chore/*` dürfen je auf
+  `main` landen; `feature/*`/`bugfix/*` gehen immer auf `develop`. Reine Doku- und
+  CI/Workflow-Datei-Änderungen zählen als `chore/*`.
 - **Strikte Regeln** — Branch-Quellen/-Ziele und Namen erzwingen.
 - **PR-only** — kein Direktpush auf main/develop; Merge nur per validiertem PR.
-- **Auto-Release** — Merge develop → main schneidet einen Release.
+- **Auto-Release** — develop trägt `X.Y.0-SNAPSHOT`; Merge nach main streicht das Suffix (**Minor**-
+  Release). `aiflow hotfix <name>` bumpt einen Hotfix-Branch auf `X.Y.(Z+1)-HOTFIX`; Merge nach
+  main streicht das Suffix (**Patch**-Release) und merged den Hotfix zusätzlich nach develop.
+  `chore/*` → main löst nie einen Release aus, und main darf selbst nie eine
+  `-SNAPSHOT`/`-HOTFIX`-Version tragen. Releasen braucht immer explizite, menschliche
+  Bestätigung — nie automatisch.
 - **Versionsstrategie** — SemVer oder CalVer; optionale Release-Tags.
 - **chore/\*** — Chore-Branches unabhängig von feature/hotfix-Regeln.
 
-Durchsetzung: der `pre-push`-Hook blockt Direktpushs auf geschützte Branches; `aiflow protect` setzt
-echten serverseitigen Branch-Schutz auf GitHub; `aiflow release [--push]` erhöht die Version, taggt
-und bumpt develop.
+Durchsetzung: der `pre-push`-Hook blockt Direktpushs auf geschützte Branches, blockt
+`feature/*`/`bugfix/*`-Merges auf `main` und weist jeden Push auf `main` mit
+`-SNAPSHOT`/`-HOTFIX`-Version zurück; `aiflow protect` setzt echten serverseitigen Branch-Schutz
+auf GitHub; `aiflow release [--yes] [--push]` zeigt erst einen Dry-Run und erhöht Version, taggt
+und bumpt develop erst mit `--yes`.
 
 ---
 
@@ -410,10 +443,22 @@ passende CLI und der MCP werden automatisch verdrahtet.
 | `bitbucket` | deine URL | `BITBUCKET_TOKEN` | atlassian-bitbucket |
 | `forgejo` / `gitea` | deine URL | `GIT_REMOTE_TOKEN` | gitea-mcp-server (`GITEA_URL`) |
 | `custom` | beliebig | dein Env-Name | aus Liste wählen (oder `none`) |
+| `none` | — | — | keiner — komplett lokal, kein MCP für einen Git-Host |
 
 **GitHub-Beispiel:** PAT mit repo + issues + pull_requests scope erstellen → in `.env` als
 `GITHUB_TOKEN`. **GitLab-Beispiel:** Personal Access Token mit `api`-Scope → `GITLAB_TOKEN`. Für
 self-managed/Enterprise die Base-URL bei init angeben; aiflow verdrahtet API-URL/Host in den MCP.
+
+Jeder Host bekommt zudem ein **vordefiniertes Release-Publish-Workflow**, einmalig geschrieben
+(nie überschrieben, falls schon eins existiert): `.github/workflows/release.yml`,
+`.gitlab-ci.yml`, `.gitea/workflows/release.yml`, `.forgejo/workflows/release.yml` oder
+`bitbucket-pipelines.yml`. Es triggert bei einem Versions-Tag-Push (den `aiflow release --push`
+erzeugt) und legt einen Release-Eintrag/Notiz auf dem Host an — es bumpt selbst nie eine Version,
+das bleibt der lokale, menschlich bestätigte `aiflow release --yes`-Schritt.
+
+**GitKraken** ist ein Git-Client, kein Host — ein eigener `gitkraken.enabled`-Schalter verdrahtet
+dessen MCP (über die `gk`-CLI) *zusätzlich* zum oben gewählten Remote-Typ, oder auch allein mit
+`remote.type: none`.
 
 Beads-Issue-Sync (`bd github`/`bd gitlab`) und Dolt-Sync nutzen denselben Remote. Alles später mit
 `aiflow change-settings` ändern (rendert `.mcp.json`, Hooks, alles neu).
@@ -556,8 +601,8 @@ aiflow protect                     serverseitigen Branch-Schutz anwenden (GitHub
 aiflow cost [...]                  Token-/Kosten-Baseline via ccusage
 aiflow doctor                      Voraussetzungen + Projekt-Zusammenfassung prüfen
 aiflow upgrade                     gebündelte Toolchain aktualisieren
-aiflow update                      aiflow-Installation selbst aktualisieren (git pull)
-aiflow project-update               aiflow-Skripte DIESES Projekts aus installierten Templates auffrischen
+aiflow update                      aiflow selbst aktualisieren (git pull, oder GitHub-Release-Download bei Nicht-Git-Install)
+aiflow project-update               DIESES Projekt auffrischen (Skripte + Agent-Defs; angepasste Dateien -> *.bak)
 aiflow version
 ```
 

@@ -1,0 +1,31 @@
+# Created by aiflow — publishes a release note for each version tag pushed (the tag
+# `aiflow release --push` creates). Bitbucket Cloud has no native "Releases" feature,
+# so this uploads a small changelog file as a repo Download instead — visible under
+# Downloads in the Bitbucket UI. Does not bump versions; that stays a local,
+# human-confirmed step (`aiflow release --yes`).
+# This is a full bitbucket-pipelines.yml — Bitbucket only reads one pipeline file at
+# the repo root, so add your own build/test steps into this same file (aiflow will
+# never overwrite it once it exists). Needs a repository access token with
+# "Downloads: write" scope in the BITBUCKET_TOKEN repo variable.
+pipelines:
+  tags:
+    'v*.*.*':
+      - step:
+          name: publish release note
+          script:
+            - echo "Release ${BITBUCKET_TAG}. See CHANGELOG.md for details." > "release-${BITBUCKET_TAG}.md"
+            - >
+              curl -fsSL -X POST
+              -u "x-token-auth:${BITBUCKET_TOKEN}"
+              "https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/downloads"
+              -F files=@"release-${BITBUCKET_TAG}.md"
+    '[0-9]*.[0-9]*':   # CalVer YYYY.MM, if versionStrategy=calver
+      - step:
+          name: publish release note
+          script:
+            - echo "Release ${BITBUCKET_TAG}. See CHANGELOG.md for details." > "release-${BITBUCKET_TAG}.md"
+            - >
+              curl -fsSL -X POST
+              -u "x-token-auth:${BITBUCKET_TOKEN}"
+              "https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/downloads"
+              -F files=@"release-${BITBUCKET_TAG}.md"

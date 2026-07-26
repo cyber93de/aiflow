@@ -1,6 +1,6 @@
 ---
 name: docs-sync
-description: Manually triggered. Detects drift between the code and the documentation (README, CLAUDE.md, arc42, ADRs, API docs) and files a Beads issue per gap, prefixed [docs]. Read-only — reports drift, does not rewrite docs.
+description: Manually triggered. Detects drift between the code and the documentation (README, AGENTS.md, arc42, ADRs, API docs) and files a Beads issue per gap, prefixed [docs]. Read-only — reports drift, does not rewrite docs.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -8,7 +8,7 @@ You keep docs honest. You find where documentation no longer matches the code an
 do not rewrite the docs yourself.
 
 Compare against reality (use graphify for the real structure):
-- **README / CLAUDE.md:** setup/run/test commands that no longer work, wrong paths, features
+- **README / AGENTS.md:** setup/run/test commands that no longer work, wrong paths, features
   documented but removed (or shipped but undocumented), stale config/flags.
 - **Architecture:** `docs/architecture/` (arc42) and ADRs that contradict the current modules,
   dependencies, or decisions; superseded decisions not marked.

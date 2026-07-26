@@ -33,7 +33,7 @@ if (($skipCheck -notcontains $cmd) -and (Test-Path '.aiflow/config.json') -and [
     $projVer = if ($projCfg.meta.aiflowVersion) { $projCfg.meta.aiflowVersion } else { '0.0.0' }
     $toolVer = if (Test-Path (Join-Path $AIFLOW_HOME 'VERSION')) { (Get-Content (Join-Path $AIFLOW_HOME 'VERSION') -TotalCount 1).Trim() } else { '0.0.0' }
     if (Test-VersionOlder $projVer $toolVer) {
-      $ans = Read-Host "This project is on aiflow $projVer, installed aiflow is $toolVer. Upgrade project templates now? (y/n) [n]"
+      $ans = Read-Host "This project is on aiflow $projVer, installed aiflow is $toolVer. Upgrade project templates now? Customised agent files are kept as *.bak, never lost. (y/n) [n]"
       if ($ans -match '^[Yy]') { & bash "$AIFLOW_HOME/lib/project-update.sh" }
       else { Write-Output "  (skipped - run 'aiflow project-update' anytime)" }
     }
@@ -84,6 +84,7 @@ switch ($cmd) {
     else { Write-Error "No .aiflow/quality-check.sh. Run 'aiflow init' first." }
   }
   'release' { Import-DotEnv; & bash '.aiflow/release.sh' @rest }
+  'hotfix' { Import-DotEnv; & bash '.aiflow/hotfix.sh' @rest }
   'protect' { Import-DotEnv; & bash '.aiflow/protect.sh' @rest }
   { $_ -in 'dependency-check','deps-check' } { Import-DotEnv; & bash '.aiflow/run-agent.sh' dependency-auditor @rest }
   'test-gap'   { Import-DotEnv; & bash '.aiflow/run-agent.sh' test-gap-advisor @rest }
@@ -130,16 +131,18 @@ USAGE
   aiflow test-gap          untested critical paths -> [test gap] Beads
   aiflow perf-check        performance audit -> [performance] Beads
   aiflow docs-check        doc/code drift -> [docs] Beads
-  aiflow onboard           learn an existing codebase into memory + CLAUDE.md + arc42
+  aiflow onboard           learn an existing codebase into memory + AGENTS.md + arc42
   aiflow sync [pull|push|both]  team sync: git + Beads(dolt) pull/push (default pull at start)
   aiflow ollama [pull|add <m>|list]  manage local Ollama models (from config)
   aiflow close-sync <id>   on Beads issue close: prompt to push + dolt-sync the remote
-  aiflow release [--push]  cut a release per the branching model (version bump + tag)
+  aiflow hotfix <name>     branch hotfix/<name> from main, bump VERSION to X.Y.(Z+1)-HOTFIX
+  aiflow release [--yes] [--push]  cut a release per the branching model (version bump + tag);
+                           dry run without --yes
   aiflow protect           apply server-side branch protection (GitHub)
   aiflow cost [...]        token/cost baseline via ccusage
   aiflow index             refresh code memory: graphify (structural graph) + cocoindex (RAG)
   aiflow upgrade           update the bundled toolchain to latest
-  aiflow update            self-update the aiflow install itself (git pull) to the latest release
+  aiflow update            self-update aiflow (git pull; or checks GitHub releases + downloads if not a git checkout)
   aiflow project-update    refresh THIS project's aiflow scripts from the installed templates
   aiflow doctor            check prerequisites
   aiflow version

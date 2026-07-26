@@ -33,7 +33,7 @@ case "$cmd" in
       PROJ_VER="$(jq -r '.meta.aiflowVersion // "0.0.0"' .aiflow/config.json 2>/dev/null)"
       TOOL_VER="$(cat "$AIFLOW_HOME/VERSION" 2>/dev/null || echo 0.0.0)"
       if is_older "$PROJ_VER" "$TOOL_VER"; then
-        printf "This project is on aiflow %s, installed aiflow is %s. Upgrade project templates now? (y/n) [n]: " "$PROJ_VER" "$TOOL_VER"
+        printf "This project is on aiflow %s, installed aiflow is %s. Upgrade project templates now? Customised agent files are kept as *.bak, never lost. (y/n) [n]: " "$PROJ_VER" "$TOOL_VER"
         read -r ans || ans=""
         case "$ans" in
           [Yy]*) bash "$AIFLOW_HOME/lib/project-update.sh" ;;
@@ -74,7 +74,7 @@ case "$cmd" in
     fi
     ;;
   ollama)  bash "$AIFLOW_HOME/lib/ollama.sh" "$@" ;;    # manage local Ollama models (pull/add/list)
-  update)  bash "$AIFLOW_HOME/lib/update.sh" "$@" ;;    # self-update the aiflow install (git pull)
+  update)  bash "$AIFLOW_HOME/lib/update.sh" "$@" ;;    # self-update the aiflow install (git pull, or GitHub-release download if not a git checkout)
   project-update) bash "$AIFLOW_HOME/lib/project-update.sh" "$@" ;;  # refresh this project's aiflow scripts from the installed templates
   close-sync|bd-sync)                                  # on Beads issue close: prompt push + dolt-sync
     if [ -x ".aiflow/bd-close-sync.sh" ]; then bash ".aiflow/bd-close-sync.sh" "$@";
@@ -126,6 +126,7 @@ case "$cmd" in
     fi
     ;;
   release) load_env; bash ".aiflow/release.sh" "$@" ;;
+  hotfix) load_env; bash ".aiflow/hotfix.sh" "$@" ;;
   protect) load_env; bash ".aiflow/protect.sh" "$@" ;;
   dependency-check|deps-check) load_env; bash ".aiflow/run-agent.sh" dependency-auditor "$@" ;;
   test-gap)                    load_env; bash ".aiflow/run-agent.sh" test-gap-advisor  "$@" ;;
@@ -155,8 +156,10 @@ USAGE
   aiflow docs-check        doc/code drift -> [docs] Beads
   aiflow a11y-check        strict WCAG accessibility audit -> [accessibility] Beads
   aiflow modernize-check   brownfield modernisation concepts -> report for the architect
-  aiflow onboard           learn an existing codebase into memory + CLAUDE.md + arc42
-  aiflow release [--push]  cut a release per the branching model (version bump + tag)
+  aiflow onboard           learn an existing codebase into memory + AGENTS.md + arc42
+  aiflow hotfix <name>     branch hotfix/<name> from main, bump VERSION to X.Y.(Z+1)-HOTFIX
+  aiflow release [--yes] [--push]  cut a release per the branching model (version bump + tag);
+                           dry run without --yes
   aiflow protect           apply server-side branch protection (GitHub)
   aiflow sync [pull|push|both]  team sync: git + Beads(dolt) pull/push (default pull at start)
   aiflow ollama [pull|add <m>|list]  manage local Ollama models (from config)
@@ -164,7 +167,7 @@ USAGE
   aiflow cost [...]        token/cost baseline via ccusage
   aiflow index             refresh code memory: graphify (structural graph) + cocoindex (RAG)
   aiflow upgrade           update the bundled toolchain (beads, rtk, graphify, ...) to latest
-  aiflow update            self-update the aiflow install itself (git pull) to the latest release
+  aiflow update            self-update aiflow (git pull; or checks GitHub releases + downloads if not a git checkout)
   aiflow project-update    refresh THIS project's aiflow scripts from the installed templates
   aiflow doctor            check prerequisites
   aiflow version

@@ -57,7 +57,7 @@ only changed files re-embed, and the index lives in `.cocoindex_code/` (gitignor
 - `aggressive` (default) — save after every non-trivial task + refresh the graph.
 - `normal` — save durable non-obvious facts; refresh when structure changes.
 - `light` — only high-value, long-lived facts.
-- `off` — rely on Beads + `CLAUDE.md` only.
+- `off` — rely on Beads + `AGENTS.md` only.
 
 ## Refresh both indexes with one command
 

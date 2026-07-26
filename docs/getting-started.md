@@ -62,19 +62,22 @@ aiflow init --no-token-saving   # same, but with caveman + rtk off (full, unfilt
 2. **graphify** (structural graph) and **cocoindex-code** (semantic RAG).
 3. **task-master**, **filesystem MCP**, **context7 MCP**.
 4. **Memory** — persistent memory, graph learning, and **intensity** (default `aggressive`).
-5. **Claude access** — `apikey` (`ANTHROPIC_API_KEY`) or `oauth` (`claude setup-token`).
-6. **Version control** — `git` / `svn` / `none`.
-7. **Remote host** — `github | github-enterprise | gitlab | gitlab-self | bitbucket | forgejo |
-   gitea | custom | none`, plus which **host MCP** to wire. Token-based.
-8. **Sync rule** — ask to push + Dolt-sync on each issue close; auto-pull at session start.
-9. **Ollama** — set it up? which models? (`qwen3-coder` recommended).
-10. **Shared team preferences** — code style, etc.
-11. **Project aim / architecture / OS / IDE**, and the **git branching model** (if VCS = git).
+5. **Coding agent(s)** — Claude Code (default **on**, full feature set), GitHub Copilot, OpenAI
+   Codex CLI — pick any combination; see [Multi-Agent Support](multi-agent).
+6. **Claude access** — `apikey` (`ANTHROPIC_API_KEY`) or `oauth` (`claude setup-token`).
+7. **Version control** — `git` / `svn` / `none`.
+8. **Remote host** — `github | github-enterprise | gitlab | gitlab-self | bitbucket | forgejo |
+   gitea | custom | none`, plus which **host MCP** to wire (and optionally **GitKraken**'s MCP
+   alongside it). Token-based.
+9. **Sync rule** — ask to push + Dolt-sync on each issue close; auto-pull at session start.
+10. **Ollama** — set it up? which models? (`qwen3-coder` recommended).
+11. **Shared team preferences** — code style, etc.
+12. **Project aim / architecture / OS / IDE**, and the **git branching model** (if VCS = git).
 
-> **Don't skip the project aim — it's the cheapest quality lever.** The aim tunes Claude to *your*
-> project: every agent reads it before planning or coding. Tell it to aiflow during `init` (question
-> 11) or later via `aiflow change-settings` — or write it manually into
-> **`.claude/memory/project-aim.md`** and **`CLAUDE.md §1`**. A good aim is 2–4 plain sentences:
+> **Don't skip the project aim — it's the cheapest quality lever.** The aim tunes the agent to
+> *your* project: every agent reads it before planning or coding. Tell it to aiflow during `init`
+> (question 12) or later via `aiflow change-settings` — or write it manually into
+> **`.claude/memory/project-aim.md`** and **`AGENTS.md §1`**. A good aim is 2–4 plain sentences:
 > *what* the product does, *for whom*, the *target architecture*, and the *quality bar*. Example:
 > *"Order-management REST API for our internal shops. Hexagonal architecture on PostgreSQL.
 > Correctness and auditability beat raw speed; every endpoint ships fully tested."*
@@ -98,7 +101,7 @@ bd create "Add health endpoint" -t task --claim   # create + claim a task
 ## Existing codebase (brownfield)?
 
 `aiflow init` detects it and offers `aiflow onboard`, which learns the code into `.claude/memory/`,
-`CLAUDE.md`, and arc42 docs so the agent starts informed — and **proposes a project aim** from the
+`AGENTS.md`, and arc42 docs so the agent starts informed — and **proposes a project aim** from the
 understanding it built. The proposal is not silently adopted: the onboarder **asks you to confirm
 or correct it** (headless runs mark it `PROPOSED — please confirm` in `project-aim.md`). Follow up
 with `aiflow modernize-check` for a modernisation report the architect can turn into beads:
@@ -121,7 +124,7 @@ version it was created with in `.aiflow/config.json` (`meta.aiflowVersion`); onc
 falls behind the installed CLI, any `aiflow` command run inside the project asks
 (interactively) whether to run `aiflow project-update` right then. It refreshes only the
 mechanical, never-hand-edited scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) and
-re-applies your config — `CLAUDE.md`, agents, docs, and your own settings are untouched.
+re-applies your config — `AGENTS.md`/`CLAUDE.md`, agents, docs, and your own settings are untouched.
 
 ## Next
 

@@ -1,0 +1,16 @@
+# Created by aiflow — publishes a GitLab Release whenever a version tag is pushed
+# (the tag `aiflow release --push` creates). Does not bump versions; that stays a
+# local, human-confirmed step (`aiflow release --yes`).
+# This is a full .gitlab-ci.yml — GitLab only reads one pipeline file at the repo
+# root, so add your own build/test stages/jobs into this same file (aiflow will
+# never overwrite it once it exists).
+publish-release:
+  stage: .post
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v?[0-9]+\.[0-9]+/'
+  script:
+    - echo "publishing release $CI_COMMIT_TAG"
+  release:
+    tag_name: '$CI_COMMIT_TAG'
+    description: 'Release $CI_COMMIT_TAG. See CHANGELOG.md for details.'

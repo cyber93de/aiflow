@@ -24,24 +24,41 @@
 - `upgrade.sh` — updates the dependency toolchain.
 
 ## templates/ (copied into target projects)
-- `CLAUDE.md` — operating rules every agent reads (style, task workflow incl. sync gate, agents,
-  memory/context stack, git rules).
-- `.aiflow/*.sh` — audit/release/ralph helpers + `bd-close-sync.sh` (pull-before-push on close).
-- `.claude/agents/*` — 13 subagents; `.claude/commands/*` — slash skills; `.claude/hooks/*` —
-  caveman, format, beads-sync (SessionStart auto-pull); `.claude/settings.json` — permissions + hooks
-  + MCP allow-list.
-- `.githooks/*` — commit-msg, pre-commit, pre-push enforcement.
+- `AGENTS.md` — agent-agnostic operating rules every coding agent reads (style, task workflow
+  incl. sync gate, agents, memory/context stack, git rules). Sections marked "(Claude Code only)"
+  are subagents/hooks/slash-commands/Ralph loop that only Claude Code can dispatch automatically.
+  `CLAUDE.md` is a one-line `@AGENTS.md` import (Claude Code's native memory-import syntax).
+  `.github/copilot-instructions.md` points Copilot at `AGENTS.md`; Codex CLI reads `AGENTS.md`
+  directly by convention (no pointer file needed).
+- `.aiflow/*.sh`(+`.ps1`) — audit/ralph helpers + `bd-close-sync.sh` (pull-before-push on close) +
+  `version.sh`/`release.sh`/`hotfix.sh` (gitflow version bump/release/hotfix — see [[architecture]]).
+- `.claude/agents/*` — 13 subagents; `.claude/commands/*` — slash-commands;
+  `.claude/skills/<name>/SKILL.md` — auto-offered skills (Claude matches `description` to context;
+  first one shipped: `seo-optimization`); `.claude/hooks/*` — caveman, format, beads-sync
+  (SessionStart auto-pull); `.claude/settings.json` — permissions + hooks + MCP allow-list. All
+  Claude Code-only.
+- `.githooks/*` — commit-msg, pre-commit, pre-push enforcement (pre-push also enforces the gitflow
+  branching model + blocks `-SNAPSHOT`/`-HOTFIX` VERSION from reaching `main` — vendor-neutral,
+  works regardless of which agent/human pushes).
 - `docker/` — Dockerfile + `run.sh` (Podman OR Docker, auto-detected). **No Dagger** (removed).
 - `.env.example` — token layout; `docs/architecture/` — arc42 + ADR seed.
 
+## release-workflows/ (repo root, NOT under templates/)
+- One release-publish CI template per host (`github.yml`, `gitlab.yml`, `gitea.yml`,
+  `forgejo.yml`, `bitbucket.yml`) — deliberately outside `templates/` (which is blindly copied
+  whole) so `apply.sh` copies only the one matching `remote.type`, never clobbering an existing
+  file at the target path.
+
 ## docs/ (GitHub Pages, just-the-docs)
-- `_config.yml` + 13 pages (index, getting-started, features, memory, agents, models, remotes, team,
-  configuration, commands, workflows, faq, contributing). Deployed by `.github/workflows/pages.yml`.
+- `_config.yml` + pages incl. index, getting-started, features, memory, agents, workflows,
+  **multi-agent** (Claude Code/Copilot/Codex CLI support), models, remotes, team, configuration,
+  config-schema, commands, faq, contributing. Deployed by `.github/workflows/pages.yml`.
 
 ## .github/workflows/
 - `ci.yml` (validate: bash -n + shellcheck + JSON + PowerShell + dry-run build),
   `release.yml` (VERSION bump → tag + per-OS archives), `pages.yml` (docs deploy).
 
 ## Root
-- `install.sh` / `install.ps1` (offer git/svn/ollama), `VERSION` (0.1.1), `LICENSE` (MIT),
-  `CHANGELOG.md`, `README.md` / `README.de.md`.
+- `install.sh` / `install.ps1` (offer git/svn/ollama), `VERSION`, `LICENSE` (MIT),
+  `CHANGELOG.md`, `README.md` / `README.de.md`, `AGENTS.md`/`CLAUDE.md` (this repo's own — see
+  the "Agents & quality gates (self-hosted aiflow)" section of the root `CLAUDE.md`).

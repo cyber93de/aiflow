@@ -1,0 +1,30 @@
+# Created by aiflow — publishes a Forgejo Release whenever a version tag is pushed
+# (the tag `aiflow release --push` creates). Does not bump versions; that stays a
+# local, human-confirmed step (`aiflow release --yes`). Uses the Forgejo REST API
+# directly (no third-party action). Verify the token/context names against your
+# Forgejo version if this fails — the built-in secret is exposed as GITHUB_TOKEN
+# (or FORGEJO_TOKEN on newer runners) for GitHub-Actions-compat.
+name: publish release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - '[0-9]*.[0-9]*'   # CalVer YYYY.MM, if versionStrategy=calver
+
+jobs:
+  release:
+    runs-on: docker
+    steps:
+      - name: Create Forgejo release via API
+        env:
+          FORGEJO_SERVER: ${{ forgejo.server_url }}
+          FORGEJO_REPO: ${{ forgejo.repository }}
+          FORGEJO_TAG: ${{ forgejo.ref_name }}
+          FORGEJO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -fsSL -X POST \
+            -H "Authorization: token ${FORGEJO_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag_name\":\"${FORGEJO_TAG}\",\"name\":\"${FORGEJO_TAG}\",\"body\":\"Release ${FORGEJO_TAG}. See CHANGELOG.md for details.\"}" \
+            "${FORGEJO_SERVER}/api/v1/repos/${FORGEJO_REPO}/releases"

@@ -23,8 +23,8 @@ description: "aiflow CLI command reference: init, install-deps, change-settings,
 | `aiflow change-settings [--no-token-saving]` | Re-adjust config, then re-render `.mcp.json`, hooks, branching, memory. `--no-token-saving` switches caveman + rtk off. |
 | `aiflow doctor` | Check prerequisites + print a per-project summary. |
 | `aiflow upgrade` | Update the bundled toolchain. |
-| `aiflow update` | Self-update the aiflow install itself (`git pull` in `AIFLOW_HOME`) to the latest release. |
-| `aiflow project-update` | Refresh THIS project's mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) from the installed templates and re-apply config. Never touches `CLAUDE.md`, agents, docs, or your own config. You're prompted for this automatically when a project's stamped version falls behind the installed CLI. |
+| `aiflow update` | Self-update aiflow to the latest release: `git pull` in `AIFLOW_HOME` if it's a git checkout; otherwise checks the GitHub Releases API and downloads + verifies (SHA256) + installs the matching per-OS archive. |
+| `aiflow project-update` | Refresh THIS project from the installed templates: mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) always; agent definitions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/agents/*`, `.claude/commands/*`, `.claude/skills/*`) too — any of those you customised is kept as `*.bak` before being replaced, and reported so you can reapply your changes. Never touches `.beads/`, `.claude/memory/*`, or your `.aiflow/config.json` project settings (aim, architecture, ...) — only `meta.aiflowVersion` is stamped. You're prompted for this automatically when a project's stamped version falls behind the installed CLI. |
 | `aiflow version` | Print the version. |
 
 ## Working
@@ -62,7 +62,8 @@ description: "aiflow CLI command reference: init, install-deps, change-settings,
 
 | Command | Does |
 |---------|------|
-| `aiflow release [--push]` | Cut a release per the branching model (version bump + tag). |
+| `aiflow hotfix <name>` | Branch `hotfix/<name>` off main and bump `VERSION` to `X.Y.(Z+1)-HOTFIX`. |
+| `aiflow release [--yes] [--push]` | Cut a release per the branching model (version bump + tag). Without `--yes`, prints a dry run only — releasing always needs explicit confirmation. |
 | `aiflow protect` | Apply server-side branch protection (GitHub). |
 | `aiflow cost [...]` | Token/cost baseline via ccusage. |
 

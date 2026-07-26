@@ -3,7 +3,7 @@ layout: default
 title: Features & advantages
 parent: Getting Started
 nav_order: 3
-description: "aiflow features: Claude Code automation, Beads task memory, code graph + semantic RAG, context7, Ollama, agents, team sync, and token savings with caveman and rtk."
+description: "aiflow features: multi-agent support (Claude Code, GitHub Copilot, OpenAI Codex CLI), Beads task memory, code graph + semantic RAG, context7, Ollama, agents, gitflow release automation, team sync, and token savings with caveman and rtk."
 ---
 
 # Features
@@ -18,6 +18,7 @@ description: "aiflow features: Claude Code automation, Beads task memory, code g
 
 | Area | What you get |
 |------|--------------|
+| **Multi-agent** | Agent-agnostic core (`AGENTS.md` + per-agent MCP config): Claude Code (full feature set), GitHub Copilot, OpenAI Codex CLI — pick any combination |
 | **Task tracking** | Beads (`bd`) — Dolt-backed issues with dependencies, status, history; survives context resets |
 | **Code memory** | **graphify** (structural graph) + **cocoindex-code** (semantic RAG) + `.claude/memory/` facts |
 | **External docs** | **context7** MCP — live, version-correct library documentation |

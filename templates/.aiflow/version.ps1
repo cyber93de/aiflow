@@ -1,5 +1,8 @@
 # Version helper for the configured strategy (semver|calver). Reads/uses the VERSION file.
-# Usage: version.ps1 current | release | next-dev [release-version]
+# Usage: version.ps1 current | release | next-dev [release-version] | start-hotfix
+# semver "release" strips whatever suffix is present (-SNAPSHOT on develop, -HOTFIX on
+# hotfix/*) - the number in front of it is already the exact release version. "start-hotfix"
+# bumps a bare main VERSION (no suffix) to the next patch + -HOTFIX.
 $ErrorActionPreference = 'Stop'
 
 $modelPath = ".aiflow/branching.json"
@@ -43,6 +46,13 @@ if ($strat -eq "calver") {
       $rp = $rel.Split('.')
       $a = $rp[0]; $b = [int]$rp[1];
       Write-Output "$a.$($b + 1).0-SNAPSHOT"
+    }
+    "start-hotfix" {
+      if ($base -match '-') {
+        Write-Error "cannot start a hotfix from a non-release version ($base)"
+        exit 1
+      }
+      Write-Output "$ma.$mi.$([int]$pa + 1)-HOTFIX"
     }
   }
 }

@@ -7,6 +7,95 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-07-26
+
+### Added
+- **`aiflow project-update` now also refreshes agent definitions**, not just mechanical scripts:
+  `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/agents/*`,
+  `.claude/commands/*`, `.claude/skills/*`. Any file you customised (differs from the incoming
+  template) is renamed to `<file>.bak` — never deleted — before the new version is written, and
+  listed in a warning so you know to review/reapply your changes; unmodified files are refreshed
+  silently. Still never touches `.beads/`, `.claude/memory/*`, or your `.aiflow/config.json`
+  project settings (aim, architecture) — those always survive an upgrade untouched.
+- **Applied the `seo-optimization` skill to aiflow's own docs site** (dogfooding): added
+  `docs/robots.txt` (allow-all + sitemap pointer), `docs/404.html`, a favicon
+  (`docs/assets/favicon.svg`), and `docs/_includes/head_custom.html` with JSON-LD structured data
+  (`SoftwareApplication` + `WebSite`) — just-the-docs' documented head-injection point, since the
+  theme/`jekyll-seo-tag` already handle per-page title/description/canonical/Open Graph from front
+  matter. `docs/llms.txt` and `docs/llms-full.txt` (context7's self-contained reference) updated
+  for multi-agent support, Skills, GitKraken, per-host release workflows, and the archive-install
+  update path — previously stale at the pre-multi-agent feature set.
+- **`aiflow update` now works on archive installs too**, not just git checkouts. If `AIFLOW_HOME`
+  isn't a git repo (e.g. installed from a downloaded release zip/tar.gz), it checks the GitHub
+  Releases API for a newer version, downloads the matching per-OS archive, verifies it against
+  the published `SHA256SUMS.txt`, and installs it over `AIFLOW_HOME` — previously it just refused
+  with "re-clone or re-download manually."
+- **Skills** (`.claude/skills/<name>/SKILL.md`, Claude Code only) — a new mechanism distinct from
+  slash-commands: Claude Code matches a skill's `description` against the current task and offers
+  to run it automatically, instead of waiting for an explicit `/command`. Ships with
+  **seo-optimization**: SEO for any web-facing project/framework (plain HTML, GitHub Pages, static
+  sites, docs sites, Next.js, Astro, Hugo, Jekyll, VuePress, VitePress, React, Vue, Svelte,
+  Angular, …) — meta tags, Open Graph/Twitter Cards, JSON-LD structured data, robots.txt/
+  sitemap.xml, canonical URLs, heading hierarchy, alt text, Core Web Vitals, GitHub Pages
+  specifics (base URL, 404, social preview, RSS); non-destructive, ends with an SEO report. Add
+  more by dropping a new `<name>/SKILL.md` into `.claude/skills/`.
+- **Agent-agnostic core.** `AGENTS.md` is now the single, shared source of truth (code style,
+  quality gates, task workflow, git rules, Definition of Done) for **any** coding agent, not just
+  Claude Code. `CLAUDE.md` is now a one-line `@AGENTS.md` import (Claude Code's native memory-import
+  syntax) so Claude Code still loads the exact same content. Sections that only Claude Code can run
+  automatically (subagents, hooks, slash-commands, the Ralph loop, caveman/rtk) are marked
+  **(Claude Code only)** — every other agent follows the same rules manually instead.
+- **`agents.{claude,copilot,codex}` config** (`aiflow init` / `change-settings`) — pick any
+  combination of Claude Code (default on, full feature set), GitHub Copilot, and OpenAI Codex CLI.
+  Each enabled agent gets its own rendered MCP config from the same server set: `.mcp.json`
+  (Claude), `.codex/config.toml` (Codex, TOML `[mcp_servers.*]` tables), `.vscode/mcp.json` +
+  `.github/copilot-instructions.md` (Copilot).
+- **New docs page:** [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent) —
+  what's shared vs. Claude Code-only, and how MCP config is rendered per agent.
+- **SEO pass:** vendor-neutral tagline/description across README/README.de/docs site
+  (`_config.yml`, `docs/index.md`), reflecting multi-agent + gitflow release automation for
+  better discoverability in search engines.
+- **`bugfix/*` branch type** for the `gitflow` model, alongside `feature/*` — both branch from
+  and merge back to `develop` only, never `main`.
+- **`main` is now actively restricted (gitflow).** Only `develop`, `hotfix/*`, or `chore/*` may
+  ever land on `main`; the `pre-push` hook parses new merge commits on a `main` push and rejects
+  any `feature/*`/`bugfix/*` source. Doc-only and CI/workflow-file-only changes count as
+  `chore/*`, not `feature/*` — and never trigger a release.
+- **`aiflow hotfix <name>`** — branches `hotfix/<name>` off `main` and bumps `VERSION` to
+  `X.Y.(Z+1)-HOTFIX` (mirrors how `develop` carries `-SNAPSHOT`).
+- **Hotfix releases.** `aiflow release` now auto-detects the release kind from `VERSION`'s
+  suffix: `-SNAPSHOT` → minor release (develop → main, strips suffix); `-HOTFIX` → patch release
+  (hotfix/* → main, strips suffix). Either way develop is bumped to the next
+  `X.(Y+1).0-SNAPSHOT`, and a hotfix release also merges the hotfix branch into `develop` so the
+  fix isn't lost there.
+- **`main` may never carry a `-SNAPSHOT`/`-HOTFIX` version.** A new `pre-push` guard rejects any
+  push to `main` whose `VERSION` still has one of those suffixes.
+- **`aiflow release` now defaults to a dry run.** It prints what it would do (old → new version,
+  develop bump, hotfix-into-develop merge) and exits; only `--yes` actually cuts the release.
+  Releasing must always be a deliberate, human-approved action — agents are told (in the
+  generated `CLAUDE.md` / `docs/branching.md`) to ask the user before adding `--yes`.
+- **Predefined release-publish workflows** for GitHub, GitLab, Gitea, Forgejo, and Bitbucket.
+  `aiflow init`/`apply` writes the one matching your chosen `remote.type` (never overwrites an
+  existing one): `.github/workflows/release.yml`, `.gitlab-ci.yml`, `.gitea/workflows/release.yml`,
+  `.forgejo/workflows/release.yml`, or `bitbucket-pipelines.yml`. Each publishes a release
+  entry/note on the host when a version tag is pushed — it never bumps versions itself, that
+  stays the local `aiflow release --yes` step. Sources in `release-workflows/` (outside
+  `templates/`, so the wrong host never gets the wrong file).
+- **GitKraken MCP** — a new independent `gitkraken.enabled` toggle (`aiflow init` /
+  `change-settings`) wires the GitKraken MCP (via the `gk` CLI) alongside whichever remote host
+  you use, since GitKraken is a client, not a host, and doesn't replace the host choice above.
+  "Local, no MCP" remains available by setting `remote.type` to `none`.
+
+### Fixed
+- **`.github/workflows/release.yml` wasn't packaging `release-workflows/`** into the published
+  per-OS archives (only `bin lib templates install.* README* LICENSE VERSION` were copied) — an
+  archive install (not a git checkout) would never get the predefined per-host release-publish
+  workflows. Fixed by including `release-workflows/` in the archive build step.
+- **`aiflow update`'s GitHub API/download requests could fail on Windows** with a Schannel
+  revocation-check error (common behind some corporate proxies/AV) even though the network path
+  was fine. Fixed by adding `--ssl-revoke-best-effort` to those `curl` calls (no-op on
+  non-Schannel/non-Windows curl builds).
+
 ## [0.2.0] — 2026-07-12
 
 ### Fixed

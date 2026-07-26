@@ -21,21 +21,25 @@ jq -n --arg model "$MODEL" --argjson strict "$STRICT" --argjson prOnly "$PRONLY"
 {
   model: $model, strict: $strict,
   permanentBranches: ["main","develop"],
-  branchTypes: ((if $model=="gitflow" then ["feature/*","hotfix/*"] else [] end)
+  branchTypes: ((if $model=="gitflow" then ["feature/*","bugfix/*","hotfix/*"] else [] end)
                + (if $chore then ["chore/*"] else [] end)),
   allowedCreations: ((if $model=="gitflow"
-        then [{type:"feature/*",from:["develop"]},{type:"hotfix/*",from:["main"]}]
+        then [{type:"feature/*",from:["develop"]},{type:"bugfix/*",from:["develop"]},{type:"hotfix/*",from:["main"]}]
         else [{type:"<any temporary>",from:["develop"]}] end)
       + (if $chore then [{type:"chore/*",from:["develop","main"]}] else [] end)),
   allowedMerges: ([{from:"develop",to:"main"},{from:"main",to:"develop"}]
-      + (if $model=="gitflow" then [{from:"feature/*",to:"develop"},{from:"hotfix/*",to:"main"}] else [] end)
+      + (if $model=="gitflow" then [{from:"feature/*",to:"develop"},{from:"bugfix/*",to:"develop"},{from:"hotfix/*",to:"main"},{from:"hotfix/*",to:"develop"}] else [] end)
       + (if $chore then [{from:"chore/*",to:"develop"},{from:"chore/*",to:"main"}] else [] end)),
+  mainRestricted: (if $model=="gitflow" then {onlyFrom:["develop","hotfix/*","chore/*"], forbidden:["feature/*","bugfix/*"]} else null end),
   pullRequests: (if $prOnly
       then {required:true, protectedBranches:["main","develop"],
             rules:["no direct push to protected branches","merge only via Pull Request","PR must pass validation"]}
       else {required:false} end),
   release: (if $autoRel
-      then {auto:true, trigger:"merge develop -> main", versionStrategy:$ver,
+      then {auto:true, manualConfirm:true,
+            triggers:["merge develop -> main (minor release, strips -SNAPSHOT)","merge hotfix/* -> main (patch release)"],
+            excludesTrigger:["chore/* -> main"],
+            versionStrategy:$ver,
             tag:{enabled:$tags, format:(if $ver=="calver" then "{version}" else "v{version}" end)}}
       else {auto:false} end),
   branchNaming: (if ($model=="gitflow" and $strict) then "enforced" else "not enforced (temporary branches may use any name)" end)
@@ -58,6 +62,13 @@ echo "  branching: $MODEL (strict=$STRICT prOnly=$PRONLY autoRelease=$AUTOREL ve
   echo "## Allowed merges"
   jq -r '.allowedMerges[] | "- \(.from) → \(.to)"' .aiflow/branching.json
   echo
+  if [ "$MODEL" = gitflow ]; then
+    echo "## main is restricted"
+    echo "- Only \`chore/*\` and \`hotfix/*\` may ever target \`main\`."
+    echo "- \`feature/*\` and \`bugfix/*\` always target \`develop\` — never \`main\`, directly or via PR."
+    echo "- Doc-only changes and CI/workflow-file-only changes (\`.github/workflows/**\`) count as \`chore/*\`, not \`feature/*\`."
+    echo
+  fi
   if [ "$PRONLY" = true ]; then
     echo "## Pull requests"
     echo "- No direct push to main/develop; merge only via PR; PR must pass validation."
@@ -65,11 +76,17 @@ echo "  branching: $MODEL (strict=$STRICT prOnly=$PRONLY autoRelease=$AUTOREL ve
   fi
   if [ "$AUTOREL" = true ]; then
     echo "## Releases"
-    echo "- A merge of develop → main creates a release (\`aiflow release\`)."
+    echo "- A merge of \`develop\` → \`main\` **or** \`hotfix/*\` → \`main\` creates a release (\`aiflow release\`)."
+    echo "- A merge of \`chore/*\` → \`main\` never triggers a release."
+    echo "- **Releasing is never automatic** — always ask the user before running \`aiflow release\` / merging into main."
     if [ "$VER" = calver ]; then
       echo "- **CalVer** \`YYYY.MM\`: release uses the current calendar version; develop is bumped to the next."
     else
-      echo "- **SemVer** \`MAJOR.MINOR.PATCH\`: \`X.Y.0-SNAPSHOT\` → \`X.Y.0\` on release; develop bumps to \`X.(Y+1).0-SNAPSHOT\`."
+      echo "- **SemVer** \`MAJOR.MINOR.PATCH\`, in-progress work always carries a suffix; \`main\` never does:"
+      echo "  - develop carries \`X.Y.0-SNAPSHOT\`; on release → \`X.Y.0\` (minor release)."
+      echo "  - \`aiflow hotfix <name>\` branches off main and bumps to \`X.Y.(Z+1)-HOTFIX\`; on release → \`X.Y.(Z+1)\` (patch release)."
+      echo "  - either way, develop is then bumped to \`X.(Y+1).0-SNAPSHOT\`, and hotfix commits are also merged into develop so the fix isn't lost."
+      echo "  - a pre-push guard rejects any push to \`main\` whose \`VERSION\` still ends in \`-SNAPSHOT\`/\`-HOTFIX\`."
     fi
     [ "$TAGS" = true ] && echo "- A git tag is created on each release ($([ "$VER" = calver ] && echo '{version}' || echo 'v{version}'))."
     echo

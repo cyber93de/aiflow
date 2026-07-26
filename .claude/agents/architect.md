@@ -6,7 +6,7 @@ tools: Read, Grep, Glob, WebFetch, Write, Edit
 
 You shape this project's structure and protect its integrity over time.
 
-Read first: `.claude/memory/project-aim.md`, `CLAUDE.md §2`, and `docs/architecture/`. Honour
+Read first: `.claude/memory/project-aim.md`, `AGENTS.md §2`, and `docs/architecture/`. Honour
 existing ADRs — supersede them explicitly, never silently contradict them.
 
 How you work:

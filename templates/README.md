@@ -1,7 +1,8 @@
 # aiflow
 
 **aiflow turns any repository into a governed, AI-driven software-delivery pipeline with one
-command.** It wires [Claude Code](https://docs.claude.com/en/docs/claude-code) together with
+command.** It wires [Claude Code](https://docs.claude.com/en/docs/claude-code) — plus, optionally,
+**GitHub Copilot** and **OpenAI Codex CLI**, agent-agnostic via a shared `AGENTS.md` — together with
 durable task tracking, autonomous work loops, a code knowledge graph, specialist review/audit
 agents, cost controls, enforced code quality, and a configurable git branching model — so an AI
 agent can take an issue, plan it, write the code in a consistent style, test it, review it against
@@ -23,7 +24,7 @@ the project, never globally.
 4. [Set up a project](#4-set-up-a-project)
 5. [Command reference](#5-command-reference)
 6. [Agents](#6-agents)
-7. [Slash-command skills](#7-slash-command-skills)
+7. [Slash-commands and Skills](#7-slash-commands-and-skills)
 8. [The bundled toolchain & why each piece is here](#8-the-bundled-toolchain--why-each-piece-is-here)
 9. [The delivery workflow](#9-the-delivery-workflow)
 10. [Autonomous work: the Ralph loop](#10-autonomous-work-the-ralph-loop)
@@ -81,7 +82,9 @@ A plain-language primer. Skip if you already know Claude Code.
   or a **Claude Code OAuth token** (`claude setup-token`, uses your subscription). aiflow supports
   both; you keep them in `.env` (never committed).
 - **Agent:** a focused AI worker with a role + system prompt (e.g. *reviewer*, *implementer*).
-- **Skill / slash-command:** a reusable instruction you trigger with `/name` (e.g. `/implement`).
+- **Slash-command:** a reusable instruction you trigger explicitly with `/name` (e.g. `/implement`).
+- **Skill:** a reusable instruction the agent offers on its own when it matches what you're doing
+  (e.g. an SEO pass when you're editing web pages) — no `/name` needed.
 - **Hook:** a script the harness runs automatically on events (after an edit, at session start,
   before a push). aiflow uses hooks for auto-format, enforcement, and output style.
 - **Memory:** durable facts stored in files (`.claude/memory/`) plus the Beads task store and the
@@ -221,7 +224,7 @@ aiflow shell            # loads .env and starts Claude Code
 | `aiflow upgrade` | Update the bundled toolchain (beads, rtk, graphify, …) to latest. |
 | `aiflow version` | Print version. |
 
-Inside Claude Code you also get the slash-command skills listed in §7.
+Inside Claude Code you also get the slash-commands and auto-offered Skills listed in §7.
 
 ---
 
@@ -269,9 +272,9 @@ The shipped agents are **deliberately generic** — a strong, universal base, no
 
 ---
 
-## 7. Slash-command skills
+## 7. Slash-commands and Skills
 
-Triggerable inside Claude Code (`.claude/commands/`):
+**Slash-commands** — triggerable inside Claude Code (`.claude/commands/`):
 
 - **Delivery:** `/intake-issue <n>` (pull a GitHub/GitLab/Bitbucket issue → Beads),
   `/decompose <goal|prd>` (claude-task-master → Beads), `/plan-epic`, `/implement [bead] [ralph|no-ralph]`,
@@ -280,7 +283,13 @@ Triggerable inside Claude Code (`.claude/commands/`):
   `/test-gap`, `/perf-check`, `/docs-check`, `/a11y-check`, `/modernize-check`.
 - **Brownfield / orientation:** `/onboard`, `/explain <path>`, `/standup`.
 
-(Beads and the Ralph loop are also available as their own plugin skills, e.g. `/beads:ready`.)
+(Beads and the Ralph loop are also available as their own plugin commands, e.g. `/beads:ready`.)
+
+**Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`: Claude Code matches the skill's
+`description` against what you're doing and offers to run it. Ships with **seo-optimization** (SEO
+for any web-facing project/framework — meta tags, Open Graph, JSON-LD structured data,
+robots.txt/sitemap.xml, GitHub Pages specifics; ends with an SEO report). Add your own by dropping
+a new `<name>/SKILL.md` into `.claude/skills/`.
 
 ---
 
@@ -449,19 +458,27 @@ lower ones** automatically.
 governance model in **`.aiflow/branching.json`** + a readable **`docs/branching.md`**, creates the
 permanent branches, seeds `VERSION`, and installs enforcement.
 
-- **Model** — `simple` (main + develop; temp branches any name) · `gitflow` (`feature/*` from
-  develop, `hotfix/*` from main) · `none`.
+- **Model** — `simple` (main + develop; temp branches any name) · `gitflow` (`feature/*`/`bugfix/*`
+  from develop, `hotfix/*` from main) · `none`.
+- **main is restricted (gitflow)** — only `develop`, `hotfix/*`, or `chore/*` may ever land on
+  `main`; `feature/*`/`bugfix/*` always merge to `develop`, never `main`. Doc-only and
+  CI/workflow-file-only changes count as `chore/*`.
 - **Strict rules** — enforce branch sources/targets and naming (gitflow).
 - **PR-only** — no direct push to main/develop; merge only via validated Pull Request.
-- **Auto-release** — a merge of develop → main cuts a release.
-- **Version strategy** — **SemVer** (`X.Y.0-SNAPSHOT` → `X.Y.0`, then develop → `X.(Y+1).0-SNAPSHOT`)
-  or **CalVer** (`YYYY.MM`, develop bumped to next month).
+- **Auto-release** — a merge of develop → main (minor) or `hotfix/*` → main (patch) cuts a
+  release; `chore/*` → main never does.
+- **Version strategy** — **SemVer**: develop carries `X.Y.0-SNAPSHOT`, `aiflow hotfix <name>`
+  carries `X.Y.(Z+1)-HOTFIX`; either suffix is stripped on release, then develop bumps to
+  `X.(Y+1).0-SNAPSHOT`. `main` itself may never carry a `-SNAPSHOT`/`-HOTFIX` version (enforced by
+  `pre-push`). Or **CalVer** (`YYYY.MM`, develop bumped to next month).
 - **Release tags** — tag each release (`v1.2.0` / `2026.06`).
 - **chore/\*** — chore branches (from/to develop or main), independent of feature/hotfix rules.
 
-Enforcement: the **`pre-push` hook** blocks direct pushes to protected branches and (strict gitflow)
-rejects non-conforming names; **`aiflow protect`** applies real server-side branch protection on
-GitHub (PR + CI required); **`aiflow release [--push]`** bumps the version, tags, and bumps develop.
+Enforcement: the **`pre-push` hook** blocks direct pushes to protected branches, (strict gitflow)
+rejects non-conforming names, blocks `feature/*`/`bugfix/*` merges onto `main`, and rejects any
+push to `main` carrying a `-SNAPSHOT`/`-HOTFIX` version; **`aiflow protect`** applies real
+server-side branch protection on GitHub (PR + CI required); **`aiflow release [--yes] [--push]`**
+prints a dry run and only bumps the version, tags, and bumps develop once run with `--yes`.
 Agents read the model and obey it (CLAUDE.md §7).
 
 ---

@@ -1,16 +1,20 @@
 # aiflow
 
-> aiflow turns any repository into a governed, AI-driven software-delivery pipeline for Claude Code:
-> durable Beads task memory, a code knowledge graph (graphify) plus semantic RAG (cocoindex-code),
-> context7 live docs, specialist agents, Ollama local models, model routing, team collaboration over
-> a shared Dolt issue graph, and token savings via caveman and rtk. One command, project-scoped,
-> vendor-neutral, MIT-licensed. Owner: Cyber93de.
+> aiflow turns any repository into a governed, AI-driven software-delivery pipeline — agent-agnostic
+> across Claude Code, GitHub Copilot, and OpenAI Codex CLI via a shared AGENTS.md — with durable
+> Beads task memory, a code knowledge graph (graphify) plus semantic RAG (cocoindex-code), context7
+> live docs, specialist agents and auto-offered Skills, gitflow branching + release automation
+> (predefined release workflows for GitHub/GitLab/Gitea/Forgejo/Bitbucket), Ollama local models,
+> model routing, team collaboration over a shared Dolt issue graph, and token savings via caveman
+> and rtk. One command, project-scoped, vendor-neutral, MIT-licensed. Owner: Cyber93de.
 
 ## Docs
 - [Home](https://cyber93de.github.io/aiflow/): overview and advantages
 - [Installation](https://cyber93de.github.io/aiflow/installation): Linux, macOS, Windows
 - [Quick Start](https://cyber93de.github.io/aiflow/getting-started): first project
 - [Features & advantages](https://cyber93de.github.io/aiflow/features)
+- [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent): Claude Code, GitHub
+  Copilot, OpenAI Codex CLI — shared AGENTS.md, per-agent MCP config
 - [Memory: graph + RAG](https://cyber93de.github.io/aiflow/memory): graphify + cocoindex + context7
 - [Token optimization](https://cyber93de.github.io/aiflow/token-optimization): caveman, rtk, routing
 - [Team collaboration](https://cyber93de.github.io/aiflow/team): shared Dolt issues, atomic claim
@@ -18,8 +22,9 @@
 - [Configuration](https://cyber93de.github.io/aiflow/configuration)
 - [Remote hosts](https://cyber93de.github.io/aiflow/remotes): GitHub, GitLab, Bitbucket, Forgejo, Gitea
 - [Models & context7](https://cyber93de.github.io/aiflow/models): Claude auth, Ollama, more models
-- [Agents](https://cyber93de.github.io/aiflow/agents)
-- [Workflows & CI/CD](https://cyber93de.github.io/aiflow/workflows)
+- [Agents](https://cyber93de.github.io/aiflow/agents): subagents, slash-commands, and Skills
+  (e.g. seo-optimization)
+- [Workflows & CI/CD](https://cyber93de.github.io/aiflow/workflows): gitflow, hotfix/release, CI
 - [config.json schema](https://cyber93de.github.io/aiflow/config-schema)
 - [Environment variables](https://cyber93de.github.io/aiflow/environment-variables)
 - [MCP servers](https://cyber93de.github.io/aiflow/mcp-servers)
@@ -34,12 +39,15 @@
 
 ## Source
 - [Repository](https://github.com/Cyber93de/aiflow)
+- [Releases](https://github.com/Cyber93de/aiflow/releases): per-OS archives + SHA256SUMS
 - [Issues](https://github.com/Cyber93de/aiflow/issues)
 - [CHANGELOG](https://github.com/Cyber93de/aiflow/blob/main/CHANGELOG.md)
 - [Third-party licenses](https://github.com/Cyber93de/aiflow/blob/main/THIRD_PARTY_LICENSES.md)
 
 ## Keywords
-Claude Code, Anthropic Claude, AI coding agent, agentic software delivery, MCP, Model Context Protocol,
+Claude Code, GitHub Copilot, OpenAI Codex CLI, agent-agnostic, AGENTS.md, Anthropic Claude, AI
+coding agent, agentic software delivery, MCP, Model Context Protocol, Skills, slash-commands,
 Beads, Dolt, graphify, code knowledge graph, CocoIndex, cocoindex-code, semantic code search, RAG,
 Context7, Ollama, local LLM, claude-code-router, rtk, caveman, token optimization, Ralph loop,
-gitflow, Conventional Commits, GitHub, GitLab, Bitbucket, Forgejo, Gitea.
+gitflow, hotfix branch, release automation, SEO optimization, Conventional Commits, GitHub,
+GitLab, Bitbucket, Forgejo, Gitea, GitKraken.

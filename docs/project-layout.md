@@ -3,7 +3,7 @@ layout: default
 title: Project layout
 parent: Reference
 nav_order: 4
-description: "The files aiflow generates in a Claude Code project: .aiflow config, .beads issues, .claude agents/hooks/memory, .githooks, .mcp.json, CLAUDE.md, and .env."
+description: "The files aiflow generates in a project: .aiflow config, .beads issues, .claude agents/hooks/memory, .githooks, per-agent MCP config, AGENTS.md/CLAUDE.md, and .env."
 ---
 
 # Project layout
@@ -28,8 +28,12 @@ your-project/
 ├─ .githooks/                # commit-msg, pre-commit, pre-push (enforcement)
 ├─ docker/                   # Dockerfile + run.sh (Podman or Docker) for headless Ralph runs
 ├─ docs/architecture/        # arc42 + ADRs
-├─ .mcp.json                 # generated from config (host MCP, filesystem, graphify, cocoindex, context7)
-├─ CLAUDE.md                 # operating rules every agent reads
+├─ .mcp.json                 # Claude Code MCP config (host MCP, filesystem, graphify, cocoindex, context7)
+├─ .codex/config.toml        # Codex CLI MCP config (only if agents.codex enabled)
+├─ .vscode/mcp.json          # Copilot/VS Code MCP config (only if agents.copilot enabled)
+├─ .github/copilot-instructions.md  # points Copilot at AGENTS.md
+├─ AGENTS.md                 # operating rules every agent reads — the source of truth
+├─ CLAUDE.md                 # one-line `@AGENTS.md` import, for Claude Code's default lookup
 └─ .env                      # secrets (gitignored, never global)
 ```
 

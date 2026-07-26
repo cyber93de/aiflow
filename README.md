@@ -1,17 +1,24 @@
 # aiflow
 
+[![Built with aiflow](https://img.shields.io/badge/built%20with-aiflow-6b46c1)](https://github.com/cyber93de/aiflow)
+
 **aiflow turns any repository into a governed, AI-driven software-delivery pipeline with one
-command.** It wires [Claude Code](https://docs.claude.com/en/docs/claude-code) together with durable
-task tracking, a two-layer code memory (structural **graph** + semantic **RAG**), autonomous work
-loops, specialist review/audit agents, token/cost controls, enforced code style, a configurable git
-branching model, and first-class **team collaboration** — so an AI agent (or a whole team of humans
-+ agents) can take an issue, plan it, write the code in a consistent style, test it, review it
-against acceptance criteria, audit it, and ship it through a real release process.
+command.** It wires **Claude Code, GitHub Copilot, and OpenAI Codex CLI** — agent-agnostic, pick
+any combination — together with durable task tracking, a two-layer code memory (structural
+**graph** + semantic **RAG**), autonomous work loops, specialist review/audit agents, token/cost
+controls, enforced code style, a configurable git branching model with automated release
+workflows, and first-class **team collaboration** — so an AI coding agent (or a whole team of
+humans + agents) can take an issue, plan it, write the code in a consistent style, test it, review
+it against acceptance criteria, audit it, and ship it through a real release process.
 
 **Most people struggle to set up their AI project successfully — especially without deep AI
 know-how yet. This tool is built to fix exactly that:** answer a few questions, get a proven,
 opinionated setup.
 
+- **Agent-agnostic** — [Claude Code](https://docs.claude.com/en/docs/claude-code) (full feature
+  set: subagents, hooks, the Ralph loop), **GitHub Copilot**, and **OpenAI Codex CLI** all read the
+  same shared `AGENTS.md` + get their own rendered MCP config. See
+  [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
 - **Token-based & vendor-neutral** — your own Anthropic API key *or* Claude Code OAuth token; git
   hosts via **tokens only, never OAuth**. No third-party hub.
 - **Local-first option** — run easy work on **Ollama** models (no key), keep top models for hard
@@ -22,7 +29,7 @@ opinionated setup.
 
 > 🇩🇪 Diese Anleitung gibt es auch auf **[Deutsch → README.de.md](README.de.md)**.
 
-**Version 0.1.1 · MIT License · [Changelog](CHANGELOG.md) ·
+**Version 0.3.0 · MIT License · [Changelog](CHANGELOG.md) ·
 📖 [Documentation site](https://cyber93de.github.io/aiflow/)**
 
 ---
@@ -36,7 +43,7 @@ opinionated setup.
 5. [The tools aiflow installs](#5-the-tools-aiflow-installs)
 6. [Memory: why a graph *and* a RAG index](#6-memory-why-a-graph-and-a-rag-index)
 7. [Agents — the full roster](#7-agents--the-full-roster)
-8. [Slash-command skills](#8-slash-command-skills)
+8. [Slash-commands and Skills](#8-slash-commands-and-skills)
 9. [Delivery workflow & branching models](#9-delivery-workflow--branching-models)
 10. [Team collaboration (multiple members)](#10-team-collaboration-multiple-members)
 11. [Configuring the remote host (GitHub / GitLab / custom)](#11-configuring-the-remote-host)
@@ -282,6 +289,10 @@ it explicitly. The shipped agents are **deliberately generic** — a strong, uni
 not the finish line: **customise them to your project's needs** by editing their markdown (prompt,
 allowed `tools:`, `model:`) — e.g. your domain language, your review focus, your test stack.
 
+> **Not on Claude Code?** Subagents/hooks/slash-commands below are Claude Code-only — GitHub
+> Copilot and OpenAI Codex CLI follow the same roles and rules manually from the shared
+> `AGENTS.md` (§5 there). See [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
+
 ### Delivery agents (do the work)
 | Agent | Role |
 |-------|------|
@@ -318,10 +329,11 @@ per-agent detail: [docs → Agents](https://cyber93de.github.io/aiflow/agents).
 
 ---
 
-## 8. Slash-command skills
+## 8. Slash-commands and Skills
 
-Triggerable inside Claude Code (`.claude/commands/`):
+Two different Claude Code mechanisms, both shipped:
 
+**Slash-commands** — explicitly triggered, `.claude/commands/`:
 - **Delivery:** `/intake-issue <n>` (pull a GitHub/GitLab/Bitbucket issue → Beads),
   `/decompose <goal|prd>` (task-master → Beads), `/plan-epic`,
   `/implement [bead] [ralph|no-ralph]` (pre-analysis first; unspecified → the implementer decides
@@ -332,7 +344,20 @@ Triggerable inside Claude Code (`.claude/commands/`):
   (brownfield modernisation report).
 - **Brownfield / orientation:** `/onboard`, `/explain <path>`, `/standup`.
 
-Beads and the Ralph loop also ship as plugin skills (`/beads:ready`, `/beads:decision`, `/ralph-loop`).
+Beads and the Ralph loop also ship plugin commands (`/beads:ready`, `/beads:decision`, `/ralph-loop`).
+
+**Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`, Claude Code matches the skill's
+`description` against what you're doing and offers to run it (confirm before it acts on anything
+non-trivial):
+- **seo-optimization** — SEO for any web-facing project (HTML, GitHub Pages, static sites, docs
+  sites, landing pages, blogs, Next.js, Astro, Hugo, Jekyll, VuePress, VitePress, React, Vue,
+  Svelte, Angular, …): meta tags, Open Graph/Twitter Cards, JSON-LD structured data, robots.txt/
+  sitemap.xml, canonical URLs, heading hierarchy, alt text, Core Web Vitals, GitHub Pages specifics
+  (base URL, 404, social preview, RSS). Auto-offers when web content is present/being created;
+  ends with an SEO report (fixed / still open / priority / recommendations).
+
+Add your own by dropping a new `<name>/SKILL.md` into `.claude/skills/` — see the shipped one for
+the expected frontmatter (`name`, `description`) and structure.
 
 ---
 
@@ -358,16 +383,26 @@ secured API, tests + `.http` file, review gate, close:
 `.aiflow/branching.json` + a readable `docs/branching.md`, creates permanent branches, seeds
 `VERSION`, and installs enforcement:
 
-- **Model** — `simple` (main + develop) · `gitflow` (`feature/*` from develop, `hotfix/*` from main) · `none`.
+- **Model** — `simple` (main + develop) · `gitflow` (`feature/*`/`bugfix/*` from develop, `hotfix/*`
+  from main) · `none`.
+- **main is restricted (gitflow)** — only `develop`, `hotfix/*`, or `chore/*` may ever land on
+  `main`; `feature/*`/`bugfix/*` always merge to `develop`. Doc-only and CI/workflow-file-only
+  changes count as `chore/*`.
 - **Strict rules** — enforce branch sources/targets and naming.
 - **PR-only** — no direct push to main/develop; merge only via a validated PR.
-- **Auto-release** — merging develop → main cuts a release.
+- **Auto-release** — `develop` carries `X.Y.0-SNAPSHOT`; merging into main strips it (**minor**
+  release). `aiflow hotfix <name>` bumps a hotfix branch to `X.Y.(Z+1)-HOTFIX`; merging into main
+  strips it (**patch** release) and also merges the hotfix into develop. `chore/*` → main never
+  releases, and `main` itself is never allowed to carry a `-SNAPSHOT`/`-HOTFIX` version.
+  Releasing always needs explicit, human-approved confirmation — never automatic.
 - **Version strategy** — SemVer or CalVer; optional release tags.
 - **chore/\*** — chore branches independent of feature/hotfix rules.
 
-Enforcement: the `pre-push` hook blocks direct pushes to protected branches; `aiflow protect`
-applies real server-side branch protection on GitHub; `aiflow release [--push]` bumps the version,
-tags, and bumps develop.
+Enforcement: the `pre-push` hook blocks direct pushes to protected branches, blocks
+`feature/*`/`bugfix/*` merges onto `main`, and rejects any push to `main` with a
+`-SNAPSHOT`/`-HOTFIX` version; `aiflow protect` applies real server-side branch protection on
+GitHub; `aiflow release [--yes] [--push]` prints a dry run, and only bumps the version, tags, and
+bumps develop once run with `--yes`.
 
 ---
 
@@ -405,10 +440,22 @@ matching CLI and MCP are wired automatically.
 | `bitbucket` | your URL | `BITBUCKET_TOKEN` | atlassian-bitbucket |
 | `forgejo` / `gitea` | your URL | `GIT_REMOTE_TOKEN` | gitea-mcp-server (`GITEA_URL` set) |
 | `custom` | any URL | your env var | pick from the list (or `none`) |
+| `none` | — | — | none — fully local, no MCP for a git host |
 
 **GitHub example:** create a PAT with repo + issues + pull_requests scope → put it in `.env` as
 `GITHUB_TOKEN`. **GitLab example:** create a personal access token with `api` scope → `GITLAB_TOKEN`.
 For self-managed/enterprise, give the base URL at init; aiflow wires the API URL / host into the MCP.
+
+Each host also gets a **predefined release-publish workflow**, written once (never overwritten if
+you already have one): `.github/workflows/release.yml`, `.gitlab-ci.yml`,
+`.gitea/workflows/release.yml`, `.forgejo/workflows/release.yml`, or `bitbucket-pipelines.yml`. It
+triggers on a version tag push (the one `aiflow release --push` creates) and publishes a release
+entry/note on the host — it never bumps versions itself, that stays the local, human-confirmed
+`aiflow release --yes` step.
+
+**GitKraken** is a git client, not a host — a separate `gitkraken.enabled` toggle wires its MCP
+(via the `gk` CLI) *alongside* whichever remote type you picked above, or on its own with
+`remote.type: none`.
 
 Beads issue sync (`bd github`/`bd gitlab`) and Dolt sync use the same remote. Change any of this
 later with `aiflow change-settings` (re-renders `.mcp.json`, hooks, everything).
@@ -549,8 +596,8 @@ aiflow protect                     apply server-side branch protection (GitHub)
 aiflow cost [...]                  token/cost baseline via ccusage
 aiflow doctor                      check prerequisites + project summary
 aiflow upgrade                     update the bundled toolchain
-aiflow update                      self-update the aiflow install itself (git pull)
-aiflow project-update               refresh THIS project's aiflow scripts from installed templates
+aiflow update                      self-update aiflow (git pull, or GitHub-release download if not a git checkout)
+aiflow project-update               refresh THIS project (scripts + agent defs; customised files -> *.bak)
 aiflow version
 ```
 

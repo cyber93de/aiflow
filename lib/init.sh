@@ -74,6 +74,12 @@ if [ "$MEM_ON" = true ]; then
   MEM_INT="$(ask 'Memory learning intensity (aggressive / normal / light)' aggressive)"
 fi
 
+# ---- which coding agent(s) this project targets ----
+echo; echo "Coding agent(s) — aiflow renders AGENTS.md + per-agent MCP config for whichever you pick:"
+AGENT_CLAUDE="$(ask_yn 'Claude Code (subagents, hooks, slash-commands, Ralph loop - the full feature set)' y)"
+AGENT_COPILOT="$(ask_yn 'GitHub Copilot (AGENTS.md via .github/copilot-instructions.md + .vscode/mcp.json)' n)"
+AGENT_CODEX="$(ask_yn 'OpenAI Codex CLI (reads AGENTS.md directly + .codex/config.toml)' n)"
+
 # ---- Claude access: OAuth vs API key (token-based; no OAuth for Git hosts) ----
 echo; echo "Claude access (token-based; pick how you authenticate):"
 CLAUDE_AUTH="$(ask 'Claude auth (apikey = ANTHROPIC_API_KEY / oauth = claude setup-token)' apikey)"
@@ -108,6 +114,10 @@ esac
 if [ "$REMOTE_TYPE" != none ] && [ "$REMOTE_TYPE" != custom ]; then
   REMOTE_MCP="$(ask "Git-host MCP to wire (github/gitlab/bitbucket/forgejo/gitea/none)" "$REMOTE_MCP")"
 fi
+
+# ---- GitKraken (client MCP, independent of the remote host above) ----
+echo; echo "GitKraken is a git client, not a host — wire its MCP alongside whichever host you picked above."
+GITKRAKEN_ON="$(ask_yn 'Also wire the GitKraken MCP (workspaces/PRs/issues via the gk CLI)?' n)"
 
 # ---- dolt sync-on-close rule ----
 SYNC_ONCLOSE=true
@@ -170,6 +180,7 @@ cat > .aiflow/config.json <<EOF
   "taskmaster":{ "enabled": $TM_ON },
   "mcp":       { "filesystem": $FS_ON, "context7": $CTX7_ON, "cocoindex": $COCO_ON },
   "memory":    { "enabled": $MEM_ON, "graph": $MEM_GRAPH, "intensity": "$MEM_INT" },
+  "agents":    { "claude": $AGENT_CLAUDE, "copilot": $AGENT_COPILOT, "codex": $AGENT_CODEX },
   "claude":    { "auth": "$CLAUDE_AUTH" },
   "vcs":       { "system": "$VCS_SYS" },
   "remote": {
@@ -179,6 +190,7 @@ cat > .aiflow/config.json <<EOF
     "tokenEnv": "$REMOTE_TOKENENV",
     "mcp": "$REMOTE_MCP"
   },
+  "gitkraken": { "enabled": $GITKRAKEN_ON },
   "sync":    { "askOnClose": $SYNC_ONCLOSE, "pullOnStart": true },
   "ollama":  { "enabled": $OLLAMA_ON, "url": "$(esc "$OLLAMA_URL")", "models": $OLLAMA_JSON },
   "teamPrefs": { "enabled": $TEAM_ON, "codeStyle": "$TEAM_STYLE" },
@@ -250,7 +262,7 @@ fi
 # ---- existing project: offer to learn the codebase into memory ----
 DID_ONBOARD=0
 if [ "$EXISTING" = 1 ] && command -v claude >/dev/null 2>&1; then
-  if [ "$YES" = 0 ] && [ "$(ask_yn 'Existing codebase detected - learn it now into memory + CLAUDE.md + arc42 (aiflow onboard)?' y)" = true ]; then
+  if [ "$YES" = 0 ] && [ "$(ask_yn 'Existing codebase detected - learn it now into memory + AGENTS.md + arc42 (aiflow onboard)?' y)" = true ]; then
     set -a; [ -f .env ] && . ./.env; set +a
     bash .aiflow/run-agent.sh onboarder && DID_ONBOARD=1 || echo "  (run 'aiflow onboard' later)"
   fi
@@ -265,16 +277,16 @@ if [ "$EXISTING" = 1 ]; then
 This is an EXISTING project. Your files were preserved (no overwrite without --force).
 Next steps:
   1) edit .env        -> GITHUB_TOKEN + (ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN)
-  2) $([ "$DID_ONBOARD" = 1 ] && echo 'review what onboard learned:' || echo 'learn the codebase:  aiflow onboard   ->') .claude/memory/codebase-map.md + CLAUDE.md §1/§2 + docs/architecture/
-  3) reconcile CLAUDE.md / docs/architecture with reality, then: aiflow shell
+  2) $([ "$DID_ONBOARD" = 1 ] && echo 'review what onboard learned:' || echo 'learn the codebase:  aiflow onboard   ->') .claude/memory/codebase-map.md + AGENTS.md §1/§2 + docs/architecture/
+  3) reconcile AGENTS.md / docs/architecture with reality, then: aiflow shell (Claude), or open Copilot/Codex CLI
   4) optional baseline audits: aiflow security-check | quality-check | dependency-check | test-gap | docs-check
 EOF
 else
   cat <<EOF
 This is a NEW project. Next steps:
   1) edit .env        -> GITHUB_TOKEN + (ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN)
-  2) review CLAUDE.md + .claude/memory/project-aim.md (fill the [EDIT ME] blocks)
-  3) aiflow shell     -> start Claude Code (secrets loaded)
+  2) review AGENTS.md + .claude/memory/project-aim.md (fill the [EDIT ME] blocks)
+  3) aiflow shell     -> start Claude Code (secrets loaded), or open Copilot/Codex CLI directly
 EOF
 fi
 echo "  Change any choice later: aiflow change-settings   |   full manual: README.md / README.de.md"

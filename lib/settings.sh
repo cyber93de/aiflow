@@ -45,6 +45,12 @@ if [ "$MEM_ON" = true ]; then
   MEM_INT="$(ask 'memory learning intensity (aggressive/normal/light)' "$MEM_INT")"
 fi
 
+# which coding agent(s) this project targets
+CUR_AGENT_CLAUDE="$(j .agents.claude)"; [ -z "$CUR_AGENT_CLAUDE" ] && CUR_AGENT_CLAUDE=true
+AGENT_CLAUDE="$(ask_yn 'Claude Code (full feature set)?' "$(dyn "$CUR_AGENT_CLAUDE")")"
+AGENT_COPILOT="$(ask_yn 'GitHub Copilot (AGENTS.md + .vscode/mcp.json)?' "$(dyn "$(j .agents.copilot)")")"
+AGENT_CODEX="$(ask_yn 'OpenAI Codex CLI (AGENTS.md + .codex/config.toml)?' "$(dyn "$(j .agents.codex)")")"
+
 # Claude auth (token-based)
 CLAUDE_AUTH="$(ask 'Claude auth (apikey/oauth)' "$(j .claude.auth)")"; [ -z "$CLAUDE_AUTH" ] && CLAUDE_AUTH=apikey
 
@@ -72,6 +78,9 @@ case "$REMOTE_TYPE" in
     ;;
 esac
 [ "$REMOTE_TYPE" != none ] && [ "$REMOTE_TYPE" != custom ] && REMOTE_MCP="$(ask 'Git-host MCP (github/gitlab/bitbucket/forgejo/gitea/none)' "$REMOTE_MCP")"
+
+# GitKraken (client MCP, independent of the remote host above)
+GITKRAKEN_ON="$(ask_yn 'wire the GitKraken MCP (workspaces/PRs/issues via the gk CLI)?' "$(dyn "$(j .gitkraken.enabled)")")"
 
 # dolt sync-on-close
 SYNC_ONCLOSE="$(j .sync.askOnClose)"; [ -z "$SYNC_ONCLOSE" ] && SYNC_ONCLOSE=true
@@ -126,8 +135,10 @@ jq -n \
   --argjson rtk "$RTK_ON" --argjson router "$ROUTER_ON" --argjson gfy "$GRAPHIFY_ON" \
   --argjson tm "$TM_ON" --argjson fs "$FS_ON" --argjson ctx7 "$CTX7_ON" --argjson coco "$COCO_ON" \
   --argjson mem "$MEM_ON" --argjson memg "$MEM_GRAPH" --arg memi "$MEM_INT" \
+  --argjson agclaude "$AGENT_CLAUDE" --argjson agcopilot "$AGENT_COPILOT" --argjson agcodex "$AGENT_CODEX" \
   --arg cauth "$CLAUDE_AUTH" --arg vsys "$VCS_SYS" \
   --arg rtype "$REMOTE_TYPE" --arg rurl "$REMOTE_URL" --arg rapi "$REMOTE_API" --arg rtok "$REMOTE_TOKENENV" --arg rmcp "$REMOTE_MCP" \
+  --argjson gk "$GITKRAKEN_ON" \
   --argjson sync "$SYNC_ONCLOSE" --arg pstart "$PSTART" \
   --argjson oll "$OLLAMA_ON" --arg ollurl "$OLLAMA_URL" --argjson ollm "$OLLAMA_JSON" \
   --argjson team "$TEAM_ON" --arg tstyle "$TEAM_STYLE" \
@@ -137,9 +148,11 @@ jq -n \
   '{caveman:{enabled:$cave,mode:$cmode},rtk:{enabled:$rtk},router:{enabled:$router},
     graphify:{enabled:$gfy},taskmaster:{enabled:$tm},mcp:{filesystem:$fs,context7:$ctx7,cocoindex:$coco},
     memory:{enabled:$mem,graph:$memg,intensity:$memi},
+    agents:{claude:$agclaude,copilot:$agcopilot,codex:$agcodex},
     claude:{auth:$cauth},
     vcs:{system:$vsys},
     remote:{type:$rtype,baseUrl:$rurl,api:$rapi,tokenEnv:$rtok,mcp:$rmcp},
+    gitkraken:{enabled:$gk},
     sync:{askOnClose:$sync,pullOnStart:($pstart=="true")},
     ollama:{enabled:$oll,url:$ollurl,models:$ollm},
     teamPrefs:{enabled:$team,codeStyle:$tstyle},

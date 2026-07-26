@@ -1,16 +1,32 @@
 # aiflow — full reference for LLMs
 
 > Self-contained explanation of what aiflow is and how it works, for AI assistants and context7.
-> aiflow turns any repository into a governed, AI-driven software-delivery pipeline for Claude Code.
-> Version 0.2.0 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
+> aiflow turns any repository into a governed, AI-driven software-delivery pipeline — agent-agnostic
+> across Claude Code, GitHub Copilot, and OpenAI Codex CLI.
+> Version 0.3.0 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
 
 ## What aiflow is
 A cross-platform CLI (POSIX bash + a Windows PowerShell launcher) that bootstraps and governs
-Claude Code projects. It wires Claude Code to durable task memory, two-layer code memory, specialist
-agents, team collaboration, and token savings — with one command. It is project-scoped (secrets and
+AI-agent-driven projects. It wires whichever coding agent(s) you use — Claude Code (full feature
+set: subagents, hooks, slash-commands, the Ralph loop), GitHub Copilot, and/or OpenAI Codex CLI —
+to durable task memory, two-layer code memory, specialist agents/Skills, team collaboration, gitflow
+release automation, and token savings — with one command. It is project-scoped (secrets and
 settings live in the project, never globally), token-based (never OAuth for git hosts), and
 vendor-neutral (your own Anthropic API key or Claude Code OAuth token). It vendors nothing; it
 installs/invokes external tools.
+
+## Agent-agnostic core
+`AGENTS.md` at the repo root is the single, shared source of truth (code style, quality gates,
+task workflow, git rules, Definition of Done) any coding agent should read. `CLAUDE.md` is a
+one-line `@AGENTS.md` import (Claude Code's native memory-import syntax) so Claude Code loads the
+identical content. `.github/copilot-instructions.md` points GitHub Copilot at `AGENTS.md`; OpenAI
+Codex CLI reads `AGENTS.md` directly by convention (no pointer needed). Sections in `AGENTS.md`
+marked "(Claude Code only)" — subagents, hooks, slash-commands, the Ralph loop, caveman/rtk — are
+automation only Claude Code can dispatch in-session; every other agent follows the same rules
+manually. `.aiflow/config.json`'s `agents{claude,copilot,codex}` (any combination, Claude Code on
+by default) selects which agent-specific files get rendered: `.mcp.json` (Claude), `.codex/
+config.toml` (Codex, TOML `[mcp_servers.*]`), `.vscode/mcp.json` (Copilot) — all from the same MCP
+server set (`mcp.*`, `remote.mcp`, `gitkraken.enabled`).
 
 ## How it works (the pipeline)
 1. `aiflow init` (or `change-settings`) runs an interactive Q&A and writes `.aiflow/config.json` —
@@ -24,9 +40,18 @@ installs/invokes external tools.
 Every script a project invokes on its own (Claude Code hooks, `.aiflow/*` checks, `docker/run.*`)
 ships as a `.sh` + `.ps1` pair; `apply.sh` picks the interpreter per `dev.os` when writing
 `.claude/settings.json`'s hook commands — Windows projects need no Git-Bash for their own
-hooks/checks. `aiflow update` self-updates the CLI install; `aiflow project-update` refreshes one
-project's mechanical scripts from the installed templates (each project stamps the aiflow version
-it was generated with in `meta.aiflowVersion` and is prompted to upgrade when it falls behind).
+hooks/checks. `aiflow update` self-updates the CLI install: `git pull --ff-only` if `AIFLOW_HOME`
+is a git checkout; otherwise it checks the GitHub Releases API for a newer version, downloads the
+matching per-OS archive, verifies it against the published `SHA256SUMS.txt`, and installs it over
+`AIFLOW_HOME`. `aiflow project-update` refreshes one project from the installed templates:
+mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) always, plus agent definitions
+(`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/agents/*`,
+`.claude/commands/*`, `.claude/skills/*`) — any of those that was customised (differs from the
+incoming template) is renamed to `<file>.bak` first, never deleted, and reported so you can
+reapply your changes; identical files are overwritten silently. Never touches `.beads/`,
+`.claude/memory/*`, or your `.aiflow/config.json` project settings (aim, architecture) — only
+`meta.aiflowVersion` is stamped (each project stamps the aiflow version it was generated with, and
+is prompted to upgrade when it falls behind the installed CLI).
 
 ## Code memory (the differentiator)
 Two complementary indexes plus durable task memory. The agent routes each question to the cheapest
@@ -44,7 +69,13 @@ those. `aiflow index` refreshes BOTH indexes (graphify build + ccc index).
 `remote.type` ∈ github | github-enterprise | gitlab | gitlab-self | bitbucket | forgejo | gitea |
 custom | none. The matching host MCP is wired automatically with the base URL threaded in
 (GITHUB_HOST / GITLAB_API_URL / GITEA_URL). Token comes from `.env` via `remote.tokenEnv`
-(e.g. GITHUB_TOKEN, GITLAB_TOKEN, GIT_REMOTE_TOKEN). No OAuth for git hosts.
+(e.g. GITHUB_TOKEN, GITLAB_TOKEN, GIT_REMOTE_TOKEN). No OAuth for git hosts. Each host also gets a
+predefined release-publish CI workflow (`.github/workflows/release.yml`, `.gitlab-ci.yml`,
+`.gitea/workflows/release.yml`, `.forgejo/workflows/release.yml`, `bitbucket-pipelines.yml`) —
+written once, never overwritten if one already exists — that publishes a release entry/note when
+a version tag is pushed (sources in `release-workflows/`, outside `templates/`). `gitkraken.
+enabled` wires the GitKraken MCP (via the `gk` CLI) independently of the host choice, since
+GitKraken is a client, not a host.
 
 ## Models
 - Claude access: `claude.auth` = apikey (ANTHROPIC_API_KEY) or oauth (CLAUDE_CODE_OAUTH_TOKEN).
@@ -77,14 +108,21 @@ loop), requirements-check (report only), modernization-advisor (aiflow modernize
 modernisation concepts as report .aiflow/modernization-report.md for the architect — EOL stacks,
 monolith->microservices strangler-fig, legacy->REST/JSON+cloud-native eventing, svn->git, missing
 unit/BDD/E2E frameworks; report only, not in the loop). Brownfield: onboarder (learns the codebase into
-memory/CLAUDE.md/arc42 and proposes a project aim from its understanding — user must confirm it).
+memory/AGENTS.md/arc42 and proposes a project aim from its understanding — user must confirm it).
 Shipped agents are deliberately generic (strong universal base config, ~70-80% less setup than
-blank Claude); customise them per project in .claude/agents/*.md. The project aim
-(.claude/memory/project-aim.md + CLAUDE.md §1, set via init/change-settings) tunes Claude to the
-project — 2-4 sentences: what, for whom, target architecture, quality bar. Slash skills:
-/intake-issue, /decompose, /plan-epic, /implement [bead] [ralph|no-ralph], /review-ac, /arch, the
-audit commands, /onboard, /explain, /standup. Autonomy: the Ralph loop (interactive / headless
-`aiflow ralph` / CI); if not specified, the implementer decides from its pre-analysis.
+blank); customise them per project in .claude/agents/*.md (Claude Code only — Copilot/Codex follow
+the same roles manually from AGENTS.md §5). The project aim (.claude/memory/project-aim.md +
+AGENTS.md §1, set via init/change-settings) tunes the agent to the project — 2-4 sentences: what,
+for whom, target architecture, quality bar. Slash-commands (Claude Code only): /intake-issue,
+/decompose, /plan-epic, /implement [bead] [ralph|no-ralph], /review-ac, /arch, the audit commands,
+/onboard, /explain, /standup. Skills (Claude Code only, `.claude/skills/<name>/SKILL.md`) —
+distinct from slash-commands: Claude Code matches a skill's description against the current task
+and offers to run it automatically. Ships with seo-optimization: SEO for any web-facing
+project/framework (HTML, GitHub Pages, static sites, Next.js, Astro, Hugo, Jekyll, VuePress,
+VitePress, React, Vue, Svelte, Angular) — meta tags, Open Graph/Twitter Cards, JSON-LD structured
+data, robots.txt/sitemap.xml, canonical URLs, Core Web Vitals, GitHub Pages specifics; ends with
+an SEO report. Autonomy: the Ralph loop (Claude Code only; interactive / headless `aiflow ralph` /
+CI); if not specified, the implementer decides from its pre-analysis.
 
 ## Quality, git, releases
 Google style for all languages; Conventional Commits; pre-commit/commit-msg/pre-push enforcement
@@ -98,7 +136,7 @@ keys with rotation; authorisation per endpoint. REST endpoints ship IDE-testable
 pre-analysis; manual triggers win (/implement <bead> ralph|no-ralph, or a directive written into
 the issue itself). Token framing: saving is a goal but partially achieved per task due to quality
 rules; net win = production-ready on first pass, no re-prompting/rework. Database
-rules (CLAUDE.md §3c): NEW data models >=3NF, real foreign keys, junction tables for m:n, NOT NULL
+rules (AGENTS.md §3c): NEW data models >=3NF, real foreign keys, junction tables for m:n, NOT NULL
 default, CHECK/UNIQUE constraints, precise types, no magic values, only necessary indexes, lookup
 tables, deliberate cascades, soft delete where needed (R1-R20); EXISTING schemas are handled with
 care (B1-B8 cautionary guidance): they may be shared by other projects and must support rollback
@@ -106,7 +144,11 @@ to older app versions — never restructure/re-key/re-type/merge/split/normalise
 note improvement potential as recommendation beads; commissioned schema changes are high-risk work
 (external-consumer check, backward-compat/rollback plan, versioned migration). Uncommissioned
 structural changes in a feature diff = review BLOCKER. Branching models: simple | gitflow | none, PR-only, auto-release, SemVer/CalVer; enforced by
-hooks + `aiflow protect` + `aiflow release`.
+hooks + `aiflow protect` + `aiflow release`. Gitflow: `feature/*`/`bugfix/*` from develop only,
+`hotfix/*` from main (`aiflow hotfix <name>`, versions `X.Y.(Z+1)-HOTFIX`); only develop, hotfix/*,
+or chore/* may ever reach main; chore/* never releases; main may never carry a
+`-SNAPSHOT`/`-HOTFIX` version; releasing always needs explicit human confirmation
+(`aiflow release --yes`).
 
 ## Token optimization
 caveman (terse output, ~75% fewer output tokens; code/commits/security stay normal) and rtk
@@ -121,15 +163,17 @@ archives on VERSION bump), `pages.yml` (deploy docs). No Dagger.
 ## Key commands
 init · install-deps · change-settings · shell [--router] · sync [pull|push|both] · close-sync <id> ·
 ollama [pull|add|list] · index · ralph "<prompt|bead>" · onboard · security-check / quality-check /
-requirements-check / dependency-check / test-gap / perf-check / docs-check · release [--push] ·
-protect · cost · doctor · upgrade · update · project-update · version.
+requirements-check / dependency-check / test-gap / perf-check / docs-check · hotfix <name> ·
+release [--yes] [--push] · protect · cost · doctor · upgrade · update · project-update · version.
 
 ## Config schema (essentials)
 .aiflow/config.json fields: caveman{enabled,mode}, rtk{enabled}, router{enabled}, graphify{enabled},
 taskmaster{enabled}, mcp{filesystem,context7,cocoindex}, memory{enabled,graph,intensity=off|light|
-normal|aggressive}, claude{auth}, vcs{system=git|svn|none}, remote{type,baseUrl,api,tokenEnv,mcp},
-sync{askOnClose,pullOnStart}, ollama{enabled,url,models}, teamPrefs{enabled,codeStyle},
-project{aim,architecture}, dev{os,ide}, git{model,strict,prOnly,autoRelease,versionStrategy,releaseTags,chore},
+normal|aggressive}, agents{claude,copilot,codex} (which agent-specific files get rendered),
+claude{auth}, vcs{system=git|svn|none}, remote{type,baseUrl,api,tokenEnv,mcp},
+gitkraken{enabled}, sync{askOnClose,pullOnStart}, ollama{enabled,url,models},
+teamPrefs{enabled,codeStyle}, project{aim,architecture}, dev{os,ide},
+git{model,strict,prOnly,autoRelease,versionStrategy,releaseTags,chore},
 meta{aiflowVersion} (stamped at init; compared against the installed CLI's VERSION to offer
 `aiflow project-update`).
 

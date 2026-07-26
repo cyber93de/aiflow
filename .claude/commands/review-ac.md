@@ -1,5 +1,5 @@
 ---
-description: Release gate — one agent, two hats: architect review (architecture, design, risks) plus the objective quality-gate checklist (CLAUDE.md §3a/§3b). Verdict PASS (release) or CHANGES REQUIRED.
+description: Release gate — one agent, two hats: architect review (architecture, design, risks) plus the objective quality-gate checklist (AGENTS.md §3a/§3b). Verdict PASS (release) or CHANGES REQUIRED.
 argument-hint: <bead-id, optional>
 ---
 

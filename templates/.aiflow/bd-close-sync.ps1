@@ -3,7 +3,7 @@
 # dolt-sync the configured remote (github/gitlab/custom). Never pushes silently.
 #
 # Usage:  powershell -File .aiflow/bd-close-sync.ps1 <issue-id>
-# Agents: the CLAUDE.md par.Beads-sync rule tells the agent to call this after `bd close`.
+# Agents: the AGENTS.md par.Beads-sync rule tells the agent to call this after `bd close`.
 $ErrorActionPreference = 'Continue'
 
 $issue = if ($args.Count -ge 1) { $args[0] } else { "<closed>" }

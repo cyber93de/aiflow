@@ -154,9 +154,14 @@ or chore/* may ever reach main; chore/* never releases; main may never carry a
 (`aiflow release --yes`).
 
 ## Token optimization
-caveman (terse output, ~75% fewer output tokens; code/commits/security stay normal) and rtk
-(CLI-output filtering, 60–90% fewer) are ON by default; graph/RAG retrieval; cheap/local model
-routing. Measure with `aiflow cost` (ccusage).
+Per-agent: Claude Code gets caveman (terse output, ~75% fewer output tokens; code/commits/security
+stay normal) and rtk (CLI-output filtering, 60–90% fewer), both ON by default. GitHub Copilot gets
+the token-optimization guide (github.com/olivomarco/github-copilot-token-optimization) baked into
+`.github/copilot-instructions.md` — terse output, "landmines only" context files, stable
+model/tool-set per thread. OpenAI Codex CLI gets optional CodexSaver
+(github.com/fendouai/CodexSaver, `codexsaver.enabled`) — an MCP server routing cheap/bounded work
+to a cheaper worker, needs a provider API key. Agent-agnostic: graph/RAG retrieval instead of
+reading whole files; cheap/local model routing. Measure with `aiflow cost` (ccusage).
 
 ## Containers & CI/CD
 Headless container runs via `docker/run.sh` using Podman OR Docker (auto-detected; `AIFLOW_CONTAINER`
@@ -174,7 +179,7 @@ release [--yes] [--push] · protect · cost · doctor · upgrade · update · pr
 taskmaster{enabled}, mcp{filesystem,context7,cocoindex}, memory{enabled,graph,intensity=off|light|
 normal|aggressive}, agents{claude,copilot,codex} (which agent-specific files get rendered),
 claude{auth}, vcs{system=git|svn|none}, remote{type,baseUrl,api,tokenEnv,mcp},
-gitkraken{enabled}, sync{askOnClose,pullOnStart}, ollama{enabled,url,models},
+gitkraken{enabled}, codexsaver{enabled,provider,apiKeyEnv}, sync{askOnClose,pullOnStart}, ollama{enabled,url,models},
 teamPrefs{enabled,codeStyle}, project{aim,architecture}, dev{os,ide},
 git{model,strict,prOnly,autoRelease,versionStrategy,releaseTags,chore},
 meta{aiflowVersion} (stamped at init; compared against the installed CLI's VERSION to offer

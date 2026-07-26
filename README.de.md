@@ -125,7 +125,7 @@ jeder Default, erstes Feature end-to-end).
 | **Qualität** | Google-Stil, Conventional Commits, Format-/Lint-/Test-Git-Hooks, Architekt+Quality-Gate-Review, statische Analyse bei jeder Änderung, objektive Metrik-Ziele (0 neue Smells/Duplikate, 0 Warnings), >80 % Coverage + BDD-E2E-Gates, Logging mit Leveln, `.http`-Dateien für REST-Endpunkte, DB-Regeln §3c (3NF+FKs für neue Schemata, Brownfield-Schemata mit Vorsicht) |
 | **Branching** | simple / gitflow / none, PR-only, Auto-Release, SemVer/CalVer |
 | **Team** | geteilte Issue-DB, atomares Claim, Session-Start-Auto-Pull, Pull-vor-Push, geteilte Preferences |
-| **Token-Ersparnis** | caveman + rtk standardmäßig an, Graph-/RAG-Retrieval, Cost-Routing |
+| **Token-Ersparnis** | Claude Code: caveman + rtk standardmäßig an, Graph-/RAG-Retrieval, Cost-Routing. Copilot: [Token-Optimization-Guide](https://github.com/olivomarco/github-copilot-token-optimization) fest in `copilot-instructions.md`. Codex: optional [CodexSaver](https://github.com/fendouai/CodexSaver)-MCP-Router (`codexsaver.enabled`) |
 
 ---
 
@@ -250,7 +250,9 @@ User-Space; Docker wird nie automatisch installiert.
 [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
 
 **Optional (wenn aktiviert):** claude-task-master · claude-code-router · rtk · **graphify**
-(braucht `uv`) · **cocoindex-code** (`ccc`, braucht `uv`) · **Ollama** (+ gewählte Modelle).
+(braucht `uv`) · **cocoindex-code** (`ccc`, braucht `uv`) · **Ollama** (+ gewählte Modelle) ·
+**CodexSaver** (`codexsaver.enabled`, braucht `agents.codex` + Python — kostenbewusster
+MCP-Router für Codex CLI, Clone + editable Pip-Install, kein veröffentlichtes Paket).
 
 Headless-Container-Runs (`docker/run.sh`) und der GitHub-MCP laufen mit **Podman oder Docker** —
 eines davon selbst installieren (wird nie automatisch installiert).

@@ -3,7 +3,7 @@ layout: default
 title: Features & advantages
 parent: Getting Started
 nav_order: 3
-description: "aiflow features: multi-agent support (Claude Code, GitHub Copilot, OpenAI Codex CLI), Beads task memory, code graph + semantic RAG, context7, Ollama, agents, gitflow release automation, team sync, and token savings with caveman and rtk."
+description: "aiflow features: multi-agent support (Claude Code, GitHub Copilot, OpenAI Codex CLI), Beads task memory, code graph + semantic RAG, context7, Ollama, agents, gitflow release automation, team sync, and per-agent token savings (caveman/rtk, Copilot token-optimization guide, CodexSaver)."
 ---
 
 # Features
@@ -32,7 +32,7 @@ description: "aiflow features: multi-agent support (Claude Code, GitHub Copilot,
 | **Quality** | Google style, conventional commits, format/lint/test git hooks, architect+quality-gate review, static analysis on every change, objective metric targets (0 new smells/duplicates, 0 warnings), >80 % coverage + BDD E2E gates, leveled logging, `.http` files for REST endpoints, DB rules §3c (3NF+FKs for new schemas, brownfield schemas handled with care) |
 | **Branching** | simple / gitflow / none, PR-only, auto-release, SemVer/CalVer |
 | **Team** | shared issue DB, atomic claim, session-start auto-pull, pull-before-push, shared preferences |
-| **Token savings** | caveman + rtk on by default, graph/RAG retrieval, cost routing |
+| **Token savings** | Claude Code: caveman + rtk on by default. Copilot: token-optimization guide. Codex: optional CodexSaver. Plus graph/RAG retrieval + cost routing for all |
 
 ## Advantages in depth
 
@@ -41,11 +41,15 @@ Two complementary code indexes plus durable task memory mean the agent *looks th
 guessing or re-reading dozens of files. See [Memory](memory).
 
 ### Big token reduction
-- **caveman** — terse output mode (~75% fewer output tokens; code/commits/security stay normal).
-- **rtk** — filters/compresses verbose command output before it enters context (60–90% fewer).
-- **graph + RAG retrieval** — answer from graphify/cocoindex instead of reading whole files (~70% fewer).
-- **model routing** — send easy/background steps to cheap or local (Ollama) models.
+- **caveman** (Claude Code) — terse output mode (~75% fewer output tokens; code/commits/security stay normal).
+- **rtk** (Claude Code) — filters/compresses verbose command output before it enters context (60–90% fewer).
+- **Copilot token-optimization guide** — baked into `.github/copilot-instructions.md`: output control, "landmines only" context files, model/tool-set stability.
+- **CodexSaver** (Codex CLI, optional) — routes cheap/bounded work to a cheaper MCP worker.
+- **graph + RAG retrieval** — answer from graphify/cocoindex instead of reading whole files (~70% fewer). Agent-agnostic.
+- **model routing** — send easy/background steps to cheap or local (Ollama) models. Agent-agnostic.
 - **measure first** — `aiflow cost` (ccusage) shows real spend.
+
+See [Token optimization](token-optimization) for the full per-agent detail.
 
 ### Team-ready by design
 Issues live in a shared Dolt database that syncs over your git remote — one issue graph for the whole

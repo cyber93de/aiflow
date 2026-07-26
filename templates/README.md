@@ -307,6 +307,9 @@ Each tool earns its place by raising **quality**, cutting **token cost**, or mak
 - **OpenAI Codex CLI** (`agents.codex`) — `npm i -g @openai/codex`. Reads `AGENTS.md` directly
   by convention. More on multi-agent setup:
   https://cyber93de.github.io/aiflow/multi-agent
+- **CodexSaver** (`codexsaver.enabled`, off by default) — cost-aware MCP router for Codex CLI.
+  https://github.com/fendouai/CodexSaver · *routes cheap/bounded work (docs, tests, explanation)
+  to a cheaper worker, keeping Codex for architecture/security/final review.*
 - **Beads (`bd`)** — git/Dolt-backed issue tracker. https://github.com/steveyegge/beads · *durable
   task memory with dependencies; work survives session/context resets.*
 - **Dolt** — versioned SQL database backing Beads. https://github.com/dolthub/dolt · *branch/merge/

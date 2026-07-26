@@ -34,10 +34,15 @@ if ($strat -eq "semver") {
 $hotfixBranch = ""
 if ($isHotfix) {
   $subj = (git log -1 --merges --pretty=%s 2>$null)
+  # supports both local "git merge" ("Merge branch 'X'") and GitHub PR-merge subjects
+  # ("Merge pull request #N from owner/X") - X may itself contain slashes (e.g. hotfix/foo).
+  $candidate = $null
   if ($subj -match "^Merge branch '([^']*)'") {
     $candidate = $matches[1]
-    if ($candidate -like "hotfix/*") { $hotfixBranch = $candidate }
+  } elseif ($subj -match "^Merge pull request #\d+ from [^/]+/(.*)$") {
+    $candidate = $matches[1]
   }
+  if ($candidate -and ($candidate -like "hotfix/*")) { $hotfixBranch = $candidate }
 }
 
 $rel = (& powershell -NoProfile -File .aiflow/version.ps1 release).Trim()

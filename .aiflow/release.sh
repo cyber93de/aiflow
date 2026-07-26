@@ -42,7 +42,11 @@ fi
 
 HOTFIX_BRANCH=""
 if [ "$IS_HOTFIX" = true ]; then
-  HOTFIX_BRANCH="$(git log -1 --merges --pretty=%s 2>/dev/null | sed -n "s/^Merge branch '\([^']*\)'.*/\1/p")"
+  # supports both local "git merge" ("Merge branch 'X'") and GitHub PR-merge subjects
+  # ("Merge pull request #N from owner/X") - X may itself contain slashes (e.g. hotfix/foo).
+  HOTFIX_BRANCH="$(git log -1 --merges --pretty=%s 2>/dev/null | sed -nE \
+    -e "s/^Merge branch '([^']*)'.*/\1/p" \
+    -e "s|^Merge pull request #[0-9]+ from [^/]+/(.*)|\1|p")"
   case "$HOTFIX_BRANCH" in hotfix/*) ;; *) HOTFIX_BRANCH="" ;; esac
 fi
 

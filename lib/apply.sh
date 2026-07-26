@@ -16,6 +16,7 @@ PROJ_DIR="$(pwd)"
 AGENT_CLAUDE="$(j '.agents.claude')"; [ -z "$AGENT_CLAUDE" ] && AGENT_CLAUDE=true
 AGENT_COPILOT="$(j '.agents.copilot')"; [ -z "$AGENT_COPILOT" ] && AGENT_COPILOT=false
 AGENT_CODEX="$(j '.agents.codex')"; [ -z "$AGENT_CODEX" ] && AGENT_CODEX=false
+CODEXSAVER_ON="$(j '.codexsaver.enabled')"; [ -z "$CODEXSAVER_ON" ] && CODEXSAVER_ON=false
 CAVEMAN_ON="$(j '.caveman.enabled')"; CAVEMAN_MODE="$(j '.caveman.mode')"
 RTK_ON="$(j '.rtk.enabled')"
 ROUTER_ON="$(j '.router.enabled')"
@@ -117,8 +118,26 @@ if [ "$AGENT_CODEX" = "true" ]; then
       "[mcp_servers.\(.key)]\ncommand = \(.value.command|@json)\nargs = \(.value.args|@json)" +
       (if .value.env then "\n[mcp_servers.\(.key).env]\n" +
         ([.value.env|to_entries[]|"\(.key) = \(.value|@json)"]|join("\n")) else "" end) + "\n"' "$tmp"
+    if [ "$CODEXSAVER_ON" = "true" ]; then
+      # CodexSaver (https://github.com/fendouai/CodexSaver) has its own installer that normally
+      # writes this same file - we own it instead and just point at the stable script path its
+      # installer creates (~/.codexsaver/codexsaver_mcp.py), so re-running 'aiflow apply' never
+      # clobbers/duplicates its entry. Codex CLI is a native binary, so on Windows the path must
+      # be Windows-style (C:\...), not Git-Bash's POSIX-style $HOME - convert with cygpath if
+      # present, else fall back to $HOME as-is (correct on Linux/macOS).
+      if command -v cygpath >/dev/null 2>&1; then
+        CS_PATH="$(cygpath -w "$HOME/.codexsaver/codexsaver_mcp.py" | sed 's/\\/\\\\/g')"
+      else
+        CS_PATH="$HOME/.codexsaver/codexsaver_mcp.py"
+      fi
+      echo "[mcp_servers.codexsaver]"
+      echo "command = \"python\""
+      echo "args = [\"$CS_PATH\"]"
+      echo "startup_timeout_sec = 10"
+      echo "tool_timeout_sec = 120"
+    fi
   } > .codex/config.toml
-  echo "  .codex/config.toml rendered for Codex CLI"
+  echo "  .codex/config.toml rendered for Codex CLI (codexsaver=$CODEXSAVER_ON)"
 fi
 if [ "$AGENT_COPILOT" = "true" ]; then
   mkdir -p .vscode

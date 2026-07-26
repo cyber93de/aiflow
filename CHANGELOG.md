@@ -8,6 +8,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **CodexSaver integration** (`codexsaver.enabled`, off by default) — optional cost-aware MCP
+  router for OpenAI Codex CLI ([fendouai/CodexSaver](https://github.com/fendouai/CodexSaver)):
+  delegates cheap/bounded work (docs, tests, explanation, search) to a cheaper worker, keeping
+  Codex for architecture/security/final review. `aiflow install-deps` clones + editable-pip-installs
+  it (no published package) plus Pi Agent, and sets the provider key from `.env` if present;
+  `apply.sh` owns `.codex/config.toml` and appends CodexSaver's entry itself (pointing at the
+  stable script path its own installer creates), so re-running `aiflow apply` never clobbers or
+  duplicates it. Needs a provider API key (DeepSeek by default) — untested end-to-end here (no
+  key available in this environment); config rendering and install wiring are verified.
 - **Ralph loop rebuilt on [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum)** —
   genuinely agent-agnostic now (Claude Code, OpenAI Codex CLI, GitHub Copilot CLI via `--agent`),
   replacing the old Claude-only hand-rolled `claude -p` loop. `aiflow ralph "<task>"` defaults to

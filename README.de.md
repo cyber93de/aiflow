@@ -30,7 +30,7 @@ erprobtes, meinungsstarkes Setup.
 
 > 🇬🇧 This guide is also available in **[English → README.md](README.md)**.
 
-**Version 0.3.0 · MIT-Lizenz · [Changelog](CHANGELOG.md) ·
+**Version 0.3.1 · MIT-Lizenz · [Changelog](CHANGELOG.md) ·
 📖 [Doku-Seite](https://cyber93de.github.io/aiflow/)**
 
 ---

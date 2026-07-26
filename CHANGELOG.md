@@ -17,6 +17,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - install-deps installs Claude Code / GitHub Copilot CLI / OpenAI Codex CLI per `agents.*`
   config (previously Claude Code was unconditional and the other two were never installed);
   `aiflow doctor` reports all three plus `ralph`/`bun`.
+- `.github/copilot-instructions.md` now applies the highest-ROI techniques from the [GitHub
+  Copilot token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization):
+  output-control directive, "landmines only" context-file guidance, model/cache-stability advice,
+  and an `applyTo:` scoping tip.
 
 ## [0.3.0] — 2026-07-26
 

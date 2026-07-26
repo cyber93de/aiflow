@@ -3,7 +3,7 @@ layout: default
 title: Getting Started
 nav_order: 2
 has_children: true
-description: "Install aiflow for Claude Code and build your first AI-driven, governed delivery project — cross-platform, project-scoped, token-based."
+description: "Install aiflow and build your first AI-driven, governed delivery project — agent-agnostic (Claude Code, GitHub Copilot, OpenAI Codex CLI), cross-platform, project-scoped, token-based."
 ---
 
 # Getting Started

@@ -75,13 +75,21 @@ git show-ref --verify --quiet refs/heads/develop
 if ($LASTEXITCODE -eq 0) {
   git switch -q develop
   if ($isHotfix -and $hotfixBranch) {
+    $mergeRef = $null
     git show-ref --verify --quiet "refs/heads/$hotfixBranch"
-    if ($LASTEXITCODE -eq 0) {
+    if ($LASTEXITCODE -eq 0) { $mergeRef = $hotfixBranch }
+    else {
+      # local branch is often already gone by now (e.g. GitHub's "delete branch on merge"
+      # after a PR merge) - fall back to the remote-tracking ref so the fix still lands here.
+      git show-ref --verify --quiet "refs/remotes/origin/$hotfixBranch"
+      if ($LASTEXITCODE -eq 0) { $mergeRef = "origin/$hotfixBranch" }
+    }
+    if ($mergeRef) {
       # VERSION always conflicts here (hotfix carries X.Y.Z-HOTFIX, develop its own -SNAPSHOT) -
       # expected and harmless since VERSION gets overwritten with $next right after anyway.
       # Any other conflict is real and aborts for manual resolution.
       $ok = $true
-      git merge --no-ff --no-commit -q $hotfixBranch *> $null
+      git merge --no-ff --no-commit -q $mergeRef *> $null
       if ($LASTEXITCODE -ne 0) { $ok = $false }
       if (-not $ok) {
         $conflicted = (git diff --name-only --diff-filter=U) -join "`n"

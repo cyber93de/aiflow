@@ -78,12 +78,20 @@ fi
 # bump develop (and fold the hotfix fix back in, so it isn't lost there)
 if git show-ref --verify --quiet refs/heads/develop; then
   git switch -q develop
-  if [ "$IS_HOTFIX" = true ] && [ -n "$HOTFIX_BRANCH" ] && git show-ref --verify --quiet "refs/heads/$HOTFIX_BRANCH"; then
+  MERGE_REF=""
+  if [ "$IS_HOTFIX" = true ] && [ -n "$HOTFIX_BRANCH" ]; then
+    if git show-ref --verify --quiet "refs/heads/$HOTFIX_BRANCH"; then MERGE_REF="$HOTFIX_BRANCH"
+    # local branch is often already gone by now (e.g. GitHub's "delete branch on merge"
+    # after a PR merge) - fall back to the remote-tracking ref so the fix still lands here.
+    elif git show-ref --verify --quiet "refs/remotes/origin/$HOTFIX_BRANCH"; then MERGE_REF="origin/$HOTFIX_BRANCH"
+    fi
+  fi
+  if [ -n "$MERGE_REF" ]; then
     # VERSION always conflicts here (hotfix carries X.Y.Z-HOTFIX, develop carries its own
     # -SNAPSHOT) - that's expected and harmless, since VERSION gets overwritten with $NEXT
     # right after anyway. Any other conflict is a real one and aborts for manual resolution.
     ok=true
-    git merge --no-ff --no-commit -q "$HOTFIX_BRANCH" >/dev/null 2>&1 || ok=false
+    git merge --no-ff --no-commit -q "$MERGE_REF" >/dev/null 2>&1 || ok=false
     if [ "$ok" = false ]; then
       conflicted="$(git diff --name-only --diff-filter=U)"
       if [ "$conflicted" = "VERSION" ]; then

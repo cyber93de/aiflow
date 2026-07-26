@@ -3,7 +3,7 @@ layout: default
 title: Installation
 parent: Getting Started
 nav_order: 1
-description: "Install aiflow on Linux, macOS, or Windows for Claude Code. The installer offers git, Subversion (svn), and Ollama; then aiflow install-deps fetches the toolchain."
+description: "Install aiflow on Linux, macOS, or Windows — works with Claude Code, GitHub Copilot, and OpenAI Codex CLI. The installer offers git, Subversion (svn), and Ollama; then aiflow install-deps fetches the toolchain."
 ---
 
 # Installation

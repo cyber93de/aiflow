@@ -34,7 +34,7 @@ description: "aiflow CLI command reference: init, install-deps, change-settings,
 | `aiflow shell [--router]` | Load `.env`, launch Claude Code (`--router` = cheap/local models). |
 | `aiflow index` | Refresh code memory: graphify (graph) + cocoindex (RAG). |
 | `aiflow ralph "<prompt|bead id>"` | Run the headless Ralph loop. |
-| `aiflow onboard` | Learn an existing codebase into memory + CLAUDE.md + arc42. |
+| `aiflow onboard` | Learn an existing codebase into memory + AGENTS.md + arc42. |
 | `aiflow ollama [pull\|add <m>\|list]` | Manage local Ollama models. |
 
 ## Team sync

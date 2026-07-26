@@ -239,8 +239,13 @@ Code-Indizes jederzeit mit **`aiflow index`** bauen (Graph + RAG).
 `aiflow install-deps` installiert nur, was deine Config aktiviert (`--all` = voller Satz). Alles im
 User-Space; Docker wird nie automatisch installiert.
 
-**Kern (immer):** Claude Code · Beads (`bd`) · Dolt (Beads-Backend) · jq · das zum Remote passende
-Git-Host-CLI (`gh`/`glab`).
+**Kern (immer):** Beads (`bd`) · Dolt (Beads-Backend) · jq · das zum Remote passende Git-Host-CLI
+(`gh`/`glab`).
+
+**Coding-Agent-CLIs (je `agents.*`):** Claude Code (`agents.claude`, standardmäßig an) ·
+**GitHub Copilot CLI** (`agents.copilot`, `npm i -g @github/copilot`) · **OpenAI Codex CLI**
+(`agents.codex`, `npm i -g @openai/codex`). Beliebig kombinierbar — siehe
+[Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
 
 **Optional (wenn aktiviert):** claude-task-master · claude-code-router · rtk · **graphify**
 (braucht `uv`) · **cocoindex-code** (`ccc`, braucht `uv`) · **Ollama** (+ gewählte Modelle).

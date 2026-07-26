@@ -17,9 +17,13 @@ case "$(uname -s 2>/dev/null)" in MINGW*|MSYS*|CYGWIN*) OS=windows;; Darwin) OS=
 cfg() { if have jq && [ -f .aiflow/config.json ]; then jq -r "$1 // \"$2\"" .aiflow/config.json; else echo "$2"; fi; }
 if [ "$ALL" = 1 ] || [ ! -f .aiflow/config.json ]; then
   RTK=true; TM=true; ROUTER=true; GFY=true   # global/--all: offer the full set
+  AGENT_CLAUDE=true; AGENT_COPILOT=true; AGENT_CODEX=true
 else
   RTK="$(cfg .rtk.enabled false)"; TM="$(cfg .taskmaster.enabled false)"
   ROUTER="$(cfg .router.enabled false)"; GFY="$(cfg .graphify.enabled false)"
+  AGENT_CLAUDE="$(cfg .agents.claude true)"    # default true: back-compat, aiflow's origin agent
+  AGENT_COPILOT="$(cfg .agents.copilot false)"
+  AGENT_CODEX="$(cfg .agents.codex false)"
 fi
 OLLAMA="$(cfg .ollama.enabled false)"
 COCO="$(cfg .mcp.cocoindex false)"; [ "$ALL" = 1 ] && COCO=true
@@ -72,9 +76,17 @@ install_ollama() {
 
 echo "aiflow install-deps (os=$OS, all=$ALL)"
 echo "  enabled: rtk=$RTK task-master=$TM router=$ROUTER graphify=$GFY cocoindex=$COCO ollama=$OLLAMA"
+echo "  coding agent(s): claude=$AGENT_CLAUDE copilot=$AGENT_COPILOT codex=$AGENT_CODEX"
 
-# ---- core (always) ----
-have claude || { say "claude code"; npmg @anthropic-ai/claude-code; }
+# ---- coding agent CLIs (per agents.* config) ----
+[ "$AGENT_CLAUDE" = true ]  && ! have claude  && { say "Claude Code"; npmg @anthropic-ai/claude-code; }
+[ "$AGENT_COPILOT" = true ] && ! have copilot && { say "GitHub Copilot CLI"; npmg @github/copilot; }
+if [ "$AGENT_CODEX" = true ] && ! have codex; then
+  say "OpenAI Codex CLI"
+  npmg @openai/codex || { [ "$OS" = macos ] && have brew && brew install --cask codex; } \
+    || warn "install codex manually: npm i -g @openai/codex (or brew install --cask codex on macOS)"
+fi
+
 install_dolt   # Beads needs the dolt binary (runs a dolt sql-server)
 have bd     || { say "beads (bd)"; npmg @beads/bd || { have go && go install github.com/steveyegge/beads/cmd/bd@latest; } || warn "install beads manually: https://github.com/steveyegge/beads"; }
 have jq     || { say "jq"; if have brew; then brew install jq; elif [ "$OS" = windows ]; then { have winget && winget install --id jqlang.jq -e; } || { have scoop && scoop install jq; } || warn "install jq: https://jqlang.github.io/jq/"; elif [ "$OS" = linux ]; then (sudo apt-get install -y jq || sudo dnf install -y jq) 2>/dev/null; else warn "install jq: https://jqlang.github.io/jq/"; fi; }

@@ -6,7 +6,7 @@
   "taskmaster":{ "enabled": false },
   "mcp":       { "filesystem": true, "context7": true, "cocoindex": true },
   "memory":    { "enabled": true, "graph": true, "intensity": "aggressive" },
-  "agents":    { "claude": true, "copilot": false, "codex": false },
+  "agents":    { "claude": true, "copilot": true, "codex": true },
   "claude":    { "auth": "oauth" },
   "vcs":       { "system": "git" },
   "remote": {

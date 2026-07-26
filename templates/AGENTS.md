@@ -489,6 +489,12 @@ Copilot/Codex route models through their own settings**)**. Manage models with `
   with `aiflow cost` (Claude Code usage only).
 - CLI output is filtered by **rtk** before reaching context **(Claude Code only)** —
   errors/diffs are preserved.
+- **Copilot:** apply the [token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization)'s
+  techniques baked into `.github/copilot-instructions.md` — terse output, "landmines only"
+  context files, stable model/tool-set per thread.
+- **Codex:** when `codexsaver.enabled`, [CodexSaver](https://github.com/fendouai/CodexSaver)
+  routes cheap/bounded work (docs, tests, explanation, search) to a cheaper worker automatically
+  via MCP — Codex stays responsible for architecture, security, and final review.
 
 ---
 

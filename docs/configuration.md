@@ -56,6 +56,7 @@ Everything is driven by **`.aiflow/config.json`** (committed, no secrets). Edit 
   "remote":   { "type": "github", "baseUrl": "https://github.com",
                 "api": "github-api", "tokenEnv": "GITHUB_TOKEN", "mcp": "github" },
   "gitkraken":{ "enabled": false },
+  "codexsaver":{ "enabled": false, "provider": "deepseek", "apiKeyEnv": "DEEPSEEK_API_KEY" },
   "sync":     { "askOnClose": true, "pullOnStart": true },
   "ollama":   { "enabled": false, "url": "http://localhost:11434", "models": [] },
   "teamPrefs":{ "enabled": false, "codeStyle": "google" },

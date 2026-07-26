@@ -22,6 +22,7 @@ check "node"    node    "https://nodejs.org (LTS)"
 check "jq"      jq      "https://jqlang.github.io/jq/ (required to read .aiflow/config.json)"
 check "bd"      bd      "Beads: https://github.com/steveyegge/beads (or /beads:init in Claude)"
 check "ralph"   ralph   "Ralph loop (open-ralph-wiggum): npm i -g @th0rgal/ralph-wiggum (needs bun)"
+check "codexsaver" codexsaver "cost-aware Codex CLI router (only if codexsaver.enabled): https://github.com/fendouai/CodexSaver"
 check "bun"     bun     "runtime for the Ralph loop: https://bun.sh"
 check "dolt"    dolt    "Beads backend (bd runs a dolt sql-server): https://docs.dolthub.com/introduction/installation"
 if command -v podman >/dev/null 2>&1; then check "podman" podman "container engine for GitHub MCP + headless runs"
@@ -50,10 +51,11 @@ else echo "  [MISS] npx        needs node (for ccusage + claude-code-templates)"
 if command -v jq >/dev/null 2>&1 && [ -f .aiflow/config.json ]; then
   echo
   echo "this project (.aiflow/config.json):"
-  printf "  agents:  claude=%s copilot=%s codex=%s\n" \
+  printf "  agents:  claude=%s copilot=%s codex=%s  codexsaver=%s\n" \
     "$(jq -r '.agents.claude // true' .aiflow/config.json)" \
     "$(jq -r '.agents.copilot // false' .aiflow/config.json)" \
-    "$(jq -r '.agents.codex // false' .aiflow/config.json)"
+    "$(jq -r '.agents.codex // false' .aiflow/config.json)" \
+    "$(jq -r '.codexsaver.enabled // false' .aiflow/config.json)"
   printf "  remote:  %s (%s) — host MCP: %s\n" \
     "$(jq -r '.remote.type // "?"' .aiflow/config.json)" \
     "$(jq -r '.remote.baseUrl // "" | if .=="" then "public" else . end' .aiflow/config.json)" \

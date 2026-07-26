@@ -3,7 +3,7 @@ layout: default
 title: Models & context7
 parent: CLI & Configuration
 nav_order: 4
-description: "Claude access (API key or OAuth), Ollama local models (qwen3-coder), adding more models via claude-code-router, and context7 live library docs for Claude Code."
+description: "Claude access (API key or OAuth), Ollama local models (qwen3-coder), adding more models via claude-code-router, and context7 live library docs — context7 wires as an MCP server for Claude Code, GitHub Copilot, or OpenAI Codex CLI."
 ---
 
 # Claude access, Ollama, more models & context7

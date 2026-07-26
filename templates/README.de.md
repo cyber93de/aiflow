@@ -66,7 +66,7 @@ Arbeitsumgebung** für Claude Code in dein Repo installiert:
 - **Git-Governance**: konfigurierbares Branching-Modell mit PR-Regeln, Releases, Versionierung.
 - **Ein echter Review-Trail**: Akzeptanzkriterien-Checks, Anforderungs-Audits, priorisierte Funde.
 
-Alles sind Dateien im Repo (`CLAUDE.md`, `.claude/`, `.aiflow/`, `.githooks/`) — transparent,
+Alles sind Dateien im Repo (`AGENTS.md`, `.claude/`, `.aiflow/`, `.githooks/`) — transparent,
 editierbar, kein Lock-in.
 
 ---
@@ -93,8 +93,9 @@ Eine Erklärung in einfachen Worten. Überspringen, wenn du Claude Code kennst.
   graphify-Graph — jede Sitzung startet informiert.
 - **MCP (Model Context Protocol):** Standard, um externe Tools anzubinden (GitHub-Issues,
   Dateisystem, Code-Graph). aiflow erzeugt die MCP-Konfiguration.
-- **Claudes Projekteinstellungen:** einfache Dateien steuern das Verhalten — `CLAUDE.md` (Regeln für
-  alle Agenten), `.claude/settings.json` (Berechtigungen + Hooks), `docs/architecture/` (arc42 + ADRs).
+- **Projekteinstellungen:** einfache Dateien steuern das Verhalten — `AGENTS.md` (Regeln für
+  alle Agenten, agent-agnostisch), `.claude/settings.json` (nur Claude Code: Berechtigungen +
+  Hooks), `docs/architecture/` (arc42 + ADRs).
 
 Ziel: Auch ein Laie führt `aiflow init` aus, beantwortet ein paar Fragen und erhält ein Setup, das die
 KI standardmäßig zu **qualitativ gutem, günstigem, reviewbarem** Output lenkt.
@@ -168,11 +169,11 @@ passt sich an:
 
 | | **Neues Projekt** (leerer Ordner) | **Bestehendes Projekt** (hat Code / Git-Historie) |
 |---|---|---|
-| Deine Dateien | nichts zu schützen | **bleiben erhalten** — Templates werden *no-clobber* kopiert; vorhandene `CLAUDE.md`, `.gitignore` usw. werden nie überschrieben (`--force` zum Ersetzen) |
+| Deine Dateien | nichts zu schützen | **bleiben erhalten** — Templates werden *no-clobber* kopiert; vorhandene `AGENTS.md`, `.gitignore` usw. werden nie überschrieben (`--force` zum Ersetzen) |
 | `git init` | läuft | übersprungen (Historie bleibt) |
 | `bd init` | läuft | nur wenn `.beads/` fehlt; Git-Hooks werden mit Beads-Hooks gemerged |
 | Branching-Modell | permanente Branches aus dem ersten Commit | `main`/`develop` aus aktuellem `HEAD` nur falls fehlend; dein aktueller Branch bleibt unangetastet |
-| Architektur-Wissen | du füllst `CLAUDE.md §1/§2` + arc42 + `project-aim` | aiflow **bietet `aiflow onboard` an**: studiert den Code, schreibt `.claude/memory/codebase-map.md` + `conventions.md`, füllt die `[EDIT ME]`-Blöcke in `CLAUDE.md` und `docs/architecture/arc42.md` |
+| Architektur-Wissen | du füllst `AGENTS.md §1/§2` + arc42 + `project-aim` | aiflow **bietet `aiflow onboard` an**: studiert den Code, schreibt `.claude/memory/codebase-map.md` + `conventions.md`, füllt die `[EDIT ME]`-Blöcke in `AGENTS.md` und `docs/architecture/arc42.md` |
 | Empfohlener Folgeschritt | losbauen | Baseline-Audits (`aiflow security-check`, `quality-check`, `dependency-check`, `test-gap`, `docs-check`) zum Befüllen des Backlogs |
 
 **Empfohlener Ablauf für ein bestehendes Projekt:**
@@ -181,7 +182,7 @@ cd /pfad/zum/bestehenden/repo
 aiflow init               # bewahrt deine Dateien; beim Onboarding "ja" sagen
 # (oder später explizit:)  aiflow onboard
 # Gelerntes prüfen & abgleichen:
-#   .claude/memory/codebase-map.md, CLAUDE.md §1/§2, docs/architecture/arc42.md
+#   .claude/memory/codebase-map.md, AGENTS.md §1/§2, docs/architecture/arc42.md
 aiflow index              # graphify-Graph über den Bestandscode bauen
 aiflow security-check     # optional: Backlog mit priorisierten Funden befüllen
 aiflow shell
@@ -217,7 +218,7 @@ aiflow shell            # lädt .env und startet Claude Code
 | `aiflow docs-check` | Doku/Code-Drift → `[docs]` Beads. |
 | `aiflow a11y-check` | Strikte WCAG-2.2-AA-Barrierefreiheitsprüfung → `[accessibility]` Beads. |
 | `aiflow modernize-check` | Brownfield-Modernisierungskonzepte → Bericht `.aiflow/modernization-report.md` für den Architekten. |
-| `aiflow onboard` | Bestandscode in Memory + CLAUDE.md + arc42 lernen. |
+| `aiflow onboard` | Bestandscode in Memory + AGENTS.md + arc42 lernen. |
 | `aiflow release [--push]` | Release gemäß Branching-Modell (Version-Bump + Tag). |
 | `aiflow protect` | Server-seitigen Branch-Schutz setzen (GitHub). |
 | `aiflow index` | graphify Code-Wissensgraph bauen/aktualisieren. |
@@ -266,7 +267,7 @@ explizit auf. Drei Gruppen:
 
 **Brownfield-Agent:**
 - **onboarder** — studiert Bestandscode und persistiert das Gelernte in `.claude/memory/`,
-  `CLAUDE.md` und arc42; **schlägt aus dem Verständnis ein Projektziel (Aim) vor** und fragt dich,
+  `AGENTS.md` und arc42; **schlägt aus dem Verständnis ein Projektziel (Aim) vor** und fragt dich,
   ob es stimmt. Schreibt nur Doku/Memory.
 
 Die mitgelieferten Agenten sind **bewusst generisch** — eine starke, universelle Basis, nicht das
@@ -346,7 +347,7 @@ Issue (GitHub / GitLab / Bitbucket)
 ```
 
 Eine Aufgabe ist **DONE** nur wenn: AK erfüllt • Tests grün • Style/Lint sauber • Review-Gate
-bestanden • Bead geschlossen • Commit referenziert Bead-ID (CLAUDE.md §10).
+bestanden • Bead geschlossen • Commit referenziert Bead-ID (AGENTS.md §10).
 
 ---
 
@@ -394,7 +395,7 @@ Separat ist **`aiflow requirements-check`** rein beratend: benotet die Beschreib
 
 Standardmäßig an:
 
-- **Code-Stil:** Google Style für **jede** Sprache (CLAUDE.md §3), mit Formattern pro Sprache.
+- **Code-Stil:** Google Style für **jede** Sprache (AGENTS.md §3), mit Formattern pro Sprache.
 - **Auto-Format:** ein PostToolUse-Hook formatiert Dateien direkt nach KI-Edits.
 - **pre-commit-Hook:** blockt den Commit, wenn Format + Lint + Unit-Tests nicht bestehen.
 - **commit-msg-Hook:** lehnt Nicht-**Conventional-Commits** ab.
@@ -402,12 +403,12 @@ Standardmäßig an:
 - **Review-Gate:** `/review-ac` + der *reviewer*-Agent — Architekt **und** Quality Gate in einem:
   Architektur-/Design-/Risiko-Review plus objektive Freigabe-Checkliste; Verdikt PASS oder CHANGES
   REQUIRED; Out-of-Scope-Ideen werden als `[suggestion]`-Beads für die nächste Loop festgehalten.
-- **Quality Gates (CLAUDE.md §3a):** statische Analyse bei jeder Umsetzung (Tool oder der Agent
+- **Quality Gates (AGENTS.md §3a):** statische Analyse bei jeder Umsetzung (Tool oder der Agent
   selbst — keine Code Smells), >80 % Coverage der geänderten Logik + alle nicht-statischen
   Methoden getestet, Unit- + BDD-End-to-End-Tests immer, Logging mit Leveln Pflicht, plus
   objektive Metrik-Ziele (0 neue Duplikate/Smells, 0 Architekturverletzungen, 0 Linter-/
   Compiler-Warnings, 0 High/Critical-Security-Findings).
-- **REST-`.http`-Dateien (CLAUDE.md §3b):** jeder neue/geänderte Endpunkt bekommt eine in der IDE
+- **REST-`.http`-Dateien (AGENTS.md §3b):** jeder neue/geänderte Endpunkt bekommt eine in der IDE
   testbare `.http`-Datei; Host/Port/Testzugang aus `.env` (`APP_HOST`, `APP_PORT`,
   `TEST_USERNAME`, `TEST_PASSWORD`).
 
@@ -477,7 +478,7 @@ gitflow) nicht-konforme Namen ab, blockt `feature/*`/`bugfix/*`-Merges auf `main
 Push auf `main` mit `-SNAPSHOT`/`-HOTFIX`-Version zurück; **`aiflow protect`** setzt echten
 server-seitigen Branch-Schutz auf GitHub (PR + CI erforderlich); **`aiflow release [--yes]
 [--push]`** zeigt erst einen Dry-Run und bumpt Version, taggt und hebt develop erst mit `--yes` an.
-Agenten lesen das Modell und befolgen es (CLAUDE.md §7).
+Agenten lesen das Modell und befolgen es (AGENTS.md §7).
 
 ---
 
@@ -525,7 +526,7 @@ Branching-Modell, Memory usw.). Secrets bleiben stets in `.env` (gitignored).
 - **Tools / Binaries** — einmal pro Benutzer (`npm -g`, `uv tool`, brew/winget); über Projekte
   geteilt. `aiflow install-deps` legt sie dort ab. Die Router-Config liegt ebenfalls im Home.
 - **Konfiguration & Secrets** — pro Projekt: `.env` (gitignored, nie global), `.aiflow/config.json`,
-  `CLAUDE.md`, `.mcp.json`, `.claude/`, `.githooks/`, Memory. Projektwechsel wechselt die Config;
+  `AGENTS.md`, `.mcp.json`, `.claude/`, `.githooks/`, Memory. Projektwechsel wechselt die Config;
   nichts leakt zwischen Projekten.
 
 ---
@@ -551,9 +552,9 @@ Der Headless-Ralph-Loop läuft auf zwei Wegen identisch:
 
 ## 21. Anpassen
 
-- **Regeln für alle Agenten:** `CLAUDE.md` bearbeiten (Überblick §1, Architektur §2, Stil §3,
+- **Regeln für alle Agenten:** `AGENTS.md` bearbeiten (Überblick §1, Architektur §2, Stil §3,
   Workflow, Git, DoD).
-- **Architekturhinweise:** schnelle Regeln in `CLAUDE.md §2`; das große Bild in `docs/architecture/`
+- **Architekturhinweise:** schnelle Regeln in `AGENTS.md §2`; das große Bild in `docs/architecture/`
   (arc42); Entscheidungen als ADRs (`/arch "<frage>"` schreibt sie via *architect*-Agent).
 - **Skills:** `.claude/commands/<name>.md` anlegen.
 - **Berechtigungen:** `permissions.allow` in `.claude/settings.json` erlaubt Routine-Befehle vorab
@@ -567,7 +568,7 @@ Der Headless-Ralph-Loop läuft auf zwei Wegen identisch:
 ## 22. Projektstruktur
 
 ```
-CLAUDE.md                  Regeln für alle Agenten (Architektur, Google Style, Workflow, Git, DoD)
+AGENTS.md                  Regeln für alle Agenten (Architektur, Google Style, Workflow, Git, DoD)
 README.md / README.de.md   dieses Handbuch (EN/DE)
 LICENSE                    MIT
 .aiflow/
@@ -618,7 +619,7 @@ aiflow selbst braucht kein Upgrade-Tool — `upgrade` betrifft die **Dependencie
 - **Ralph sofort BLOCKED:** `result.json` / `.aiflow/ralph.log` lesen — meist unklare AK oder
   fehlender Zugang.
 - **`bd`-Fehler / keine DB:** Beads braucht **dolt** — `aiflow install-deps` installiert es.
-- **Auto-Format/Lint tut nichts:** passenden Formatter installieren (CLAUDE.md §3).
+- **Auto-Format/Lint tut nichts:** passenden Formatter installieren (AGENTS.md §3).
 - **pre-push blockt:** das ist das Branching-Modell; ordentlichen Branch/PR nutzen oder
   `AIFLOW_ALLOW_DIRECT_PUSH=1` für Tooling.
 - **`--router` startet nicht:** claude-code-router installieren + `~/.claude-code-router/config.json` anlegen.

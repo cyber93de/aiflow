@@ -72,11 +72,12 @@ task — the real saving is **never having to ask twice**.
 - **[Getting started](getting-started)** — install and build your first project.
 - **[Features](features)** — the full capability map.
 - **[Memory: graph + RAG](memory)** — why aiflow uses both, and how it routes questions.
-- **[Agents](agents)** — the full roster of delivery, audit, and brownfield agents.
+- **[Agents](agents)** — the full roster of delivery, audit, and brownfield agents (Claude Code).
+- **[Multi-Agent Support](multi-agent)** — using GitHub Copilot and/or OpenAI Codex CLI too.
 - **[Models](models)** — Claude access, Ollama, context7, adding more models.
 - **[Remote hosts](remotes)** — GitHub, GitLab, Bitbucket, Forgejo, Gitea, custom.
 - **[Team collaboration](team)** — many members, one issue graph.
-- **[Configuration](configuration)** — CLAUDE.md, team preferences, custom MCPs.
+- **[Configuration](configuration)** — AGENTS.md, team preferences, custom MCPs.
 - **[Commands](commands)** — the `aiflow` CLI reference.
 - **[Workflows & CI/CD](workflows)** — branching models + build/release.
 - **[FAQ](faq)** · **[Feedback & contributing](contributing)**

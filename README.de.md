@@ -51,7 +51,7 @@ erprobtes, meinungsstarkes Setup.
 12. [Claude-Zugang, Ollama & weitere Modelle](#12-claude-zugang-ollama--weitere-modelle)
 13. [Arbeiten mit context7](#13-arbeiten-mit-context7)
 14. [Eigene MCP-Server hinzufügen](#14-eigene-mcp-server-hinzufügen)
-15. [Konfiguration, die du anpassen solltest (CLAUDE.md, Preferences, …)](#15-konfiguration-die-du-anpassen-solltest)
+15. [Konfiguration, die du anpassen solltest (AGENTS.md, Preferences, …)](#15-konfiguration-die-du-anpassen-solltest)
 16. [Kommando-Referenz](#16-kommando-referenz)
 17. [Token- & Kostenoptimierung](#17-token--kostenoptimierung)
 18. [CI/CD & Releases bauen](#18-cicd--releases-bauen)
@@ -200,7 +200,7 @@ aiflow init --no-token-saving   # dito, aber caveman + rtk aus (volle, ungefilte
 > **Das Projektziel (Aim) nicht überspringen — der günstigste Qualitätshebel.** Das Aim stimmt
 > Claude auf *dein* Projekt ab: Jeder Agent liest es vor Planung und Code. Nenne es aiflow beim
 > `init` (Frage 11) oder später via `aiflow change-settings` — oder pflege es manuell in
-> **`.claude/memory/project-aim.md`** und **`CLAUDE.md §1`**. Ein gutes Aim sind 2–4 klare Sätze:
+> **`.claude/memory/project-aim.md`** und **`AGENTS.md §1`**. Ein gutes Aim sind 2–4 klare Sätze:
 > *was* das Produkt tut, *für wen*, die *Zielarchitektur* und der *Qualitätsanspruch*. Beispiel:
 > *„REST-API für Auftragsverwaltung unserer internen Shops. Hexagonale Architektur auf PostgreSQL.
 > Korrektheit und Nachvollziehbarkeit schlagen Tempo; jeder Endpunkt wird vollständig getestet."*
@@ -222,7 +222,7 @@ bd create "Health-Endpoint" -t task --claim   # Task anlegen + claimen
 ```
 
 **Bestehende Codebasis (Brownfield)?** `aiflow init` erkennt sie und bietet `aiflow onboard` an —
-lernt den Code in `.claude/memory/`, `CLAUDE.md` und arc42, damit der Agent informiert startet, und
+lernt den Code in `.claude/memory/`, `AGENTS.md` und arc42, damit der Agent informiert startet, und
 **schlägt aus dem gebildeten Verständnis ein Projektziel (Aim) vor**. Der Vorschlag wird nicht
 stillschweigend übernommen: Der Onboarder **fragt dich, ob es so stimmt** (Headless-Läufe
 markieren es als `PROPOSED — please confirm` in `project-aim.md`). Danach lohnt
@@ -318,7 +318,7 @@ dein Test-Stack).
 ### Brownfield-Agent
 | Agent | Rolle |
 |-------|-------|
-| **onboarder** | Studiert eine bestehende Codebasis und persistiert Gelerntes in `.claude/memory/`, `CLAUDE.md` und arc42 — künftige Sessions starten informiert; schlägt ein Projektziel (Aim) vor und fragt dich, ob es stimmt. Schreibt nur Docs/Memory. |
+| **onboarder** | Studiert eine bestehende Codebasis und persistiert Gelerntes in `.claude/memory/`, `AGENTS.md` und arc42 — künftige Sessions starten informiert; schlägt ein Projektziel (Aim) vor und fragt dich, ob es stimmt. Schreibt nur Docs/Memory. |
 
 **Was alle Delivery-Agenten gemeinsam haben:** nur Production-Ready-Output (Vorsicht bei Technologie
 mit geringem Reifegrad — Reviewer und Tester bemängeln sie), kleine Klassen / KISS (Divide & Conquer
@@ -540,12 +540,12 @@ abschalten mit `--no-token-saving`:
 
 Am lohnendsten:
 
-- **`CLAUDE.md`** — die Betriebsregeln, die jeder Agent liest (Projektüberblick, Architektur-Hinweise,
+- **`AGENTS.md`** — die Betriebsregeln, die jeder Agent liest (Projektüberblick, Architektur-Hinweise,
   Code-Stil, Task-Workflow, Git-Regeln, Memory-/Context-Stack, Kommunikation). **Fülle die
   `[EDIT ME]`-Blöcke** (§1 Überblick, §2 Architektur) — der größte Qualitätshebel.
 - **`.aiflow/team-prefs.json`** („Preferences") — geteilte, versionierte Team-/Nutzer-Preferences:
   Code-Stil-Preset, Sprache, Konventionen. Committet, damit das Team sie erbt; überschreibt
-  `CLAUDE.md §3`.
+  `AGENTS.md §3`.
 - **`.claude/memory/`** — `project-aim.md` (Ziel + Architektur), `dev-environment.md`,
   `memory-policy.md` (Retrieval-Routing + Lern-Intensität). Aktuell halten.
 - **`.claude/settings.json`** — Permissions (allow/deny), Hooks (caveman, Formatter, beads-sync),
@@ -592,7 +592,7 @@ aiflow close-sync <id>             bei Issue-Close: Push + Dolt-Sync anbieten
 aiflow ollama [pull|add <m>|list]  lokale Ollama-Modelle verwalten
 aiflow index                       Code-Memory aktualisieren: graphify (Graph) + cocoindex (RAG)
 aiflow ralph "<prompt|bead id>"    die Headless-Ralph-Schleife laufen lassen
-aiflow onboard                     bestehende Codebasis in Memory + CLAUDE.md + arc42 lernen
+aiflow onboard                     bestehende Codebasis in Memory + AGENTS.md + arc42 lernen
 aiflow security-check | quality-check | requirements-check | dependency-check
 aiflow test-gap | perf-check | docs-check | a11y-check   On-Demand-Audits → Beads-Issues
 aiflow modernize-check             Brownfield-Modernisierungskonzepte → Bericht für den Architekten
@@ -667,7 +667,7 @@ dein-projekt/
 ├─ .githooks/                # commit-msg, pre-commit, pre-push (Durchsetzung)
 ├─ docs/architecture/        # arc42 + ADRs
 ├─ .mcp.json                 # aus Config generiert (Host-MCP, graphify, cocoindex, context7, …)
-├─ CLAUDE.md                 # Betriebsregeln, die jeder Agent liest
+├─ AGENTS.md                 # Betriebsregeln, die jeder Agent liest
 └─ .env                      # Secrets (gitignored, nie global)
 ```
 

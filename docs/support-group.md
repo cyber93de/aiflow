@@ -3,7 +3,7 @@ layout: default
 title: Support
 nav_order: 7
 has_children: true
-description: "aiflow support: FAQ, troubleshooting for Claude Code / Beads / Ollama / MCP, feedback and bug reports, and the changelog."
+description: "aiflow support: FAQ, troubleshooting for Claude Code / GitHub Copilot / OpenAI Codex CLI / Beads / Ollama / MCP, feedback and bug reports, and the changelog."
 ---
 
 # Support

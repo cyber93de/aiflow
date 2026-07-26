@@ -3,7 +3,7 @@ layout: default
 title: Concepts
 nav_order: 3
 has_children: true
-description: "Core aiflow concepts for Claude Code: two-layer code memory (graph + RAG), context engineering, token optimization (caveman, rtk), and team collaboration."
+description: "Core aiflow concepts: two-layer code memory (graph + RAG), context engineering, token optimization (caveman, rtk), and team collaboration — agent-agnostic across Claude Code, GitHub Copilot, and OpenAI Codex CLI."
 ---
 
 # Concepts

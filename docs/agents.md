@@ -3,7 +3,7 @@ layout: default
 title: Agents
 parent: Agents & Workflows
 nav_order: 1
-description: "aiflow's Claude Code subagents in detail: what architect, planner, implementer, reviewer, tester, the audit agents, accessibility-checker, modernization-advisor, and the onboarder do and watch for."
+description: "aiflow's Claude Code subagents in detail: what architect, planner, implementer, reviewer, tester, the audit agents, accessibility-checker, modernization-advisor, and the onboarder do and watch for. Plus Skills and slash-commands, and what GitHub Copilot / OpenAI Codex CLI users do instead."
 ---
 
 # Agents — the full roster
@@ -13,6 +13,12 @@ description: "aiflow's Claude Code subagents in detail: what architect, planner,
 {:toc}
 
 ---
+
+> **Claude Code only.** Subagents, Skills, and slash-commands below are dispatched automatically
+> by Claude Code and have no equivalent in GitHub Copilot or OpenAI Codex CLI today. Every agent —
+> Claude Code, Copilot, or Codex CLI — follows the same roles and rules from the shared
+> `AGENTS.md`; Copilot/Codex just do it manually instead of via automatic dispatch. See
+> [Multi-Agent Support](multi-agent).
 
 Specialist subagents live in `.claude/agents/`. Claude picks one by its `description`, or you invoke
 it explicitly. The shipped agents are **deliberately generic** — a strong, universal starting point,
@@ -105,11 +111,11 @@ so the product owner can triage (except the two report-only agents).
 
 | Agent | Role |
 |-------|------|
-| **onboarder** | Studies an existing codebase and persists what it learns into `.claude/memory/`, `CLAUDE.md`, and arc42 — future sessions start informed; **proposes a project aim** from its understanding and asks you to confirm it. Writes docs/memory only. |
+| **onboarder** | Studies an existing codebase and persists what it learns into `.claude/memory/`, `AGENTS.md`, and arc42 — future sessions start informed; **proposes a project aim** from its understanding and asks you to confirm it. Writes docs/memory only. |
 
-## Slash-command skills
+## Slash-commands and Skills
 
-Triggerable inside Claude Code (`.claude/commands/`):
+**Slash-commands** — explicitly triggered inside Claude Code (`.claude/commands/`):
 
 - **Delivery:** `/intake-issue <n>`, `/decompose <goal|prd>`, `/plan-epic`,
   `/implement [bead] [ralph|no-ralph]`, `/review-ac`, `/arch "<question>"`.
@@ -117,7 +123,12 @@ Triggerable inside Claude Code (`.claude/commands/`):
   `/test-gap`, `/perf-check`, `/docs-check`, `/a11y-check`, `/modernize-check`.
 - **Brownfield / orientation:** `/onboard`, `/explain <path>`, `/standup`.
 
-Beads and the Ralph loop also ship as plugin skills (`/beads:ready`, `/beads:decision`, `/ralph-loop`).
+Beads and the Ralph loop also ship as plugin commands (`/beads:ready`, `/beads:decision`, `/ralph-loop`).
+
+**Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`: Claude Code matches the skill's
+`description` against what you're doing and offers to run it, no `/name` needed. Ships with
+**seo-optimization** (SEO for any web-facing project/framework). Add your own by dropping a new
+`<name>/SKILL.md` into `.claude/skills/`.
 
 ## Customising an agent
 

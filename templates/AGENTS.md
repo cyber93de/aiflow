@@ -365,14 +365,23 @@ by dropping a new `<name>/SKILL.md` into `.claude/skills/`.
 
 ---
 
-## 6. Ralph loop (Claude Code only, autonomous iteration)
+## 6. Ralph loop (autonomous iteration — agent-agnostic)
 
-For larger tasks, run the **Ralph loop** — the agent iterates until the task is
-`COMPLETE` or `BLOCKED`.
-- Interactive: `/ralph-loop:ralph-loop` inside Claude Code.
-- Headless / CI: `aiflow ralph "<prompt or bead id>"` (see `.aiflow/ralph-headless.sh`) — this
-  entry point is agent-agnostic (plain bash), but the loop body assumes a Claude Code session.
-- The loop stops at the AC, never invents scope, and writes `result.json`.
+For larger tasks, run the **Ralph loop** — the agent iterates on the same task until it emits a
+completion (or abort) signal.
+- Headless / CI: `aiflow ralph "<prompt or bead id>" [ralph flags...]` (see
+  `.aiflow/ralph-headless.sh`). Runs on **[open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum)**
+  and works with Claude Code, OpenAI Codex CLI, or GitHub Copilot CLI via `--agent
+  claude-code|codex|copilot` — defaults to the first agent enabled in `.aiflow/config.json →
+  agents.*` (claude > codex > copilot) if you don't pass `--agent` yourself. ralph-wiggum owns
+  the outer loop (iterations, restarts, `.ralph/ralph-history.json`); this script just builds the
+  task prompt. `aiflow ralph "<task>" --tasks` enables Tasks Mode for multi-part work; `ralph
+  --status` (from another terminal) shows live progress.
+- Interactive, Claude Code only: `/ralph-loop:ralph-loop` — a separate Claude Code plugin skill,
+  not the headless CLI above.
+- The loop stops at the AC, never invents scope. Known limitation: completion-promise
+  auto-detection isn't always reliable with every agent — `--max-iterations` remains the real
+  safety bound regardless.
 
 **Who decides whether to use it:** by default the **implementer decides automatically** from its
 **pre-analysis** (current architecture, expected change, effort, complexity): long-horizon /
@@ -381,7 +390,8 @@ reason are stated before implementation starts. You can also trigger it **manual
 the Claude Code session for a given issue (`/implement <bead> ralph` / `no-ralph`, or
 `/ralph-loop`), or write it **into the bead itself** (e.g. "use the Ralph loop" in the
 description) — the implementer honours a directive found in the bead like an explicit flag.
-Copilot/Codex: iterate on the task yourself until AC are met, checking back against §4 at each step.
+Copilot/Codex users: run `aiflow ralph "<task>" --agent codex` (or `copilot`) directly, or iterate
+on the task yourself until AC are met, checking back against §4 at each step.
 
 ---
 
@@ -479,6 +489,12 @@ Copilot/Codex route models through their own settings**)**. Manage models with `
   with `aiflow cost` (Claude Code usage only).
 - CLI output is filtered by **rtk** before reaching context **(Claude Code only)** —
   errors/diffs are preserved.
+- **Copilot:** apply the [token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization)'s
+  techniques baked into `.github/copilot-instructions.md` — terse output, "landmines only"
+  context files, stable model/tool-set per thread.
+- **Codex:** when `codexsaver.enabled`, [CodexSaver](https://github.com/fendouai/CodexSaver)
+  routes cheap/bounded work (docs, tests, explanation, search) to a cheaper worker automatically
+  via MCP — Codex stays responsible for architecture, security, and final review.
 
 ---
 

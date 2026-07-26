@@ -64,11 +64,17 @@ bumps develop once run with `--yes`.
 
 ## Autonomous work: the Ralph loop
 
-For larger tasks, hand off to the Ralph loop — the agent iterates until `COMPLETE` or `BLOCKED`.
+For larger tasks, hand off to the Ralph loop — the agent iterates on the same task until it
+signals completion. Runs on
+[open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum), agent-agnostic: Claude Code,
+OpenAI Codex CLI, or GitHub Copilot CLI.
 
-- **Interactive:** `/ralph-loop` inside Claude Code.
-- **Headless:** `aiflow ralph "implement bd-12"` — each iteration writes `result.json`; tuned via
-  `.env` (`RALPH_MAX_ITERATIONS`, `RALPH_TIMEOUT_SECONDS`, `RALPH_PERMISSION_MODE`).
+- **Interactive, Claude Code only:** `/ralph-loop` — a separate Claude Code plugin skill.
+- **Headless (any agent):** `aiflow ralph "implement bd-12" [--agent claude-code|codex|copilot]` —
+  defaults to the first agent enabled in `.aiflow/config.json → agents.*` if `--agent` is
+  omitted; tuned via `RALPH_MAX_ITERATIONS` (env). Needs [Bun](https://bun.sh) +
+  `npm i -g @th0rgal/ralph-wiggum` (installed by `aiflow install-deps`). Completion-promise
+  auto-stop isn't always reliable with every agent — `--max-iterations` is the real safety bound.
 - **In CI:** the same loop runs via `.github/workflows/agent.yml` on manual dispatch, the `agent`
   issue label, or nightly.
 - **Containerised:** `docker/run.sh` runs it in a container using **Podman or Docker** (auto-detected;

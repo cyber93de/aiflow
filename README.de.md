@@ -17,8 +17,10 @@ KI-Know-how. Genau dafür ist dieses Tool gebaut:** ein paar Fragen beantworten,
 erprobtes, meinungsstarkes Setup.
 
 - **Agent-agnostisch** — [Claude Code](https://docs.claude.com/en/docs/claude-code) (volles
-  Feature-Set: Subagenten, Hooks, Ralph-Loop), **GitHub Copilot** und **OpenAI Codex CLI** lesen
-  alle dieselbe gemeinsame `AGENTS.md` + bekommen je eigene gerenderte MCP-Config. Siehe
+  Feature-Set: Subagenten, Hooks, Slash-Commands), **GitHub Copilot** und **OpenAI Codex CLI**
+  lesen alle dieselbe gemeinsame `AGENTS.md` + bekommen je eigene gerenderte MCP-Config. Der
+  **Ralph-Loop** funktioniert über alle drei via
+  [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum). Siehe
   [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
 - **Token-basiert & anbieterneutral** — dein eigener Anthropic-API-Key *oder* Claude-Code-OAuth-Token;
   Git-Hosts **nur über Tokens, nie OAuth**. Kein Dritt-Hub.
@@ -123,7 +125,7 @@ jeder Default, erstes Feature end-to-end).
 | **Qualität** | Google-Stil, Conventional Commits, Format-/Lint-/Test-Git-Hooks, Architekt+Quality-Gate-Review, statische Analyse bei jeder Änderung, objektive Metrik-Ziele (0 neue Smells/Duplikate, 0 Warnings), >80 % Coverage + BDD-E2E-Gates, Logging mit Leveln, `.http`-Dateien für REST-Endpunkte, DB-Regeln §3c (3NF+FKs für neue Schemata, Brownfield-Schemata mit Vorsicht) |
 | **Branching** | simple / gitflow / none, PR-only, Auto-Release, SemVer/CalVer |
 | **Team** | geteilte Issue-DB, atomares Claim, Session-Start-Auto-Pull, Pull-vor-Push, geteilte Preferences |
-| **Token-Ersparnis** | caveman + rtk standardmäßig an, Graph-/RAG-Retrieval, Cost-Routing |
+| **Token-Ersparnis** | Claude Code: caveman + rtk standardmäßig an, Graph-/RAG-Retrieval, Cost-Routing. Copilot: [Token-Optimization-Guide](https://github.com/olivomarco/github-copilot-token-optimization) fest in `copilot-instructions.md`. Codex: optional [CodexSaver](https://github.com/fendouai/CodexSaver)-MCP-Router (`codexsaver.enabled`) |
 
 ---
 
@@ -239,11 +241,18 @@ Code-Indizes jederzeit mit **`aiflow index`** bauen (Graph + RAG).
 `aiflow install-deps` installiert nur, was deine Config aktiviert (`--all` = voller Satz). Alles im
 User-Space; Docker wird nie automatisch installiert.
 
-**Kern (immer):** Claude Code · Beads (`bd`) · Dolt (Beads-Backend) · jq · das zum Remote passende
-Git-Host-CLI (`gh`/`glab`).
+**Kern (immer):** Beads (`bd`) · Dolt (Beads-Backend) · jq · das zum Remote passende Git-Host-CLI
+(`gh`/`glab`).
+
+**Coding-Agent-CLIs (je `agents.*`):** Claude Code (`agents.claude`, standardmäßig an) ·
+**GitHub Copilot CLI** (`agents.copilot`, `npm i -g @github/copilot`) · **OpenAI Codex CLI**
+(`agents.codex`, `npm i -g @openai/codex`). Beliebig kombinierbar — siehe
+[Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
 
 **Optional (wenn aktiviert):** claude-task-master · claude-code-router · rtk · **graphify**
-(braucht `uv`) · **cocoindex-code** (`ccc`, braucht `uv`) · **Ollama** (+ gewählte Modelle).
+(braucht `uv`) · **cocoindex-code** (`ccc`, braucht `uv`) · **Ollama** (+ gewählte Modelle) ·
+**CodexSaver** (`codexsaver.enabled`, braucht `agents.codex` + Python — kostenbewusster
+MCP-Router für Codex CLI, Clone + editable Pip-Install, kein veröffentlichtes Paket).
 
 Headless-Container-Runs (`docker/run.sh`) und der GitHub-MCP laufen mit **Podman oder Docker** —
 eines davon selbst installieren (wird nie automatisch installiert).

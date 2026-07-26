@@ -301,14 +301,24 @@ Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen.
 Jedes Tool verdient seinen Platz durch mehr **Qualität**, weniger **Token-Kosten** oder
 **autonome, prüfbare** Lieferung.
 
-- **Claude Code** — die Agent-Laufzeit, auf der alles aufbaut.
-  https://docs.claude.com/en/docs/claude-code · *plant, editiert, führt Tools aus — nicht nur Chat.*
+- **Claude Code** — die Referenz-Agent-Laufzeit; volles Feature-Set (Subagenten, Hooks, Skills,
+  Slash-Commands, Ralph-Loop). https://docs.claude.com/en/docs/claude-code · *plant, editiert,
+  führt Tools aus — nicht nur Chat.*
+- **GitHub Copilot CLI** (`agents.copilot`) — `npm i -g @github/copilot`. Liest dieselbe
+  `AGENTS.md` über `.github/copilot-instructions.md`.
+- **OpenAI Codex CLI** (`agents.codex`) — `npm i -g @openai/codex`. Liest `AGENTS.md` direkt per
+  Konvention. Mehr zum Multi-Agent-Setup: https://cyber93de.github.io/aiflow/multi-agent
+- **CodexSaver** (`codexsaver.enabled`, standardmäßig aus) — kostenbewusster MCP-Router für
+  Codex CLI. https://github.com/fendouai/CodexSaver · *leitet günstige/begrenzte Arbeit (Docs,
+  Tests, Erklärungen) an einen billigeren Worker weiter, Codex bleibt für Architektur/Security/
+  finale Review zuständig.*
 - **Beads (`bd`)** — git-/Dolt-gestützter Issue-Tracker. https://github.com/steveyegge/beads ·
   *dauerhafter Task-Speicher mit Abhängigkeiten; Arbeit überlebt Sitzungs-/Kontext-Resets.*
 - **Dolt** — versionierte SQL-DB hinter Beads. https://github.com/dolthub/dolt · *branch/merge/diff-
   Historie für Tasks — echter Audit-Trail.*
-- **Ralph-Loop** — autonome „iteriere bis fertig"-Schleife. *erledigt eine Aufgabe unbeaufsichtigt,
-  stoppt bei COMPLETE/BLOCKED, schreibt `result.json`.*
+- **Ralph-Loop** ([open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum)) — autonome
+  „iteriere bis fertig"-Schleife, agent-agnostisch (Claude Code/Codex/Copilot CLI). *erledigt eine
+  Aufgabe unbeaufsichtigt, stoppt bei Abschluss-Signal oder `--max-iterations`.*
 - **claude-task-master** — Ziel/PRD → Task-Baum mit Abhängigkeiten.
   https://github.com/eyaltoledano/claude-task-master · *gute Zerlegung = besserer, reviewbarer
   Output; `claude-code`-Provider, kein Extra-Key.*
@@ -353,13 +363,21 @@ bestanden • Bead geschlossen • Commit referenziert Bead-ID (AGENTS.md §10).
 
 ## 10. Autonomes Arbeiten: der Ralph-Loop
 
-Für größere Aufgaben an den **Ralph-Loop** übergeben — der Agent iteriert bis `COMPLETE` oder `BLOCKED`.
+Für größere Aufgaben an den **Ralph-Loop** übergeben — der Agent iteriert an derselben Aufgabe,
+bis er ein Abschluss-Signal ausgibt. Läuft auf
+**[open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum)**, agent-agnostisch: Claude
+Code, OpenAI Codex CLI oder GitHub Copilot CLI.
 
-- **Interaktiv:** `/ralph-loop` in Claude Code.
-- **Headless:** `aiflow ralph "implement bd-12"` — jede Iteration schreibt `result.json`
-  (`{status, summary, next, blocker}`); per `.env` getunt (`RALPH_MAX_ITERATIONS`,
-  `RALPH_TIMEOUT_SECONDS`, `RALPH_PERMISSION_MODE`). Funktioniert mit env-Token **oder** deinem
-  gespeicherten Claude-Login (OAuth).
+- **Interaktiv, nur Claude Code:** `/ralph-loop` — ein separater Claude-Code-Plugin-Skill.
+- **Headless (jeder Agent):** `aiflow ralph "implement bd-12" [--agent claude-code|codex|copilot]
+  [ralph-flags...]` — nutzt standardmäßig den ersten aktivierten Agent aus
+  `.aiflow/config.json → agents.*` (claude > codex > copilot), falls kein `--agent` angegeben.
+  Getunt über `RALPH_MAX_ITERATIONS` (env); ralph-wiggum selbst verwaltet Iterations-Historie
+  (`.ralph/ralph-history.json`) und Abschlusserkennung (`--tasks` für mehrteilige Arbeit, `ralph
+  --status` zum Live-Verfolgen aus einem anderen Terminal). Braucht [Bun](https://bun.sh) +
+  `npm i -g @th0rgal/ralph-wiggum` (installiert `aiflow install-deps`). Bekannte Einschränkung:
+  automatisches Stoppen per Completion-Promise ist nicht bei jedem Agent zuverlässig —
+  `--max-iterations` bleibt die eigentliche Absicherung.
 - **In CI:** derselbe Loop via `.github/workflows/agent.yml` (manuell, `agent`-Label oder nächtlich, §19).
 - **Containerisiert:** `docker/run.sh` — Container via **Podman oder Docker** (auto-erkannt;
   überschreiben mit `AIFLOW_CONTAINER=podman|docker`).
@@ -378,7 +396,7 @@ Prefix an, damit ein Mensch/PO sichten kann. Ändern nie Code.
 | `aiflow dependency-check` | verwundbare/veraltete/ungenutzte Deps, Lizenzen | `[dependency]` |
 | `aiflow test-gap` | ungetestete kritische / stark genutzte Pfade | `[test gap]` |
 | `aiflow perf-check` | N+1, sync-IO, O(n²), fehlende Pagination/Indizes | `[performance]` |
-| `aiflow docs-check` | README/CLAUDE/arc42/API-Drift | `[docs]` |
+| `aiflow docs-check` | README/AGENTS.md/arc42/API-Drift | `[docs]` |
 | `aiflow a11y-check` | WCAG 2.2 AA: Kontrast, Tastatur, ARIA, Labels (strikt) | `[accessibility]` |
 | `aiflow modernize-check` | EOL-Stacks, Monolith→Microservices, Legacy→REST/Cloud-Native, svn→git, fehlende Test-Frameworks | *nur Bericht* |
 

@@ -7,6 +7,30 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **CodexSaver integration** (`codexsaver.enabled`, off by default) — optional cost-aware MCP
+  router for OpenAI Codex CLI ([fendouai/CodexSaver](https://github.com/fendouai/CodexSaver)):
+  delegates cheap/bounded work (docs, tests, explanation, search) to a cheaper worker, keeping
+  Codex for architecture/security/final review. `aiflow install-deps` clones + editable-pip-installs
+  it (no published package) plus Pi Agent, and sets the provider key from `.env` if present;
+  `apply.sh` owns `.codex/config.toml` and appends CodexSaver's entry itself (pointing at the
+  stable script path its own installer creates), so re-running `aiflow apply` never clobbers or
+  duplicates it. Needs a provider API key (DeepSeek by default) — untested end-to-end here (no
+  key available in this environment); config rendering and install wiring are verified.
+- **Ralph loop rebuilt on [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum)** —
+  genuinely agent-agnostic now (Claude Code, OpenAI Codex CLI, GitHub Copilot CLI via `--agent`),
+  replacing the old Claude-only hand-rolled `claude -p` loop. `aiflow ralph "<task>"` defaults to
+  the first agent enabled in `agents.*`; `install-deps` installs Bun + the `ralph` CLI. Known
+  limitation: completion-promise auto-stop isn't always reliable — `--max-iterations` remains the
+  real safety bound regardless of agent.
+- install-deps installs Claude Code / GitHub Copilot CLI / OpenAI Codex CLI per `agents.*`
+  config (previously Claude Code was unconditional and the other two were never installed);
+  `aiflow doctor` reports all three plus `ralph`/`bun`.
+- `.github/copilot-instructions.md` now applies the highest-ROI techniques from the [GitHub
+  Copilot token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization):
+  output-control directive, "landmines only" context-file guidance, model/cache-stability advice,
+  and an `applyTo:` scoping tip.
+
 ## [0.3.0] — 2026-07-26
 
 ### Added

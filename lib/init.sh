@@ -80,6 +80,18 @@ AGENT_CLAUDE="$(ask_yn 'Claude Code (subagents, hooks, slash-commands, Ralph loo
 AGENT_COPILOT="$(ask_yn 'GitHub Copilot (AGENTS.md via .github/copilot-instructions.md + .vscode/mcp.json)' n)"
 AGENT_CODEX="$(ask_yn 'OpenAI Codex CLI (reads AGENTS.md directly + .codex/config.toml)' n)"
 
+# ---- CodexSaver: optional cost-aware MCP router for Codex CLI (needs a provider API key) ----
+CODEXSAVER_ON=false; CODEXSAVER_PROVIDER=deepseek; CODEXSAVER_KEYENV=DEEPSEEK_API_KEY
+if [ "$AGENT_CODEX" = true ]; then
+  echo; echo "CodexSaver (https://github.com/fendouai/CodexSaver) routes cheap/bounded Codex work"
+  echo "(docs, tests, explanation) to a cheaper worker - needs Python + a provider API key."
+  CODEXSAVER_ON="$(ask_yn 'Install CodexSaver for Codex CLI?' n)"
+  if [ "$CODEXSAVER_ON" = true ]; then
+    CODEXSAVER_PROVIDER="$(ask 'Provider (deepseek recommended)' deepseek)"
+    CODEXSAVER_KEYENV="$(ask 'Env var holding the provider API key' DEEPSEEK_API_KEY)"
+  fi
+fi
+
 # ---- Claude access: OAuth vs API key (token-based; no OAuth for Git hosts) ----
 echo; echo "Claude access (token-based; pick how you authenticate):"
 CLAUDE_AUTH="$(ask 'Claude auth (apikey = ANTHROPIC_API_KEY / oauth = claude setup-token)' apikey)"
@@ -181,6 +193,7 @@ cat > .aiflow/config.json <<EOF
   "mcp":       { "filesystem": $FS_ON, "context7": $CTX7_ON, "cocoindex": $COCO_ON },
   "memory":    { "enabled": $MEM_ON, "graph": $MEM_GRAPH, "intensity": "$MEM_INT" },
   "agents":    { "claude": $AGENT_CLAUDE, "copilot": $AGENT_COPILOT, "codex": $AGENT_CODEX },
+  "codexsaver":{ "enabled": $CODEXSAVER_ON, "provider": "$CODEXSAVER_PROVIDER", "apiKeyEnv": "$CODEXSAVER_KEYENV" },
   "claude":    { "auth": "$CLAUDE_AUTH" },
   "vcs":       { "system": "$VCS_SYS" },
   "remote": {

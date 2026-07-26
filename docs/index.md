@@ -2,7 +2,7 @@
 layout: default
 title: Home
 nav_order: 1
-description: "aiflow: a governed, AI-driven software-delivery pipeline, agent-agnostic across Claude Code, GitHub Copilot, and OpenAI Codex CLI — Beads task memory, code knowledge graph (graphify) + semantic RAG (cocoindex), context7, agents, gitflow release automation, Ollama, team sync, and token savings with caveman and rtk. One command, MIT."
+description: "aiflow: a governed, AI-driven software-delivery pipeline, agent-agnostic across Claude Code, GitHub Copilot, and OpenAI Codex CLI — Beads task memory, code knowledge graph (graphify) + semantic RAG (cocoindex), context7, agents, gitflow release automation, Ollama, team sync, and per-agent token savings (caveman/rtk, Copilot token-optimization guide, CodexSaver). One command, MIT."
 permalink: /
 ---
 
@@ -62,7 +62,7 @@ task — the real saving is **never having to ask twice**.
 | Advantage | How |
 |-----------|-----|
 | **Better memory** | Structural graph (graphify) + semantic RAG (cocoindex-code) + durable Beads tasks → the agent looks things up instead of guessing. |
-| **Fewer tokens** | caveman (~75% less output) + rtk (60–90% less CLI noise) + graph/RAG retrieval (~70% vs reading files) + cheap/local routing. |
+| **Fewer tokens** | Claude Code: caveman (~75% less output) + rtk (60–90% less CLI noise). Copilot: token-optimization guide. Codex: optional CodexSaver. All agents: graph/RAG retrieval (~70% vs reading files) + cheap/local routing. |
 | **Team-ready** | Shared Dolt issue DB over your git remote, atomic claiming, pull-before-push. |
 | **Governed** | Conventional Commits, enforced Google style, review gate, security/quality/deps/test/perf/docs audits, branching + releases. |
 | **Autonomous** | The Ralph loop finishes tasks unattended (local, container, or CI). |

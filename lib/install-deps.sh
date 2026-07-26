@@ -17,12 +17,20 @@ case "$(uname -s 2>/dev/null)" in MINGW*|MSYS*|CYGWIN*) OS=windows;; Darwin) OS=
 cfg() { if have jq && [ -f .aiflow/config.json ]; then jq -r "$1 // \"$2\"" .aiflow/config.json; else echo "$2"; fi; }
 if [ "$ALL" = 1 ] || [ ! -f .aiflow/config.json ]; then
   RTK=true; TM=true; ROUTER=true; GFY=true   # global/--all: offer the full set
+  AGENT_CLAUDE=true; AGENT_COPILOT=true; AGENT_CODEX=true
 else
   RTK="$(cfg .rtk.enabled false)"; TM="$(cfg .taskmaster.enabled false)"
   ROUTER="$(cfg .router.enabled false)"; GFY="$(cfg .graphify.enabled false)"
+  AGENT_CLAUDE="$(cfg .agents.claude true)"    # default true: back-compat, aiflow's origin agent
+  AGENT_COPILOT="$(cfg .agents.copilot false)"
+  AGENT_CODEX="$(cfg .agents.codex false)"
 fi
 OLLAMA="$(cfg .ollama.enabled false)"
 COCO="$(cfg .mcp.cocoindex false)"; [ "$ALL" = 1 ] && COCO=true
+# CodexSaver needs a paid provider API key - never auto-enabled by --all, config opt-in only
+CODEXSAVER="$(cfg .codexsaver.enabled false)"
+CODEXSAVER_PROVIDER="$(cfg .codexsaver.provider deepseek)"
+CODEXSAVER_KEYENV="$(cfg .codexsaver.apiKeyEnv DEEPSEEK_API_KEY)"
 
 npmg() { # install a global npm package, retry with sudo on permission error
   have npm || { warn "npm not found - install Node.js first (https://nodejs.org)"; return 1; }
@@ -69,14 +77,55 @@ install_ollama() {
     *)       curl -fsSL https://ollama.com/install.sh | sh || warn "install ollama: https://ollama.com/download" ;;
   esac
 }
+install_bun() { # runtime open-ralph-wiggum needs
+  have bun && return 0
+  say "installing bun (runtime for the Ralph loop)"
+  if have brew; then brew install oven-sh/bun/bun
+  elif [ "$OS" = windows ]; then powershell -NoProfile -c "irm bun.sh/install.ps1 | iex" || warn "install bun manually: https://bun.sh"
+  else curl -fsSL https://bun.sh/install | bash || warn "install bun manually: https://bun.sh"; fi
+  export PATH="$HOME/.bun/bin:$PATH"
+}
+install_codexsaver() { # cost-aware MCP router for Codex CLI - no PyPI package, editable install
+  # from source. Global by design (its own README): one clone shared across projects, like the
+  # tool itself recommends. We never touch its own ~/.codex/config.toml write; our own
+  # .codex/config.toml (in apply.sh) just points at the stable script path it installs.
+  have codexsaver && return 0
+  { have python3 || have python; } || { warn "CodexSaver needs Python - install it first: https://python.org"; return 1; }
+  PY=python3; have python3 || PY=python
+  say "installing CodexSaver (cost-aware Codex CLI router)"
+  local dir="$HOME/.local/share/aiflow/codexsaver"
+  if [ -d "$dir/.git" ]; then (cd "$dir" && git pull -q) || true
+  else mkdir -p "$(dirname "$dir")"; git clone -q https://github.com/fendouai/CodexSaver "$dir" || { warn "clone failed: https://github.com/fendouai/CodexSaver"; return 1; }
+  fi
+  (cd "$dir" && "$PY" -m pip install -q -e .) || { warn "pip install -e . failed in $dir"; return 1; }
+  npmg @earendil-works/pi-coding-agent
+  if [ -n "${!CODEXSAVER_KEYENV:-}" ]; then
+    codexsaver auth set --provider "$CODEXSAVER_PROVIDER" --api-key "${!CODEXSAVER_KEYENV}" 2>/dev/null \
+      || warn "codexsaver auth set failed - run manually: codexsaver auth set --provider $CODEXSAVER_PROVIDER --api-key ..."
+  else
+    warn "CodexSaver installed but no key in \$$CODEXSAVER_KEYENV - run: codexsaver auth set --provider $CODEXSAVER_PROVIDER --api-key ..."
+  fi
+  codexsaver install 2>/dev/null || warn "run 'codexsaver install' manually to finish global setup"
+}
 
 echo "aiflow install-deps (os=$OS, all=$ALL)"
 echo "  enabled: rtk=$RTK task-master=$TM router=$ROUTER graphify=$GFY cocoindex=$COCO ollama=$OLLAMA"
+echo "  coding agent(s): claude=$AGENT_CLAUDE copilot=$AGENT_COPILOT codex=$AGENT_CODEX codexsaver=$CODEXSAVER"
 
-# ---- core (always) ----
-have claude || { say "claude code"; npmg @anthropic-ai/claude-code; }
+# ---- coding agent CLIs (per agents.* config) ----
+[ "$AGENT_CLAUDE" = true ]  && ! have claude  && { say "Claude Code"; npmg @anthropic-ai/claude-code; }
+[ "$AGENT_COPILOT" = true ] && ! have copilot && { say "GitHub Copilot CLI"; npmg @github/copilot; }
+if [ "$AGENT_CODEX" = true ] && ! have codex; then
+  say "OpenAI Codex CLI"
+  npmg @openai/codex || { [ "$OS" = macos ] && have brew && brew install --cask codex; } \
+    || warn "install codex manually: npm i -g @openai/codex (or brew install --cask codex on macOS)"
+fi
+[ "$AGENT_CODEX" = true ] && [ "$CODEXSAVER" = true ] && install_codexsaver
+
 install_dolt   # Beads needs the dolt binary (runs a dolt sql-server)
 have bd     || { say "beads (bd)"; npmg @beads/bd || { have go && go install github.com/steveyegge/beads/cmd/bd@latest; } || warn "install beads manually: https://github.com/steveyegge/beads"; }
+# Ralph loop (open-ralph-wiggum) - agent-agnostic, works with whichever CLI(s) are enabled above
+have ralph  || { install_bun; say "ralph-wiggum (Ralph loop)"; npmg @th0rgal/ralph-wiggum; }
 have jq     || { say "jq"; if have brew; then brew install jq; elif [ "$OS" = windows ]; then { have winget && winget install --id jqlang.jq -e; } || { have scoop && scoop install jq; } || warn "install jq: https://jqlang.github.io/jq/"; elif [ "$OS" = linux ]; then (sudo apt-get install -y jq || sudo dnf install -y jq) 2>/dev/null; else warn "install jq: https://jqlang.github.io/jq/"; fi; }
 install_vcs_cli  # gh or glab to match the configured VCS host
 

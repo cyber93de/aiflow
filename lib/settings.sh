@@ -51,6 +51,17 @@ AGENT_CLAUDE="$(ask_yn 'Claude Code (full feature set)?' "$(dyn "$CUR_AGENT_CLAU
 AGENT_COPILOT="$(ask_yn 'GitHub Copilot (AGENTS.md + .vscode/mcp.json)?' "$(dyn "$(j .agents.copilot)")")"
 AGENT_CODEX="$(ask_yn 'OpenAI Codex CLI (AGENTS.md + .codex/config.toml)?' "$(dyn "$(j .agents.codex)")")"
 
+# CodexSaver: optional cost-aware MCP router for Codex CLI
+CODEXSAVER_ON=false; CODEXSAVER_PROVIDER="$(j .codexsaver.provider)"; [ -z "$CODEXSAVER_PROVIDER" ] && CODEXSAVER_PROVIDER=deepseek
+CODEXSAVER_KEYENV="$(j .codexsaver.apiKeyEnv)"; [ -z "$CODEXSAVER_KEYENV" ] && CODEXSAVER_KEYENV=DEEPSEEK_API_KEY
+if [ "$AGENT_CODEX" = true ]; then
+  CODEXSAVER_ON="$(ask_yn 'CodexSaver (cost-aware Codex CLI routing)?' "$(dyn "$(j .codexsaver.enabled)")")"
+  if [ "$CODEXSAVER_ON" = true ]; then
+    CODEXSAVER_PROVIDER="$(ask 'CodexSaver provider' "$CODEXSAVER_PROVIDER")"
+    CODEXSAVER_KEYENV="$(ask 'Env var holding the provider API key' "$CODEXSAVER_KEYENV")"
+  fi
+fi
+
 # Claude auth (token-based)
 CLAUDE_AUTH="$(ask 'Claude auth (apikey/oauth)' "$(j .claude.auth)")"; [ -z "$CLAUDE_AUTH" ] && CLAUDE_AUTH=apikey
 
@@ -136,6 +147,7 @@ jq -n \
   --argjson tm "$TM_ON" --argjson fs "$FS_ON" --argjson ctx7 "$CTX7_ON" --argjson coco "$COCO_ON" \
   --argjson mem "$MEM_ON" --argjson memg "$MEM_GRAPH" --arg memi "$MEM_INT" \
   --argjson agclaude "$AGENT_CLAUDE" --argjson agcopilot "$AGENT_COPILOT" --argjson agcodex "$AGENT_CODEX" \
+  --argjson csaver "$CODEXSAVER_ON" --arg csprov "$CODEXSAVER_PROVIDER" --arg cskeyenv "$CODEXSAVER_KEYENV" \
   --arg cauth "$CLAUDE_AUTH" --arg vsys "$VCS_SYS" \
   --arg rtype "$REMOTE_TYPE" --arg rurl "$REMOTE_URL" --arg rapi "$REMOTE_API" --arg rtok "$REMOTE_TOKENENV" --arg rmcp "$REMOTE_MCP" \
   --argjson gk "$GITKRAKEN_ON" \
@@ -149,6 +161,7 @@ jq -n \
     graphify:{enabled:$gfy},taskmaster:{enabled:$tm},mcp:{filesystem:$fs,context7:$ctx7,cocoindex:$coco},
     memory:{enabled:$mem,graph:$memg,intensity:$memi},
     agents:{claude:$agclaude,copilot:$agcopilot,codex:$agcodex},
+    codexsaver:{enabled:$csaver,provider:$csprov,apiKeyEnv:$cskeyenv},
     claude:{auth:$cauth},
     vcs:{system:$vsys},
     remote:{type:$rtype,baseUrl:$rurl,api:$rapi,tokenEnv:$rtok,mcp:$rmcp},

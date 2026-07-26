@@ -38,6 +38,7 @@ live in `.env`.
     "mcp": "github"         // github|gitlab|bitbucket|forgejo|gitea|none (host MCP to wire)
   },
   "gitkraken": { "enabled": false },                     // GitKraken MCP (client, not a host — alongside remote.*)
+  "codexsaver": { "enabled": false, "provider": "deepseek", "apiKeyEnv": "DEEPSEEK_API_KEY" }, // Codex CLI cost-aware MCP router
   "sync":     { "askOnClose": true, "pullOnStart": true },
   "ollama":   { "enabled": false, "url": "http://localhost:11434", "models": [] },
   "teamPrefs":{ "enabled": false, "codeStyle": "google" },

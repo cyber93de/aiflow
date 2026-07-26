@@ -32,17 +32,24 @@ jobs:
 
       - name: Skip if already released, or VERSION is an in-progress snapshot/hotfix
         id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           v="${{ steps.ver.outputs.version }}"
+          tag="${{ steps.ver.outputs.tag }}"
           # main must never carry -SNAPSHOT/-HOTFIX (same rule the pre-push hook enforces) - if
           # it transiently does (e.g. the moment a hotfix PR lands on main, before 'aiflow
           # release --yes' strips the suffix), never cut a release for that literal string.
           if [[ "$v" == *-SNAPSHOT || "$v" == *-HOTFIX ]]; then
             echo "exists=true"  >> "$GITHUB_OUTPUT"
             echo "::notice::VERSION is '$v' (in-progress) — not releasing. Run 'aiflow release --yes' to cut the real release."
-          elif git rev-parse -q --verify "refs/tags/${{ steps.ver.outputs.tag }}" >/dev/null; then
+          # Check the GitHub Release itself, not the raw git tag ref: 'aiflow release' creates
+          # and pushes the tag locally (git tag + push --follow-tags) BEFORE this workflow ever
+          # runs, so the tag always already exists on the very push meant to trigger the release.
+          # A tag-ref check would skip every real release; a Release-existence check doesn't.
+          elif gh release view "$tag" >/dev/null 2>&1; then
             echo "exists=true"  >> "$GITHUB_OUTPUT"
-            echo "::notice::Tag ${{ steps.ver.outputs.tag }} already exists — nothing to release."
+            echo "::notice::Release $tag already exists — nothing to release."
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi

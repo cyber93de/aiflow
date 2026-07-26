@@ -3,7 +3,7 @@ layout: default
 title: Changelog
 parent: Support
 nav_order: 4
-description: "aiflow changelog and release history: 0.3.1 release-process hotfix, 0.3.0 agent-agnostic core + gitflow automation + Skills, 0.2.0 cross-platform scripts + self-update, 0.1.1 quality-gate release, and the 0.1.0 first public release."
+description: "aiflow changelog and release history: 0.4.0 real multi-agent tooling (CLI installs, Copilot token-optimization, CodexSaver, open-ralph-wiggum), 0.3.1 release-process hotfix, 0.3.0 agent-agnostic core + gitflow automation + Skills, 0.2.0 cross-platform scripts + self-update, 0.1.1 quality-gate release, and the 0.1.0 first public release."
 ---
 
 # Changelog
@@ -12,6 +12,24 @@ description: "aiflow changelog and release history: 0.3.1 release-process hotfix
 aiflow follows [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/). The authoritative, always-current changelog lives in the
 repository: **[CHANGELOG.md](https://github.com/Cyber93de/aiflow/blob/main/CHANGELOG.md)**.
+
+## 0.4.0 — real multi-agent tooling
+
+Highlights:
+
+- **CLIs actually get installed now.** `aiflow install-deps` installs Claude Code, GitHub Copilot
+  CLI, and OpenAI Codex CLI per `agents.*` (previously only Claude Code was ever installed);
+  `aiflow doctor` reports all three plus `ralph`/`bun`.
+- **Each agent gets a real token-saving mechanism**, not just Claude Code: GitHub Copilot gets the
+  [token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization) baked
+  into `.github/copilot-instructions.md`; OpenAI Codex CLI gets an optional
+  [CodexSaver](https://github.com/fendouai/CodexSaver) MCP router (`codexsaver.enabled`) that
+  routes cheap/bounded work to a cheaper worker.
+- **Ralph loop rebuilt on [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum)** —
+  genuinely agent-agnostic (Claude Code/Codex CLI/Copilot CLI via `--agent`), replacing the old
+  Claude-only hand-rolled loop. Known limitation: completion-promise auto-stop isn't always
+  reliable — `--max-iterations` remains the real safety bound.
+- Docs swept throughout to reflect the real per-agent picture instead of Claude-only framing.
 
 ## 0.3.1 — hotfix: release-process correctness
 

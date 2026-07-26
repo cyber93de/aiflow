@@ -7,6 +7,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-07-26
+
 ### Added
 - **CodexSaver integration** (`codexsaver.enabled`, off by default) — optional cost-aware MCP
   router for OpenAI Codex CLI ([fendouai/CodexSaver](https://github.com/fendouai/CodexSaver)):

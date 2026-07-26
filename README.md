@@ -30,7 +30,7 @@ opinionated setup.
 
 > 🇩🇪 Diese Anleitung gibt es auch auf **[Deutsch → README.de.md](README.de.md)**.
 
-**Version 0.3.1 · MIT License · [Changelog](CHANGELOG.md) ·
+**Version 0.4.0 · MIT License · [Changelog](CHANGELOG.md) ·
 📖 [Documentation site](https://cyber93de.github.io/aiflow/)**
 
 ---

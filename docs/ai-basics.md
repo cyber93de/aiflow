@@ -42,9 +42,13 @@ every token in it costs money and attention. Two consequences aiflow designs aro
 
 [Claude Code](https://docs.claude.com/en/docs/claude-code) is Anthropic's coding agent for the
 terminal and IDE. With your permission it reads files, runs commands, edits code, and uses tools.
-It is configured per project through plain files — `CLAUDE.md` (the rules every agent follows),
+It is configured per project through plain files — `AGENTS.md` (the rules every agent follows),
 `.claude/settings.json` (permissions + hooks), `.claude/agents/` and `.claude/commands/`. aiflow
 generates and maintains all of these for you.
+
+**aiflow isn't Claude Code-only, though.** `AGENTS.md` is agent-agnostic: GitHub Copilot and
+OpenAI Codex CLI read the same rules (Claude Code just has extra automation on top — subagents,
+hooks, slash-commands). See [Multi-Agent Support](multi-agent) if you use more than one.
 
 ## What is an agent?
 

@@ -3,7 +3,7 @@ layout: default
 title: Memory — graph + RAG
 parent: Concepts
 nav_order: 1
-description: "aiflow code memory for Claude Code: a structural knowledge graph (graphify) plus semantic RAG (cocoindex) and Beads task memory — cutting tokens and hallucinations."
+description: "aiflow code memory: a structural knowledge graph (graphify) plus semantic RAG (cocoindex) and Beads task memory — cutting tokens and hallucinations. Persistent memory files are Claude Code-only; graphify/cocoindex/context7 work as MCP servers for any agent."
 ---
 
 # Memory: why a graph *and* a RAG index

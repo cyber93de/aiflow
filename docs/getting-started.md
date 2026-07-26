@@ -3,7 +3,7 @@ layout: default
 title: Quick Start
 parent: Getting Started
 nav_order: 2
-description: "Quick start: install aiflow, run aiflow init for Claude Code, wire MCP servers, and complete your first task with Beads, agents, and graph + RAG memory."
+description: "Quick start: install aiflow, run aiflow init (Claude Code, GitHub Copilot, and/or OpenAI Codex CLI), wire MCP servers, and complete your first task with Beads, agents, and graph + RAG memory."
 ---
 
 # Quick Start

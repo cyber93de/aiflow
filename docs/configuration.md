@@ -3,7 +3,7 @@ layout: default
 title: Configuration
 parent: CLI & Configuration
 nav_order: 2
-description: "Configure aiflow: .aiflow/config.json, CLAUDE.md operating rules, shared team preferences, and adding custom MCP servers for Claude Code."
+description: "Configure aiflow: .aiflow/config.json, the agent-agnostic AGENTS.md operating rules (Claude Code, GitHub Copilot, OpenAI Codex CLI), shared team preferences, and adding custom MCP servers."
 ---
 
 # Configuration you should tune
@@ -23,15 +23,19 @@ Everything is driven by **`.aiflow/config.json`** (committed, no secrets). Edit 
 
 ## The files most worth tuning
 
-- **`CLAUDE.md`** — the operating rules every agent reads (project overview, architecture hints, code
-  style, task workflow, git rules, the memory/context stack, communication). **Fill the `[EDIT ME]`
-  blocks** (§1 overview, §2 architecture) — this is the single biggest quality lever.
+- **`AGENTS.md`** — the operating rules **any** coding agent reads (Claude Code, GitHub Copilot,
+  OpenAI Codex CLI): project overview, architecture hints, code style, task workflow, git rules,
+  the memory/context stack, communication. **Fill the `[EDIT ME]` blocks** (§1 overview, §2
+  architecture) — this is the single biggest quality lever. `CLAUDE.md` is just a one-line
+  `@AGENTS.md` import for Claude Code — edit `AGENTS.md`, not `CLAUDE.md`. See
+  [Multi-Agent Support](multi-agent).
 - **`.aiflow/team-prefs.json`** (the "preferences" file) — shared, versioned team/user preferences:
-  code style preset, language, conventions. Committed so the team inherits them; overrides `CLAUDE.md §3`.
+  code style preset, language, conventions. Committed so the team inherits them; overrides `AGENTS.md §3`.
 - **`.claude/memory/`** — `project-aim.md` (goal + architecture), `dev-environment.md`,
-  `memory-policy.md` (the retrieval routing + learning intensity). Keep these current.
+  `memory-policy.md` (the retrieval routing + learning intensity). **Claude Code only** — read
+  these files directly if your agent doesn't support persistent memory. Keep them current.
 - **`.claude/settings.json`** — permissions (allow/deny), hooks (caveman, formatter, beads-sync),
-  MCP allow-list.
+  MCP allow-list. **Claude Code only.**
 - **`.aiflow/branching.json` / `docs/branching.md`** — the branching + release model.
 - **`.env`** — all tokens/keys.
 
@@ -87,5 +91,5 @@ Tip: prefer a focused MCP over a broad one — fewer tools = less context and fe
 
 - **Tools / binaries** — installed once per user (`npm -g`, `uv tool`, brew/winget); shared across
   projects. `aiflow install-deps` puts them there; the router config lives in your home dir.
-- **Configuration & secrets** — per project: `.env`, `.aiflow/config.json`, `CLAUDE.md`, `.mcp.json`,
+- **Configuration & secrets** — per project: `.env`, `.aiflow/config.json`, `AGENTS.md`, `.mcp.json`,
   `.claude/`, `.githooks/`, memory. Switching projects switches config; nothing leaks between them.

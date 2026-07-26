@@ -35,23 +35,25 @@ aiflow init
 | 2 | rtk CLI-output filtering? | **on** | trims noisy command output before it hits context |
 | 3 | graphify (structural code graph)? | **on** | answers "who calls X?" without re-reading files |
 | 4 | cocoindex-code (semantic RAG)? | **on** | "find the code about Y", local embeddings, no key |
-| 5 | task-master / filesystem MCP / context7 MCP? | **on** | task decomposition, file access, live library docs |
-| 6 | Persistent memory + graph learning + intensity | **on**, `aggressive` | durable facts in `.claude/memory/` |
-| 7 | Claude auth | `apikey` | or `oauth` (`claude setup-token`, uses your plan) |
-| 8 | Version control | `git` | or `svn` / `none` |
-| 9 | Remote host | `github` | github-enterprise, gitlab(-self), bitbucket, forgejo, gitea, custom, none — token-based |
-| 10 | Sync on issue close? auto-pull at start? | **yes / yes** | team collaboration via the shared Dolt issue DB |
-| 11 | Ollama (local models)? which? | **off**; `qwen3-coder` suggested | local models for easy/background steps, no API key |
-| 12 | Shared team preferences? | **off**; style `google` | committed team-wide conventions |
-| 13 | **Project aim** / architecture / OS / IDE | *empty — fill it!* | the cheapest quality lever; see below |
-| 14 | Git branching model | `simple` | or `gitflow` / `none`; strict rules + PR-only default **yes** |
+| 5 | claude-task-master / filesystem MCP / context7 MCP? | **on** | task decomposition, file access, live library docs |
+| 6 | Persistent memory + graph learning + intensity | **on**, `aggressive` | durable facts in `.claude/memory/` (Claude Code only) |
+| 7 | **Coding agent(s)** — Claude Code / GitHub Copilot / OpenAI Codex CLI | Claude Code **on**, others off | any combination; renders `AGENTS.md` + per-agent MCP config — see [Multi-Agent Support](multi-agent) |
+| 8 | Claude auth | `apikey` | or `oauth` (`claude setup-token`, uses your plan) |
+| 9 | Version control | `git` | or `svn` / `none` |
+| 10 | Remote host + GitKraken MCP? | `github`; GitKraken **off** | github-enterprise, gitlab(-self), bitbucket, forgejo, gitea, custom, none — token-based; GitKraken wires alongside any host, it's a client not a host |
+| 11 | Sync on issue close? auto-pull at start? | **yes / yes** | team collaboration via the shared Dolt issue DB |
+| 12 | Ollama (local models)? which? | **off**; `qwen3-coder` suggested | local models for easy/background steps, no API key |
+| 13 | claude-code-router (cheap/local model routing)? | on if Ollama is on, else off | routes easy/background tasks away from top models |
+| 14 | Shared team preferences? | **off**; style `google` | committed team-wide conventions |
+| 15 | **Project aim** / architecture / OS / IDE | *empty — fill it!* | the cheapest quality lever; see below |
+| 16 | Git branching model | `simple` | or `gitflow` / `none`; strict rules + PR-only default **yes** |
 
 For the aim, answer something like:
 
 > *Order-management REST API for our internal shops. Hexagonal architecture on PostgreSQL.
 > Correctness and auditability beat raw speed; every endpoint ships fully tested.*
 
-**What gets generated:** `.aiflow/config.json` (single source of truth), `CLAUDE.md` (operating
+**What gets generated:** `.aiflow/config.json` (single source of truth), `AGENTS.md` (operating
 rules incl. quality gates §3a, REST rules §3b, database rules §3c), `.claude/agents/` +
 `.claude/commands/` (the whole roster), `.mcp.json`, git hooks (format/lint/test + Conventional
 Commits + branch rules), `.env` from `.env.example`, memory seed files, and the Beads issue DB.
@@ -106,14 +108,14 @@ bd close <id> --reason "AC verified: endpoints tested, coverage 87%"
 
 ## 4. What you'd tune next
 
-- **`CLAUDE.md §1/§2`** — project overview + architecture hints (biggest quality lever).
+- **`AGENTS.md §1/§2`** — project overview + architecture hints (biggest quality lever).
 - **`.claude/agents/*.md`** — the shipped agents are deliberately generic; add your domain
   language, review focus, test stack.
 - **On-demand checks:** `aiflow security-check`, `aiflow a11y-check` (strict WCAG),
   `aiflow modernize-check` (brownfield modernisation report), `aiflow quality-check`, and more —
   see [Commands](commands).
 - **Existing codebase instead?** `aiflow init` detects it and offers `aiflow onboard` — it learns
-  the code into memory, fills `CLAUDE.md`, and proposes a project aim for you to confirm.
+  the code into memory, fills `AGENTS.md`, and proposes a project aim for you to confirm.
 
 ![aiflow change-settings](assets/terminal/settings.gif)
 

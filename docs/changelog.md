@@ -3,7 +3,7 @@ layout: default
 title: Changelog
 parent: Support
 nav_order: 4
-description: "aiflow changelog and release history: 0.2.0 cross-platform scripts + self-update, 0.1.1 quality-gate release, and the 0.1.0 first public release."
+description: "aiflow changelog and release history: 0.3.1 release-process hotfix, 0.3.0 agent-agnostic core + gitflow automation + Skills, 0.2.0 cross-platform scripts + self-update, 0.1.1 quality-gate release, and the 0.1.0 first public release."
 ---
 
 # Changelog
@@ -12,6 +12,53 @@ description: "aiflow changelog and release history: 0.2.0 cross-platform scripts
 aiflow follows [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/). The authoritative, always-current changelog lives in the
 repository: **[CHANGELOG.md](https://github.com/Cyber93de/aiflow/blob/main/CHANGELOG.md)**.
+
+## 0.3.1 — hotfix: release-process correctness
+
+Highlights:
+
+- **`branching.sh` no longer loses history when creating a missing local `main`/`develop`.**
+  Previously it always branched off current `HEAD`; now it creates the branch from
+  `origin/<branch>` when that remote ref exists, so a diverged `origin/develop` is never
+  silently ignored.
+- **Hotfix-branch detection now recognises GitHub PR-merge commits**, not just local
+  `git merge` ones — both `aiflow release`'s merge-into-develop step and the `pre-push`
+  main-restriction guard previously only matched `Merge branch 'X'` subjects and silently let
+  `Merge pull request #N from owner/X` commits through unchecked.
+- **`aiflow release` falls back to `origin/<hotfix-branch>`** when the local branch was already
+  deleted (e.g. GitHub's "delete branch on merge" default), so the fix still lands on `develop`.
+- **`release.yml` never publishes a release for an in-progress `-SNAPSHOT`/`-HOTFIX` `VERSION`**
+  — it previously tagged and published whatever `VERSION` said verbatim, which could briefly be
+  a literal `-HOTFIX`-suffixed string right after a hotfix PR merge and before `aiflow release
+  --yes` stripped it.
+
+## 0.3.0 — agent-agnostic core, gitflow automation, Skills, multi-host releases
+
+Highlights:
+
+- **Agent-agnostic core** — `AGENTS.md` is the shared source of truth for Claude Code, GitHub
+  Copilot, and OpenAI Codex CLI; `CLAUDE.md` is now a one-line `@AGENTS.md` import. Sections only
+  Claude Code can run automatically (subagents, hooks, slash-commands, the Ralph loop) are marked
+  **(Claude Code only)**.
+- **`agents.{claude,copilot,codex}` config** renders per-agent MCP config from one server set:
+  `.mcp.json` (Claude), `.codex/config.toml` (Codex CLI), `.vscode/mcp.json` (Copilot).
+- **Gitflow branching automation** — `bugfix/*` alongside `feature/*`; `main` restricted to
+  `develop`/`hotfix/*`/`chore/*` (enforced by `pre-push`); `aiflow hotfix <name>`; `main` may
+  never carry a `-SNAPSHOT`/`-HOTFIX` version; `aiflow release` defaults to a dry run — only
+  `--yes` actually cuts a release.
+- **Predefined release-publish workflows** for GitHub, GitLab, Gitea, Forgejo, and Bitbucket,
+  written once per project (never overwriting an existing one) from `release-workflows/`.
+- **GitKraken MCP** toggle, independent of the chosen remote host.
+- **Skills** (`.claude/skills/<name>/SKILL.md`) — a new mechanism distinct from slash-commands:
+  Claude Code matches a skill's `description` against the current task and offers to run it
+  automatically. Ships with **seo-optimization**.
+- **`aiflow update` now works on archive installs**, not just git checkouts — checks the GitHub
+  Releases API, downloads the matching per-OS archive, and verifies it against `SHA256SUMS.txt`.
+- **`aiflow project-update` now also refreshes agent definitions** — any customised file is kept
+  as `*.bak` before being replaced, and reported so you can reapply your changes; `.beads/`,
+  `.claude/memory/*`, and your project settings (aim, architecture) always survive untouched.
+- **SEO pass** on the docs site (robots.txt, 404, favicon, JSON-LD structured data, Google Search
+  Console verification) and refreshed `llms.txt`/`llms-full.txt` for context7.
 
 ## 0.2.0 — cross-platform scripts, self-update, no more broken nightly agent
 

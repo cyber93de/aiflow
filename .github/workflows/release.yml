@@ -30,10 +30,17 @@ jobs:
           echo "version=$v" >> "$GITHUB_OUTPUT"
           echo "tag=v$v"     >> "$GITHUB_OUTPUT"
 
-      - name: Skip if this version is already released
+      - name: Skip if already released, or VERSION is an in-progress snapshot/hotfix
         id: check
         run: |
-          if git rev-parse -q --verify "refs/tags/${{ steps.ver.outputs.tag }}" >/dev/null; then
+          v="${{ steps.ver.outputs.version }}"
+          # main must never carry -SNAPSHOT/-HOTFIX (same rule the pre-push hook enforces) - if
+          # it transiently does (e.g. the moment a hotfix PR lands on main, before 'aiflow
+          # release --yes' strips the suffix), never cut a release for that literal string.
+          if [[ "$v" == *-SNAPSHOT || "$v" == *-HOTFIX ]]; then
+            echo "exists=true"  >> "$GITHUB_OUTPUT"
+            echo "::notice::VERSION is '$v' (in-progress) — not releasing. Run 'aiflow release --yes' to cut the real release."
+          elif git rev-parse -q --verify "refs/tags/${{ steps.ver.outputs.tag }}" >/dev/null; then
             echo "exists=true"  >> "$GITHUB_OUTPUT"
             echo "::notice::Tag ${{ steps.ver.outputs.tag }} already exists — nothing to release."
           else

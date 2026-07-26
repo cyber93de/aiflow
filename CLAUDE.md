@@ -104,6 +104,13 @@ AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no
   (`make-casts.mjs` + agg; regenerate after CLI-output changes).
 - Releases: bump `VERSION` + update `CHANGELOG.md`, push to `main` → `release.yml` tags and
   publishes per-OS archives. A pushed `VERSION` without a matching tag always cuts a release.
+  `release.yml` refuses to release while `VERSION` still carries `-SNAPSHOT`/`-HOTFIX`.
+- **Rule: every release — hotfix or not — must be followed by a pages update.** The docs site
+  (`docs/index.md`, `README.md`/`README.de.md`) must show the new version number, and
+  `docs/changelog.md` must gain a highlights entry for that version (newest first, same style as
+  existing entries; links to the authoritative `CHANGELOG.md`). This is docs-only — do it on a
+  `chore/*` branch, never a `feature/*`/`bugfix/*`, and it must **not** bump `VERSION` or cut
+  another release.
 
 ## Conventions & Patterns
 

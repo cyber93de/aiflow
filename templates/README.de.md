@@ -301,8 +301,13 @@ Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen.
 Jedes Tool verdient seinen Platz durch mehr **Qualität**, weniger **Token-Kosten** oder
 **autonome, prüfbare** Lieferung.
 
-- **Claude Code** — die Agent-Laufzeit, auf der alles aufbaut.
-  https://docs.claude.com/en/docs/claude-code · *plant, editiert, führt Tools aus — nicht nur Chat.*
+- **Claude Code** — die Referenz-Agent-Laufzeit; volles Feature-Set (Subagenten, Hooks, Skills,
+  Slash-Commands, Ralph-Loop). https://docs.claude.com/en/docs/claude-code · *plant, editiert,
+  führt Tools aus — nicht nur Chat.*
+- **GitHub Copilot CLI** (`agents.copilot`) — `npm i -g @github/copilot`. Liest dieselbe
+  `AGENTS.md` über `.github/copilot-instructions.md`.
+- **OpenAI Codex CLI** (`agents.codex`) — `npm i -g @openai/codex`. Liest `AGENTS.md` direkt per
+  Konvention. Mehr zum Multi-Agent-Setup: https://cyber93de.github.io/aiflow/multi-agent
 - **Beads (`bd`)** — git-/Dolt-gestützter Issue-Tracker. https://github.com/steveyegge/beads ·
   *dauerhafter Task-Speicher mit Abhängigkeiten; Arbeit überlebt Sitzungs-/Kontext-Resets.*
 - **Dolt** — versionierte SQL-DB hinter Beads. https://github.com/dolthub/dolt · *branch/merge/diff-

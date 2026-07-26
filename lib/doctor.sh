@@ -15,6 +15,8 @@ check() {
 echo "aiflow doctor"
 echo "core:"
 check "claude"  claude  "npm i -g @anthropic-ai/claude-code"
+check "copilot" copilot "GitHub Copilot CLI: npm i -g @github/copilot (only if agents.copilot enabled)"
+check "codex"   codex   "OpenAI Codex CLI: npm i -g @openai/codex (only if agents.codex enabled)"
 check "git"     git     "https://git-scm.com"
 check "node"    node    "https://nodejs.org (LTS)"
 check "jq"      jq      "https://jqlang.github.io/jq/ (required to read .aiflow/config.json)"
@@ -46,6 +48,10 @@ else echo "  [MISS] npx        needs node (for ccusage + claude-code-templates)"
 if command -v jq >/dev/null 2>&1 && [ -f .aiflow/config.json ]; then
   echo
   echo "this project (.aiflow/config.json):"
+  printf "  agents:  claude=%s copilot=%s codex=%s\n" \
+    "$(jq -r '.agents.claude // true' .aiflow/config.json)" \
+    "$(jq -r '.agents.copilot // false' .aiflow/config.json)" \
+    "$(jq -r '.agents.codex // false' .aiflow/config.json)"
   printf "  remote:  %s (%s) — host MCP: %s\n" \
     "$(jq -r '.remote.type // "?"' .aiflow/config.json)" \
     "$(jq -r '.remote.baseUrl // "" | if .=="" then "public" else . end' .aiflow/config.json)" \

@@ -236,8 +236,13 @@ indexes any time with **`aiflow index`** (graph + RAG).
 `aiflow install-deps` installs only what your config enables (`--all` = full set). All are
 user-space; Docker is never auto-installed.
 
-**Core (always):** Claude Code · Beads (`bd`) · Dolt (Beads' database backend) · jq · the git-host
-CLI matching your remote (`gh`/`glab`).
+**Core (always):** Beads (`bd`) · Dolt (Beads' database backend) · jq · the git-host CLI matching
+your remote (`gh`/`glab`).
+
+**Coding agent CLIs (per `agents.*`):** Claude Code (`agents.claude`, default on) ·
+**GitHub Copilot CLI** (`agents.copilot`, `npm i -g @github/copilot`) · **OpenAI Codex CLI**
+(`agents.codex`, `npm i -g @openai/codex`). Pick any combination — see
+[Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
 
 **Optional (when enabled):** claude-task-master · claude-code-router · rtk · **graphify**
 (needs `uv`) · **cocoindex-code** (`ccc`, needs `uv`) · **Ollama** (+ your selected models).

@@ -95,9 +95,18 @@ echo "  branching: $MODEL (strict=$STRICT prOnly=$PRONLY autoRelease=$AUTOREL ve
 } > docs/branching.md
 
 # ---- ensure permanent branches exist (don't switch) ----
+# If a remote-tracking ref already exists (origin/$b) but no local branch, create the local
+# branch FROM origin/$b, not from current HEAD - origin/$b may have diverged from wherever
+# you're currently checked out, and branching off HEAD would silently lose/ignore that history.
 if [ -d .git ] && git rev-parse --verify HEAD >/dev/null 2>&1; then
   for b in main develop; do
-    git show-ref --verify --quiet "refs/heads/$b" || { git branch "$b" >/dev/null 2>&1 && echo "  created branch $b"; }
+    if ! git show-ref --verify --quiet "refs/heads/$b"; then
+      if git show-ref --verify --quiet "refs/remotes/origin/$b"; then
+        git branch "$b" "origin/$b" >/dev/null 2>&1 && echo "  created branch $b (tracking origin/$b)"
+      else
+        git branch "$b" >/dev/null 2>&1 && echo "  created branch $b"
+      fi
+    fi
   done
 fi
 

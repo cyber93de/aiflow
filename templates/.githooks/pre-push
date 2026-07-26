@@ -51,12 +51,17 @@ while read -r lref lsha rref rsha; do
 
   # main is restricted: only chore/*, hotfix/*, or a develop merge may ever reach main.
   # feature/* and bugfix/* must never land on main directly. Detected from merge-commit
-  # subjects ("Merge branch '<name>'") for merges newly pushed to main.
+  # subjects for merges newly pushed to main - supports both local "git merge" ("Merge
+  # branch 'X'") and GitHub PR-merge subjects ("Merge pull request #N from owner/X"), since
+  # X may itself contain slashes (e.g. hotfix/foo) and PR-merged commits never go through
+  # this hook at merge time (only a later push that includes them does).
   if [ "$branch" = main ] && [ -n "$MAINFORBID" ] && [ "$rsha" != "0000000000000000000000000000000000000000" ]; then
     while read -r csha; do
       [ -z "$csha" ] && continue
       subj="$(git log -1 --format=%s "$csha" 2>/dev/null)"
-      src="$(printf '%s' "$subj" | sed -n "s/^Merge branch '\([^']*\)'.*/\1/p")"
+      src="$(printf '%s' "$subj" | sed -nE \
+        -e "s/^Merge branch '([^']*)'.*/\1/p" \
+        -e "s|^Merge pull request #[0-9]+ from [^/]+/(.*)|\1|p")"
       [ -z "$src" ] && continue
       for f in $MAINFORBID; do
         case "$f" in

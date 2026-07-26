@@ -17,8 +17,10 @@ KI-Know-how. Genau dafür ist dieses Tool gebaut:** ein paar Fragen beantworten,
 erprobtes, meinungsstarkes Setup.
 
 - **Agent-agnostisch** — [Claude Code](https://docs.claude.com/en/docs/claude-code) (volles
-  Feature-Set: Subagenten, Hooks, Ralph-Loop), **GitHub Copilot** und **OpenAI Codex CLI** lesen
-  alle dieselbe gemeinsame `AGENTS.md` + bekommen je eigene gerenderte MCP-Config. Siehe
+  Feature-Set: Subagenten, Hooks, Slash-Commands), **GitHub Copilot** und **OpenAI Codex CLI**
+  lesen alle dieselbe gemeinsame `AGENTS.md` + bekommen je eigene gerenderte MCP-Config. Der
+  **Ralph-Loop** funktioniert über alle drei via
+  [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum). Siehe
   [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
 - **Token-basiert & anbieterneutral** — dein eigener Anthropic-API-Key *oder* Claude-Code-OAuth-Token;
   Git-Hosts **nur über Tokens, nie OAuth**. Kein Dritt-Hub.

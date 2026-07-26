@@ -311,8 +311,9 @@ Each tool earns its place by raising **quality**, cutting **token cost**, or mak
   task memory with dependencies; work survives session/context resets.*
 - **Dolt** — versioned SQL database backing Beads. https://github.com/dolthub/dolt · *branch/merge/
   diff history for tasks — a real audit trail.*
-- **Ralph loop** — autonomous iterate-until-done loop. *finishes a task unattended, stops at
-  COMPLETE/BLOCKED, writes `result.json`.*
+- **Ralph loop** ([open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum)) — autonomous
+  iterate-until-done loop, agent-agnostic (Claude Code/Codex/Copilot CLI). *finishes a task
+  unattended, stops on a completion signal or `--max-iterations`.*
 - **claude-task-master** — goal/PRD → task tree with dependencies.
   https://github.com/eyaltoledano/claude-task-master · *good decomposition = better, reviewable
   output; uses the `claude-code` provider, no extra key.*
@@ -357,13 +358,19 @@ passed • bead closed • commit references the bead id (AGENTS.md §10).
 
 ## 10. Autonomous work: the Ralph loop
 
-For larger tasks, hand off to the **Ralph loop** — the agent iterates until `COMPLETE` or `BLOCKED`.
+For larger tasks, hand off to the **Ralph loop** — the agent iterates on the same task until it
+signals completion. Runs on **[open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum)**,
+agent-agnostic: works with Claude Code, OpenAI Codex CLI, or GitHub Copilot CLI.
 
-- **Interactive:** `/ralph-loop` inside Claude Code.
-- **Headless:** `aiflow ralph "implement bd-12"` — each iteration writes `result.json`
-  (`{status, summary, next, blocker}`); tuned via `.env` (`RALPH_MAX_ITERATIONS`,
-  `RALPH_TIMEOUT_SECONDS`, `RALPH_PERMISSION_MODE`). Works with a token in env **or** your stored
-  Claude login (OAuth).
+- **Interactive, Claude Code only:** `/ralph-loop` — a separate Claude Code plugin skill.
+- **Headless (any agent):** `aiflow ralph "implement bd-12" [--agent claude-code|codex|copilot]
+  [ralph flags...]` — defaults to the first agent enabled in `.aiflow/config.json → agents.*`
+  (claude > codex > copilot) if you don't pass `--agent`. Tuned via `RALPH_MAX_ITERATIONS` (env);
+  ralph-wiggum itself owns iteration history (`.ralph/ralph-history.json`) and completion
+  detection (`--tasks` for multi-part work, `ralph --status` to watch progress live from another
+  terminal). Needs [Bun](https://bun.sh) + `npm i -g @th0rgal/ralph-wiggum` (installed by `aiflow
+  install-deps`). Known limitation: completion-promise auto-stop isn't always reliable with every
+  agent — `--max-iterations` remains the real safety bound regardless.
 - **In CI:** the same loop runs via `.github/workflows/agent.yml` on manual dispatch, the `agent`
   issue label, or nightly (§19).
 - **Containerised:** `docker/run.sh` runs the loop in a container via **Podman or Docker**
@@ -383,7 +390,7 @@ recognisable prefix so a human/PO can triage. They never modify code.
 | `aiflow dependency-check` | vulnerable/outdated/unused deps, license conflicts | `[dependency]` |
 | `aiflow test-gap` | untested critical / high-fan-in paths | `[test gap]` |
 | `aiflow perf-check` | N+1, sync I/O, O(n²), missing pagination/indexes | `[performance]` |
-| `aiflow docs-check` | README/CLAUDE/arc42/API drift | `[docs]` |
+| `aiflow docs-check` | README/AGENTS.md/arc42/API drift | `[docs]` |
 | `aiflow a11y-check` | WCAG 2.2 AA: contrast, keyboard, ARIA, labels (strict) | `[accessibility]` |
 | `aiflow modernize-check` | EOL stacks, monolith→microservices, legacy→REST/cloud-native, svn→git, missing test frameworks | *report only* |
 

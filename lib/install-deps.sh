@@ -73,6 +73,14 @@ install_ollama() {
     *)       curl -fsSL https://ollama.com/install.sh | sh || warn "install ollama: https://ollama.com/download" ;;
   esac
 }
+install_bun() { # runtime open-ralph-wiggum needs
+  have bun && return 0
+  say "installing bun (runtime for the Ralph loop)"
+  if have brew; then brew install oven-sh/bun/bun
+  elif [ "$OS" = windows ]; then powershell -NoProfile -c "irm bun.sh/install.ps1 | iex" || warn "install bun manually: https://bun.sh"
+  else curl -fsSL https://bun.sh/install | bash || warn "install bun manually: https://bun.sh"; fi
+  export PATH="$HOME/.bun/bin:$PATH"
+}
 
 echo "aiflow install-deps (os=$OS, all=$ALL)"
 echo "  enabled: rtk=$RTK task-master=$TM router=$ROUTER graphify=$GFY cocoindex=$COCO ollama=$OLLAMA"
@@ -89,6 +97,8 @@ fi
 
 install_dolt   # Beads needs the dolt binary (runs a dolt sql-server)
 have bd     || { say "beads (bd)"; npmg @beads/bd || { have go && go install github.com/steveyegge/beads/cmd/bd@latest; } || warn "install beads manually: https://github.com/steveyegge/beads"; }
+# Ralph loop (open-ralph-wiggum) - agent-agnostic, works with whichever CLI(s) are enabled above
+have ralph  || { install_bun; say "ralph-wiggum (Ralph loop)"; npmg @th0rgal/ralph-wiggum; }
 have jq     || { say "jq"; if have brew; then brew install jq; elif [ "$OS" = windows ]; then { have winget && winget install --id jqlang.jq -e; } || { have scoop && scoop install jq; } || warn "install jq: https://jqlang.github.io/jq/"; elif [ "$OS" = linux ]; then (sudo apt-get install -y jq || sudo dnf install -y jq) 2>/dev/null; else warn "install jq: https://jqlang.github.io/jq/"; fi; }
 install_vcs_cli  # gh or glab to match the configured VCS host
 

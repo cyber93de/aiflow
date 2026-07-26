@@ -21,6 +21,8 @@ check "git"     git     "https://git-scm.com"
 check "node"    node    "https://nodejs.org (LTS)"
 check "jq"      jq      "https://jqlang.github.io/jq/ (required to read .aiflow/config.json)"
 check "bd"      bd      "Beads: https://github.com/steveyegge/beads (or /beads:init in Claude)"
+check "ralph"   ralph   "Ralph loop (open-ralph-wiggum): npm i -g @th0rgal/ralph-wiggum (needs bun)"
+check "bun"     bun     "runtime for the Ralph loop: https://bun.sh"
 check "dolt"    dolt    "Beads backend (bd runs a dolt sql-server): https://docs.dolthub.com/introduction/installation"
 if command -v podman >/dev/null 2>&1; then check "podman" podman "container engine for GitHub MCP + headless runs"
 else check "docker" docker "container engine (or Podman): GitHub MCP + headless runs"; fi

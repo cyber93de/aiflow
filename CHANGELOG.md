@@ -7,6 +7,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Ralph loop rebuilt on [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum)** —
+  genuinely agent-agnostic now (Claude Code, OpenAI Codex CLI, GitHub Copilot CLI via `--agent`),
+  replacing the old Claude-only hand-rolled `claude -p` loop. `aiflow ralph "<task>"` defaults to
+  the first agent enabled in `agents.*`; `install-deps` installs Bun + the `ralph` CLI. Known
+  limitation: completion-promise auto-stop isn't always reliable — `--max-iterations` remains the
+  real safety bound regardless of agent.
+- install-deps installs Claude Code / GitHub Copilot CLI / OpenAI Codex CLI per `agents.*`
+  config (previously Claude Code was unconditional and the other two were never installed);
+  `aiflow doctor` reports all three plus `ralph`/`bun`.
+
 ## [0.3.0] — 2026-07-26
 
 ### Added

@@ -8,8 +8,9 @@
 ## What aiflow is
 A cross-platform CLI (POSIX bash + a Windows PowerShell launcher) that bootstraps and governs
 AI-agent-driven projects. It wires whichever coding agent(s) you use — Claude Code (full feature
-set: subagents, hooks, slash-commands, the Ralph loop), GitHub Copilot, and/or OpenAI Codex CLI —
-to durable task memory, two-layer code memory, specialist agents/Skills, team collaboration, gitflow
+set: subagents, hooks, slash-commands), GitHub Copilot, and/or OpenAI Codex CLI — plus an
+agent-agnostic Ralph loop (open-ralph-wiggum) that works with all three — to durable task memory,
+two-layer code memory, specialist agents/Skills, team collaboration, gitflow
 release automation, and token savings — with one command. It is project-scoped (secrets and
 settings live in the project, never globally), token-based (never OAuth for git hosts), and
 vendor-neutral (your own Anthropic API key or Claude Code OAuth token). It vendors nothing; it
@@ -21,7 +22,7 @@ task workflow, git rules, Definition of Done) any coding agent should read. `CLA
 one-line `@AGENTS.md` import (Claude Code's native memory-import syntax) so Claude Code loads the
 identical content. `.github/copilot-instructions.md` points GitHub Copilot at `AGENTS.md`; OpenAI
 Codex CLI reads `AGENTS.md` directly by convention (no pointer needed). Sections in `AGENTS.md`
-marked "(Claude Code only)" — subagents, hooks, slash-commands, the Ralph loop, caveman/rtk — are
+marked "(Claude Code only)" — subagents, hooks, slash-commands, caveman/rtk — are
 automation only Claude Code can dispatch in-session; every other agent follows the same rules
 manually. `.aiflow/config.json`'s `agents{claude,copilot,codex}` (any combination, Claude Code on
 by default) selects which agent-specific files get rendered: `.mcp.json` (Claude), `.codex/
@@ -121,8 +122,10 @@ and offers to run it automatically. Ships with seo-optimization: SEO for any web
 project/framework (HTML, GitHub Pages, static sites, Next.js, Astro, Hugo, Jekyll, VuePress,
 VitePress, React, Vue, Svelte, Angular) — meta tags, Open Graph/Twitter Cards, JSON-LD structured
 data, robots.txt/sitemap.xml, canonical URLs, Core Web Vitals, GitHub Pages specifics; ends with
-an SEO report. Autonomy: the Ralph loop (Claude Code only; interactive / headless `aiflow ralph` /
-CI); if not specified, the implementer decides from its pre-analysis.
+an SEO report. Autonomy: the Ralph loop (open-ralph-wiggum, agent-agnostic: Claude Code/Codex
+CLI/Copilot CLI via `--agent`; interactive `/ralph-loop` is Claude Code-only; headless
+`aiflow ralph` / CI works with any); if not specified, the implementer decides from its
+pre-analysis.
 
 ## Quality, git, releases
 Google style for all languages; Conventional Commits; pre-commit/commit-msg/pre-push enforcement

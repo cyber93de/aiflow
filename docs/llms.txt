@@ -5,8 +5,9 @@
 > Beads task memory, a code knowledge graph (graphify) plus semantic RAG (cocoindex-code), context7
 > live docs, specialist agents and auto-offered Skills, gitflow branching + release automation
 > (predefined release workflows for GitHub/GitLab/Gitea/Forgejo/Bitbucket), Ollama local models,
-> model routing, team collaboration over a shared Dolt issue graph, and token savings via caveman
-> and rtk. One command, project-scoped, vendor-neutral, MIT-licensed. Owner: Cyber93de.
+> model routing, team collaboration over a shared Dolt issue graph, and per-agent token savings
+> (Claude Code: caveman + rtk; GitHub Copilot: token-optimization guide; OpenAI Codex CLI: optional
+> CodexSaver MCP router). One command, project-scoped, vendor-neutral, MIT-licensed. Owner: Cyber93de.
 
 ## Docs
 - [Home](https://cyber93de.github.io/aiflow/): overview and advantages
@@ -16,7 +17,8 @@
 - [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent): Claude Code, GitHub
   Copilot, OpenAI Codex CLI — shared AGENTS.md, per-agent MCP config
 - [Memory: graph + RAG](https://cyber93de.github.io/aiflow/memory): graphify + cocoindex + context7
-- [Token optimization](https://cyber93de.github.io/aiflow/token-optimization): caveman, rtk, routing
+- [Token optimization](https://cyber93de.github.io/aiflow/token-optimization): caveman + rtk
+  (Claude Code), the Copilot token-optimization guide, CodexSaver (Codex CLI), routing
 - [Team collaboration](https://cyber93de.github.io/aiflow/team): shared Dolt issues, atomic claim
 - [Command reference](https://cyber93de.github.io/aiflow/commands)
 - [Configuration](https://cyber93de.github.io/aiflow/configuration)
@@ -48,6 +50,7 @@
 Claude Code, GitHub Copilot, OpenAI Codex CLI, agent-agnostic, AGENTS.md, Anthropic Claude, AI
 coding agent, agentic software delivery, MCP, Model Context Protocol, Skills, slash-commands,
 Beads, Dolt, graphify, code knowledge graph, CocoIndex, cocoindex-code, semantic code search, RAG,
-Context7, Ollama, local LLM, claude-code-router, rtk, caveman, token optimization, Ralph loop,
-gitflow, hotfix branch, release automation, SEO optimization, Conventional Commits, GitHub,
-GitLab, Bitbucket, Forgejo, Gitea, GitKraken.
+Context7, Ollama, local LLM, claude-code-router, rtk, caveman, CodexSaver, GitHub Copilot
+token-optimization guide, token optimization, Ralph loop, open-ralph-wiggum, gitflow, hotfix
+branch, release automation, SEO optimization, Conventional Commits, GitHub, GitLab, Bitbucket,
+Forgejo, Gitea, GitKraken.

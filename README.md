@@ -123,7 +123,7 @@ question, every default, first feature end-to-end).
 | **Quality** | Google style, conventional commits, format/lint/test git hooks, architect+quality-gate review, static analysis on every change, objective metric targets (0 new smells/duplicates, 0 warnings), >80 % coverage + BDD E2E gates, leveled logging, `.http` files for REST endpoints, DB rules §3c (3NF+FKs for new schemas, brownfield schemas handled with care) |
 | **Branching** | simple / gitflow / none, PR-only, auto-release, SemVer/CalVer |
 | **Team** | shared issue DB, atomic claim, session-start auto-pull, pull-before-push, shared preferences |
-| **Token savings** | caveman + rtk on by default, graph/RAG retrieval, cost routing |
+| **Token savings** | Claude Code: caveman + rtk on by default, graph/RAG retrieval, cost routing. Copilot: [token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization) baked into `copilot-instructions.md`. Codex: optional [CodexSaver](https://github.com/fendouai/CodexSaver) MCP router (`codexsaver.enabled`) |
 
 ---
 
@@ -246,7 +246,9 @@ your remote (`gh`/`glab`).
 [Multi-Agent Support](https://cyber93de.github.io/aiflow/multi-agent).
 
 **Optional (when enabled):** claude-task-master · claude-code-router · rtk · **graphify**
-(needs `uv`) · **cocoindex-code** (`ccc`, needs `uv`) · **Ollama** (+ your selected models).
+(needs `uv`) · **cocoindex-code** (`ccc`, needs `uv`) · **Ollama** (+ your selected models) ·
+**CodexSaver** (`codexsaver.enabled`, needs `agents.codex` + Python — cost-aware MCP router for
+Codex CLI, clone + editable pip install, no published package).
 
 Headless container runs (`docker/run.sh`) and the GitHub MCP work with **Podman or Docker** —
 install either one yourself (never auto-installed).

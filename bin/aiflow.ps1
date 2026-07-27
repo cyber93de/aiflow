@@ -4,6 +4,25 @@ $ErrorActionPreference = 'Stop'
 $AIFLOW_HOME = (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)) -replace '\\', '/'
 $env:AIFLOW_HOME = $AIFLOW_HOME
 
+# 'bash' on PATH is frequently WSL's stub (C:\Windows\System32\bash.exe), which cannot
+# resolve Windows-style paths like "C:/dev/aiflow/lib/init.sh" and fails with
+# "No such file or directory". Resolve Git for Windows' own bash.exe explicitly instead.
+function Resolve-Bash {
+  $gitCmd = Get-Command git.exe -ErrorAction SilentlyContinue
+  if ($gitCmd) {
+    $gitRoot = Split-Path -Parent (Split-Path -Parent $gitCmd.Source)
+    $candidate = Join-Path $gitRoot 'bin\bash.exe'
+    if (Test-Path $candidate) { return $candidate }
+  }
+  foreach ($base in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
+    if ($base) {
+      $candidate = Join-Path $base 'Git\bin\bash.exe'
+      if (Test-Path $candidate) { return $candidate }
+    }
+  }
+  throw "Git Bash not found - install Git for Windows (https://git-scm.com/download/win) so aiflow's bash-based commands can run."
+}
+
 function Import-DotEnv {
   if (Test-Path '.env') {
     Get-Content '.env' | ForEach-Object {
@@ -34,18 +53,18 @@ if (($skipCheck -notcontains $cmd) -and (Test-Path '.aiflow/config.json') -and [
     $toolVer = if (Test-Path (Join-Path $AIFLOW_HOME 'VERSION')) { (Get-Content (Join-Path $AIFLOW_HOME 'VERSION') -TotalCount 1).Trim() } else { '0.0.0' }
     if (Test-VersionOlder $projVer $toolVer) {
       $ans = Read-Host "This project is on aiflow $projVer, installed aiflow is $toolVer. Upgrade project templates now? Customised agent files are kept as *.bak, never lost. (y/n) [n]"
-      if ($ans -match '^[Yy]') { & bash "$AIFLOW_HOME/lib/project-update.sh" }
+      if ($ans -match '^[Yy]') { & (Resolve-Bash) "$AIFLOW_HOME/lib/project-update.sh" }
       else { Write-Output "  (skipped - run 'aiflow project-update' anytime)" }
     }
   } catch {}
 }
 
 switch ($cmd) {
-  'init'    { & bash "$AIFLOW_HOME/lib/init.sh" @rest }
-  'doctor'  { & bash "$AIFLOW_HOME/lib/doctor.sh" @rest }
-  { $_ -in 'change-settings','settings' } { & bash "$AIFLOW_HOME/lib/settings.sh" @rest }
-  { $_ -in 'install-deps','setup' } { & bash "$AIFLOW_HOME/lib/install-deps.sh" @rest }
-  'upgrade' { & bash "$AIFLOW_HOME/lib/upgrade.sh" @rest }
+  'init'    { & (Resolve-Bash) "$AIFLOW_HOME/lib/init.sh" @rest }
+  'doctor'  { & (Resolve-Bash) "$AIFLOW_HOME/lib/doctor.sh" @rest }
+  { $_ -in 'change-settings','settings' } { & (Resolve-Bash) "$AIFLOW_HOME/lib/settings.sh" @rest }
+  { $_ -in 'install-deps','setup' } { & (Resolve-Bash) "$AIFLOW_HOME/lib/install-deps.sh" @rest }
+  'upgrade' { & (Resolve-Bash) "$AIFLOW_HOME/lib/upgrade.sh" @rest }
   'shell'   {
     Import-DotEnv
     if ($rest.Count -gt 0 -and $rest[0] -eq '--router') {
@@ -65,32 +84,32 @@ switch ($cmd) {
   }
   'ralph'   {
     Import-DotEnv
-    if (Test-Path '.aiflow/ralph-headless.sh') { & bash '.aiflow/ralph-headless.sh' @rest }
+    if (Test-Path '.aiflow/ralph-headless.sh') { & (Resolve-Bash) '.aiflow/ralph-headless.sh' @rest }
     else { Write-Error "No .aiflow/ralph-headless.sh. Run 'aiflow init' first." }
   }
   'security-check' {
     Import-DotEnv
-    if (Test-Path '.aiflow/security-check.sh') { & bash '.aiflow/security-check.sh' @rest }
+    if (Test-Path '.aiflow/security-check.sh') { & (Resolve-Bash) '.aiflow/security-check.sh' @rest }
     else { Write-Error "No .aiflow/security-check.sh. Run 'aiflow init' first." }
   }
   { $_ -in 'requirements-check','req-check' } {
     Import-DotEnv
-    if (Test-Path '.aiflow/requirements-check.sh') { & bash '.aiflow/requirements-check.sh' @rest }
+    if (Test-Path '.aiflow/requirements-check.sh') { & (Resolve-Bash) '.aiflow/requirements-check.sh' @rest }
     else { Write-Error "No .aiflow/requirements-check.sh. Run 'aiflow init' first." }
   }
   { $_ -in 'quality-check','refactor-check' } {
     Import-DotEnv
-    if (Test-Path '.aiflow/quality-check.sh') { & bash '.aiflow/quality-check.sh' @rest }
+    if (Test-Path '.aiflow/quality-check.sh') { & (Resolve-Bash) '.aiflow/quality-check.sh' @rest }
     else { Write-Error "No .aiflow/quality-check.sh. Run 'aiflow init' first." }
   }
-  'release' { Import-DotEnv; & bash '.aiflow/release.sh' @rest }
-  'hotfix' { Import-DotEnv; & bash '.aiflow/hotfix.sh' @rest }
-  'protect' { Import-DotEnv; & bash '.aiflow/protect.sh' @rest }
-  { $_ -in 'dependency-check','deps-check' } { Import-DotEnv; & bash '.aiflow/run-agent.sh' dependency-auditor @rest }
-  'test-gap'   { Import-DotEnv; & bash '.aiflow/run-agent.sh' test-gap-advisor @rest }
-  'perf-check' { Import-DotEnv; & bash '.aiflow/run-agent.sh' performance-advisor @rest }
-  'docs-check' { Import-DotEnv; & bash '.aiflow/run-agent.sh' docs-sync @rest }
-  'onboard'    { Import-DotEnv; & bash '.aiflow/run-agent.sh' onboarder @rest }
+  'release' { Import-DotEnv; & (Resolve-Bash) '.aiflow/release.sh' @rest }
+  'hotfix' { Import-DotEnv; & (Resolve-Bash) '.aiflow/hotfix.sh' @rest }
+  'protect' { Import-DotEnv; & (Resolve-Bash) '.aiflow/protect.sh' @rest }
+  { $_ -in 'dependency-check','deps-check' } { Import-DotEnv; & (Resolve-Bash) '.aiflow/run-agent.sh' dependency-auditor @rest }
+  'test-gap'   { Import-DotEnv; & (Resolve-Bash) '.aiflow/run-agent.sh' test-gap-advisor @rest }
+  'perf-check' { Import-DotEnv; & (Resolve-Bash) '.aiflow/run-agent.sh' performance-advisor @rest }
+  'docs-check' { Import-DotEnv; & (Resolve-Bash) '.aiflow/run-agent.sh' docs-sync @rest }
+  'onboard'    { Import-DotEnv; & (Resolve-Bash) '.aiflow/run-agent.sh' onboarder @rest }
   'sync'       {
     $dir = if ($rest.Count -ge 1) { $rest[0] } else { 'both' }
     if (Test-Path .git) { if ($dir -ne 'push') { Write-Output '>> git pull --rebase'; & git pull --rebase } }
@@ -102,11 +121,11 @@ switch ($cmd) {
       }
     }
   }
-  'ollama'     { & bash "$AIFLOW_HOME/lib/ollama.sh" @rest }
-  'update'     { & bash "$AIFLOW_HOME/lib/update.sh" @rest }
-  'project-update' { & bash "$AIFLOW_HOME/lib/project-update.sh" @rest }
+  'ollama'     { & (Resolve-Bash) "$AIFLOW_HOME/lib/ollama.sh" @rest }
+  'update'     { & (Resolve-Bash) "$AIFLOW_HOME/lib/update.sh" @rest }
+  'project-update' { & (Resolve-Bash) "$AIFLOW_HOME/lib/project-update.sh" @rest }
   { $_ -in 'close-sync','bd-sync' } {
-    if (Test-Path '.aiflow/bd-close-sync.sh') { & bash '.aiflow/bd-close-sync.sh' @rest }
+    if (Test-Path '.aiflow/bd-close-sync.sh') { & (Resolve-Bash) '.aiflow/bd-close-sync.sh' @rest }
     else { Write-Error "No .aiflow/bd-close-sync.sh (enable sync-on-close via 'aiflow change-settings')." }
   }
   { $_ -in 'version','-v','--version' } {

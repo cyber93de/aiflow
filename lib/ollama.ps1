@@ -88,7 +88,7 @@ switch ($cmd) {
     Write-JsonFile $CFG $raw
     Write-Output "  added $m to $CFG"
     if (Invoke-EnsureOllama) { & ollama pull $m }
-    & powershell -NoProfile -File (Join-Path $PSScriptRoot 'apply.ps1') *> $null
+    try { & (Join-Path $PSScriptRoot 'apply.ps1') *> $null } catch {}
   }
   "pull" {
     $models = Get-ModelsFromCfg

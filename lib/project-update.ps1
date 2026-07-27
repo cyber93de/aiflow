@@ -126,7 +126,7 @@ if ($script:backedUp.Count -gt 0) {
   Write-Output "   agent definitions were already up to date - nothing backed up."
 }
 
-& powershell -NoProfile -File (Join-Path $AIFLOW_HOME 'lib/apply.ps1')
+& (Join-Path $AIFLOW_HOME 'lib/apply.ps1')
 
 $verFile = Join-Path $AIFLOW_HOME 'VERSION'
 $newVer = if (Test-Path $verFile) { (Get-Content $verFile -TotalCount 1).Trim() } else { "0.0.0" }

@@ -7,6 +7,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-07-27
+
+### Fixed
+- `aiflow init` (and every other bash-backed subcommand) failing on Windows with
+  `No such file or directory` — the PowerShell launcher built `AIFLOW_HOME` with backslashes,
+  which mangled when interpolated into forward-slash bash paths. `AIFLOW_HOME` is now
+  normalized to forward slashes once, up front.
+
 ## [0.4.0] — 2026-07-26
 
 ### Added

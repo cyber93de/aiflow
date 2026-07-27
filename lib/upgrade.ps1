@@ -44,7 +44,9 @@ if ((Test-Path '.aiflow/config.json') -and (Test-Cmd jq) -and (Test-Cmd graphify
 
 Step "re-applying project config"
 if (Test-Path '.aiflow/config.json') {
-  $applyPs1 = Join-Path $PSScriptRoot 'apply.ps1'
-  if (Test-Path $applyPs1) { & $applyPs1 }
+  try {
+    $applyPs1 = Join-Path $PSScriptRoot 'apply.ps1'
+    & $applyPs1
+  } catch {}
 }
 Write-Output "upgrade done. Run 'aiflow doctor' to verify versions."

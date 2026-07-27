@@ -7,6 +7,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.2] — 2026-07-27
+
+### Fixed
+- `aiflow init` (and every other bash-backed subcommand) still failing on Windows after 0.4.1
+  with `No such file or directory` — plain `bash` on PATH commonly resolves to WSL's stub
+  (`C:\Windows\System32\bash.exe`), which can't parse Windows-style paths at all, regardless of
+  slash direction. The launcher now resolves Git for Windows' own `bash.exe` explicitly (via
+  `git.exe`'s location, or common install dirs) instead of trusting whatever `bash` is on PATH.
+
 ## [0.4.1] — 2026-07-27
 
 ### Fixed

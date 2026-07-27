@@ -1,7 +1,7 @@
 # aiflow - agentic delivery bootstrapper (PowerShell launcher)
 $ErrorActionPreference = 'Stop'
 
-$AIFLOW_HOME = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$AIFLOW_HOME = (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)) -replace '\\', '/'
 $env:AIFLOW_HOME = $AIFLOW_HOME
 
 function Import-DotEnv {

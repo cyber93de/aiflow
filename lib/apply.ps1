@@ -458,7 +458,7 @@ function Add-Badge($rf) {
     $newLines = @($Badge, '') + $lines
   }
   Write-PlainFile $rf (($newLines -join "`n") + "`n")
-  Write-Output "  $rf: added 'Built with aiflow' badge"
+  Write-Output "  ${rf}: added 'Built with aiflow' badge"
 }
 Add-Badge 'README.md'
 Add-Badge 'README.de.md'

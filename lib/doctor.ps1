@@ -3,14 +3,39 @@ $ErrorActionPreference = 'SilentlyContinue'
 
 function Test-Have($name) { [bool](Get-Command $name -ErrorAction SilentlyContinue) }
 
-# never let a --version probe hang (mirrors lib/doctor.sh's `timeout 5` guard)
+# never let a --version probe hang (mirrors lib/doctor.sh's `timeout 5` guard).
+# Start-Job runs in a separate runspace with no real console stdin, and several
+# CLIs here (claude, gh, bd, ralph, ...) wait on stdin in that context and never
+# return - so this uses a real child process with stdin closed immediately instead.
+# Bare npm-shim names (copilot, codex, ralph, ...) resolve to a .ps1/.cmd pair, not
+# a directly-launchable .exe, so Process.Start needs the resolved file dispatched
+# through the right host (cmd.exe for .cmd, powershell.exe for .ps1).
 function Get-VersionLine($cmdName) {
-  $job = Start-Job -ScriptBlock { param($c) & $c --version 2>$null } -ArgumentList $cmdName
-  $out = $null
-  if (Wait-Job $job -Timeout 5) { $out = Receive-Job $job } else { Stop-Job $job | Out-Null }
-  Remove-Job $job -Force | Out-Null
-  if ($out) { return ($out | Select-Object -First 1) }
-  return ""
+  $cmd = Get-Command $cmdName -All -ErrorAction SilentlyContinue |
+    Sort-Object { switch ($_.Extension) { '.exe' {0} '.cmd' {1} '.bat' {1} default {2} } } |
+    Select-Object -First 1
+  if (-not $cmd) { return "" }
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  switch ($cmd.Extension) {
+    { $_ -in '.cmd', '.bat' } { $psi.FileName = 'cmd.exe'; $psi.Arguments = "/c `"$($cmd.Source)`" --version" }
+    '.ps1' { $psi.FileName = 'powershell.exe'; $psi.Arguments = "-NoProfile -NonInteractive -File `"$($cmd.Source)`" --version" }
+    default { $psi.FileName = $cmd.Source; $psi.Arguments = '--version' }
+  }
+  $psi.RedirectStandardInput = $true
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError = $true
+  $psi.UseShellExecute = $false
+  $psi.CreateNoWindow = $true
+  try { $p = [System.Diagnostics.Process]::Start($psi) } catch { return "" }
+  try { $p.StandardInput.Close() } catch {}
+  $stdoutTask = $p.StandardOutput.ReadToEndAsync()
+  if (-not $p.WaitForExit(5000)) {
+    try { $p.Kill() } catch {}
+    return ""
+  }
+  $out = $stdoutTask.GetAwaiter().GetResult()
+  if ([string]::IsNullOrWhiteSpace($out)) { return "" }
+  return (($out -split "`r?`n" | Where-Object { $_ }) | Select-Object -First 1)
 }
 
 function Invoke-Check($name, $cmdName, $hint) {
@@ -69,7 +94,8 @@ function Get-JVal($obj, $path, $default) {
     if ($null -eq $cur) { break }
     $cur = $cur.$seg
   }
-  if ($null -eq $cur -or $cur -eq $false) { return $default }
+  if ($null -eq $cur -or $cur -eq $false) { $cur = $default }
+  if ($cur -is [bool]) { return $(if ($cur) { 'true' } else { 'false' }) }
   return $cur
 }
 

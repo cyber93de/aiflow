@@ -8,13 +8,13 @@
 # so easy/background tasks actually route to them (aiflow shell --router).
 $ErrorActionPreference = 'SilentlyContinue'
 
-$CFG = ".aiflow/config.json"
+$CfgPath = ".aiflow/config.json"
 
 function Test-Have($name) { [bool](Get-Command $name -ErrorAction SilentlyContinue) }
 
 function Get-Cfg {
-  if (Test-Path $CFG) {
-    try { return (Get-Content $CFG -Raw | ConvertFrom-Json) } catch { return $null }
+  if (Test-Path $CfgPath) {
+    try { return (Get-Content $CfgPath -Raw | ConvertFrom-Json) } catch { return $null }
   }
   return $null
 }
@@ -67,7 +67,8 @@ function Invoke-EnsureOllama {
 }
 
 $cmd = if ($args.Count -ge 1) { $args[0] } else { "pull" }
-$rest = if ($args.Count -ge 2) { $args[1..($args.Count - 1)] } else { @() }
+# leading ',' prevents the if/else pipeline from unwrapping a 1-element array back to a scalar
+$rest = if ($args.Count -ge 2) { ,@($args[1..($args.Count - 1)]) } else { ,@() }
 
 switch ($cmd) {
   "models" { Get-ModelsFromCfg | ForEach-Object { Write-Output $_ } }
@@ -75,8 +76,8 @@ switch ($cmd) {
   "add" {
     $m = if ($rest.Count -ge 1) { $rest[0] } else { "" }
     if (-not $m) { [Console]::Error.WriteLine("usage: aiflow ollama add <model>"); exit 2 }
-    if (-not (Test-Path $CFG)) { [Console]::Error.WriteLine("$CFG not found"); exit 1 }
-    $raw = Get-Content $CFG -Raw | ConvertFrom-Json
+    if (-not (Test-Path $CfgPath)) { [Console]::Error.WriteLine("$CfgPath not found"); exit 1 }
+    $raw = Get-Content $CfgPath -Raw | ConvertFrom-Json
     if ($raw.PSObject.Properties.Match('ollama').Count -eq 0) {
       $raw | Add-Member -NotePropertyName ollama -NotePropertyValue ([pscustomobject]@{})
     }
@@ -85,14 +86,14 @@ switch ($cmd) {
     if ($raw.ollama.models) { $existing = @($raw.ollama.models) }
     $updated = @(@($existing + $m) | Sort-Object -Unique)
     Set-JsonProperty $raw.ollama "models" $updated
-    Write-JsonFile $CFG $raw
-    Write-Output "  added $m to $CFG"
+    Write-JsonFile $CfgPath $raw
+    Write-Output "  added $m to $CfgPath"
     if (Invoke-EnsureOllama) { & ollama pull $m }
     try { & (Join-Path $PSScriptRoot 'apply.ps1') *> $null } catch {}
   }
   "pull" {
     $models = Get-ModelsFromCfg
-    if ($models.Count -eq 0) { Write-Output "  no ollama models in $CFG (add with: aiflow ollama add <model>)"; exit 0 }
+    if ($models.Count -eq 0) { Write-Output "  no ollama models in $CfgPath (add with: aiflow ollama add <model>)"; exit 0 }
     if (-not (Invoke-EnsureOllama)) { exit 0 }
     foreach ($m in $models) {
       if (-not $m) { continue }

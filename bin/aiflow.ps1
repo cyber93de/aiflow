@@ -18,7 +18,11 @@ function Import-DotEnv {
 }
 
 $cmd = if ($args.Count -gt 0) { $args[0] } else { 'help' }
-$rest = if ($args.Count -gt 1) { $args[1..($args.Count-1)] } else { @() }
+# The leading ',' is required: PowerShell streams an array returned from an if/else branch
+# through the pipeline element-by-element, so '$x = if (...) { @(one-item-array) }' collapses
+# back to a bare scalar - which then splats as individual characters via '@rest' instead of as
+# one argument. ',' (unary comma operator) wraps the whole array as a single pipeline object.
+$rest = if ($args.Count -gt 1) { ,@($args[1..($args.Count-1)]) } else { ,@() }
 
 function Test-VersionOlder($a, $b) {
   if ($a -eq $b) { return $false }
@@ -49,7 +53,7 @@ switch ($cmd) {
   'shell'   {
     Import-DotEnv
     if ($rest.Count -gt 0 -and $rest[0] -eq '--router') {
-      $r2 = if ($rest.Count -gt 1) { $rest[1..($rest.Count-1)] } else { @() }
+      $r2 = if ($rest.Count -gt 1) { ,@($rest[1..($rest.Count-1)]) } else { ,@() }
       if (-not (Get-Command ccr -ErrorAction SilentlyContinue)) { Write-Error 'claude-code-router not installed: npm i -g @musistudio/claude-code-router'; break }
       & ccr code @r2
     } else { & claude @rest }

@@ -7,7 +7,9 @@ MODEL=".aiflow/branching.json"; CFG=".aiflow/config.json"
 [ -f "$MODEL" ] || { echo "no branching model. Run 'aiflow change-settings' first." >&2; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo "jq required" >&2; exit 1; }
 
-VCS="$( [ -f "$CFG" ] && jq -r '.vcs // "github"' "$CFG" || echo github )"
+# the remote HOST decides whether protection is automatable (gh) - .vcs is an object
+# ({system: git}) and would stringify as JSON garbage in the message below
+VCS="$( [ -f "$CFG" ] && jq -r '.remote.type // "github"' "$CFG" || echo github )"
 PRONLY="$(jq -r '.pullRequests.required // false' "$MODEL")"
 BRANCHES="$(jq -r '(.pullRequests.protectedBranches // ["main","develop"])[]' "$MODEL")"
 

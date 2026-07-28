@@ -9,7 +9,9 @@ $model = Get-Content $modelPath -Raw | ConvertFrom-Json
 
 $vcs = "github"
 if (Test-Path $cfgPath) {
-  try { $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json; if ($cfg.vcs) { $vcs = $cfg.vcs } } catch {}
+  # the remote HOST decides whether protection is automatable (gh) - .vcs is an object
+  # ({system: git}) and would stringify as '@{system=git}' in the message below
+  try { $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json; if ($cfg.remote.type) { $vcs = $cfg.remote.type } } catch {}
 }
 $prOnly = $model.pullRequests.required -eq $true
 $branches = $model.pullRequests.protectedBranches

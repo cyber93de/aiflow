@@ -84,17 +84,15 @@ if (Test-Have npx) {
   Write-Output "  [MISS] npx        needs node (for ccusage + claude-code-templates)"
 }
 
-# Get-JVal mirrors jq's `//` operator exactly, including its documented quirk of
-# treating an explicit `false` the same as a missing/null value (see aiflow-5qe -
-# this is a known upstream jq-idiom bug in lib/doctor.sh, reproduced here on purpose
-# for behavioral parity rather than silently fixed).
+# Null-check only (NOT jq's `//` semantics): an explicitly-set `false` must survive the
+# default instead of being collapsed to it (aiflow-5qe - lib/doctor.sh fixed the same way).
 function Get-JVal($obj, $path, $default) {
   $cur = $obj
   foreach ($seg in $path -split '\.') {
     if ($null -eq $cur) { break }
     $cur = $cur.$seg
   }
-  if ($null -eq $cur -or $cur -eq $false) { $cur = $default }
+  if ($null -eq $cur) { $cur = $default }
   if ($cur -is [bool]) { return $(if ($cur) { 'true' } else { 'false' }) }
   return $cur
 }

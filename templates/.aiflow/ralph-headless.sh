@@ -24,7 +24,7 @@ case " $* " in
   *" --agent "*) : ;;
   *)
     if command -v jq >/dev/null 2>&1 && [ -f .aiflow/config.json ]; then
-      if   [ "$(jq -r '.agents.claude  // true'  .aiflow/config.json)" = true ]; then AGENT_FLAG=(--agent claude-code)
+      if   [ "$(jq -r 'if .agents.claude == null then true else .agents.claude end'  .aiflow/config.json)" = true ]; then AGENT_FLAG=(--agent claude-code)
       elif [ "$(jq -r '.agents.codex   // false' .aiflow/config.json)" = true ]; then AGENT_FLAG=(--agent codex)
       elif [ "$(jq -r '.agents.copilot // false' .aiflow/config.json)" = true ]; then AGENT_FLAG=(--agent copilot)
       fi

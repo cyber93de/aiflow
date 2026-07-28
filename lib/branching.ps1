@@ -17,18 +17,15 @@ function Write-JsonFile($path, $obj) {
   [System.IO.File]::WriteAllText($full, $json, $utf8NoBom)
 }
 
-# Get-JVal mirrors jq's `//` operator (null-or-false -> default) exactly, including its known
-# quirk of overriding an explicit `false` with the default (see aiflow-5qe) - reproduced on
-# purpose for exact parity with lib/branching.sh's `g() { jq -r "$1 // empty"; }` + bash `:=`
-# default pattern (this is where TAGS's default of `true` can silently override an explicit
-# `releaseTags: false`).
+# Null-check only (NOT jq's `//` semantics): an explicitly-set `false` must survive the
+# default instead of being collapsed to it (aiflow-5qe - lib/branching.sh fixed the same way).
 function Get-JVal($obj, $path, $default) {
   $cur = $obj
   foreach ($seg in $path -split '\.') {
     if ($null -eq $cur) { break }
     $cur = $cur.$seg
   }
-  if ($null -eq $cur -or $cur -eq $false) { return $default }
+  if ($null -eq $cur) { return $default }
   return $cur
 }
 

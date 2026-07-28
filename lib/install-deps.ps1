@@ -51,12 +51,12 @@ function Npmg($pkg) {
   return $true
 }
 function InstallUv {
-  # NOTE: bash's fallback here runs the official astral.sh install script via irm|iex; that
-  # exact remote-script-execution pattern is withheld from this port pending human sign-off
-  # (see aiflow-uv2) - falls back to bash's own manual-install message in the meantime.
+  # same official installer lib/install-deps.sh runs on Windows (human-approved, aiflow-bkl)
   if (Have uv) { return }
   Say "installing uv (for graphify)"
-  WarnMsg "install uv manually: https://docs.astral.sh/uv/"
+  try { Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression }
+  catch { WarnMsg "install uv manually: https://docs.astral.sh/uv/" }
+  $env:Path = "$env:USERPROFILE\.local\bin;$env:USERPROFILE\.cargo\bin;$env:Path"
 }
 function InstallRtk {
   Say "installing rtk"
@@ -108,12 +108,12 @@ function InstallOllama {
 }
 function InstallBun {
   # runtime open-ralph-wiggum needs
-  # NOTE: bash's fallback here runs the official bun.sh install script via irm|iex; that exact
-  # remote-script-execution pattern is withheld from this port pending human sign-off (see
-  # aiflow-uv2) - falls back to bash's own manual-install message in the meantime.
+  # same official installer lib/install-deps.sh runs on Windows (human-approved, aiflow-bkl)
   if (Have bun) { return }
   Say "installing bun (runtime for the Ralph loop)"
-  WarnMsg "install bun manually: https://bun.sh"
+  try { Invoke-RestMethod https://bun.sh/install.ps1 | Invoke-Expression }
+  catch { WarnMsg "install bun manually: https://bun.sh" }
+  $env:Path = "$env:USERPROFILE\.bun\bin;$env:Path"
 }
 function InstallCodexsaver {
   # cost-aware MCP router for Codex CLI - no PyPI package, editable install from source.
@@ -218,7 +218,7 @@ if ($All -or $OLLAMA -eq 'true') {
 # A container engine is optional: the GitHub MCP and the headless Ralph container (docker/run.sh)
 # work with EITHER Podman or Docker. Install one yourself if you want them.
 if (-not (Have podman) -and -not (Have docker)) {
-  WarnMsg "No container engine (Podman or Docker) found — needed for the GitHub MCP and headless container runs. Install Podman (https://podman.io) or Docker Desktop (https://www.docker.com/products/docker-desktop/)."
+  WarnMsg "No container engine (Podman or Docker) found - needed for the GitHub MCP and headless container runs. Install Podman (https://podman.io) or Docker Desktop (https://www.docker.com/products/docker-desktop/)."
 }
 
 # re-apply so newly installed tools get wired (rtk hook etc.)

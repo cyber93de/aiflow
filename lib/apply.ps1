@@ -12,18 +12,15 @@ if (-not $cfgObj) { [Console]::Error.WriteLine("$CFG could not be parsed"); exit
 
 function Have($name) { [bool](Get-Command $name -ErrorAction SilentlyContinue) }
 
-# Get-JVal mirrors jq's `//` operator (null-or-false -> default) exactly, including its known
-# quirk of overriding an explicit `false` with the default (see aiflow-5qe) - reproduced on
-# purpose for exact parity with lib/apply.sh's `j() { jq -r "$1 // empty"; }` + bash `[ -z ] &&`
-# default pattern (this is where e.g. agents.claude's `true` default can silently override an
-# explicit `agents.claude: false`).
+# Null-check only (NOT jq's `//` semantics): an explicitly-set `false` must survive the
+# default instead of being collapsed to it (aiflow-5qe - lib/apply.sh fixed the same way).
 function Get-JVal($obj, $path, $default) {
   $cur = $obj
   foreach ($seg in $path -split '\.') {
     if ($null -eq $cur) { break }
     $cur = $cur.$seg
   }
-  if ($null -eq $cur -or $cur -eq $false) { return $default }
+  if ($null -eq $cur) { return $default }
   return $cur
 }
 

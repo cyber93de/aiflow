@@ -7,6 +7,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-07-29
+
+### Fixed
+- `aiflow update` overlaid the new archive over the old install without cleaning `bin/`/`lib/`
+  first — updating across the 0.5.0 OS-split (mixed `.sh`+`.ps1` layout → OS-scoped) left every
+  old-layout file behind. Both `update.sh`/`update.ps1` now remove `bin/` and `lib/` before
+  installing.
+- `install-deps.ps1`'s config reader built its `jq` filter as one argument containing literal
+  quote characters — PowerShell's native-exe argument passing mangles that (unlike bash, which
+  execs argv as-is), silently dropping the quotes or, for an empty default, the whole argument,
+  shifting everything after it. Real-world effect: the uv/bun auto-install path (restored in
+  0.5.0) crashed with jq compile errors the moment it actually ran. Switched to `jq --arg` for a
+  real default, `// empty` for an empty one.
+
 ## [0.5.0] — 2026-07-29
 
 ### Added

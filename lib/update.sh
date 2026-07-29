@@ -83,6 +83,11 @@ else
   [ -d "$STAGE" ] || { echo "unexpected archive layout (no aiflow-$LATEST_VER/ directory)" >&2; exit 1; }
 
   echo "   installing into $AIFLOW_HOME..."
+  # clean bin/ and lib/ first: a plain overlay would leave files from the previous
+  # version's layout behind (e.g. lib/*.sh surviving an update to an OS-scoped
+  # .ps1-only windows archive - aiflow-cv7). templates/ and top-level files ship
+  # complete in every archive and are fully overwritten anyway.
+  rm -rf "$AIFLOW_HOME/bin" "$AIFLOW_HOME/lib"
   cp -rf "$STAGE"/. "$AIFLOW_HOME"/
   chmod +x "$AIFLOW_HOME/bin/aiflow" "$AIFLOW_HOME/lib/"*.sh "$AIFLOW_HOME/templates/.aiflow/"*.sh \
     "$AIFLOW_HOME/templates/docker/"*.sh 2>/dev/null || true

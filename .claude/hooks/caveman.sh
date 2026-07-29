@@ -4,7 +4,7 @@
 CFG=".aiflow/config.json"
 ON=true; MODE=full
 if command -v jq >/dev/null 2>&1 && [ -f "$CFG" ]; then
-  ON="$(jq -r '.caveman.enabled // true' "$CFG")"
+  ON="$(jq -r 'if .caveman.enabled == null then true else .caveman.enabled end' "$CFG")"
   MODE="$(jq -r '.caveman.mode // "full"' "$CFG")"
 fi
 [ "${AIFLOW_CAVEMAN:-}" = "off" ] && ON=false

@@ -14,7 +14,7 @@ MODEL=".aiflow/branching.json"
 command -v jq >/dev/null 2>&1 || { echo "jq required" >&2; exit 1; }
 
 [ "$(jq -r '.release.auto // false' "$MODEL")" = true ] || { echo "auto-release is disabled in the branching model." >&2; exit 1; }
-TAGS="$(jq -r '.release.tag.enabled // true' "$MODEL")"
+TAGS="$(jq -r 'if .release.tag.enabled == null then true else .release.tag.enabled end' "$MODEL")"
 STRAT="$(jq -r '.release.versionStrategy // "semver"' "$MODEL")"
 
 PUSH=0; YES=0

@@ -60,13 +60,30 @@ jobs:
           set -euo pipefail
           ver="${{ steps.ver.outputs.version }}"
           stage="aiflow-$ver"
-          mkdir -p "dist/$stage"
-          cp -r bin lib templates release-workflows install.sh install.ps1 README.md README.de.md LICENSE VERSION "dist/$stage/"
+          # templates/ ships FULL (both .sh + .ps1) to every OS - a project may target either
+          # shell regardless of host. bin/ and lib/ are OS-scoped: windows gets only the .ps1
+          # tool scripts, linux/macos get only the .sh tool scripts - see aiflow-awr.
+          common=(README.md README.de.md LICENSE VERSION release-workflows templates)
+
+          mkdir -p "dist/win/$stage/bin" "dist/win/$stage/lib"
+          cp bin/aiflow.ps1 "dist/win/$stage/bin/"
+          cp lib/*.ps1 "dist/win/$stage/lib/"
+          cp install.ps1 "dist/win/$stage/"
+          cp -r "${common[@]}" "dist/win/$stage/"
+
+          mkdir -p "dist/posix/$stage/bin" "dist/posix/$stage/lib"
+          cp bin/aiflow "dist/posix/$stage/bin/"
+          cp lib/*.sh "dist/posix/$stage/lib/"
+          cp install.sh "dist/posix/$stage/"
+          cp -r "${common[@]}" "dist/posix/$stage/"
+
+          mkdir -p dist/out
           cd dist
           command -v zip >/dev/null 2>&1 || sudo apt-get -y -q install zip
-          tar -czf "aiflow-$ver-linux.tar.gz" "$stage"
-          tar -czf "aiflow-$ver-macos.tar.gz" "$stage"
-          zip -qr  "aiflow-$ver-windows.zip"  "$stage"
+          tar -czf "out/aiflow-$ver-linux.tar.gz" -C posix "$stage"
+          tar -czf "out/aiflow-$ver-macos.tar.gz" -C posix "$stage"
+          (cd win && zip -qr "../out/aiflow-$ver-windows.zip" "$stage")
+          cd out
           sha256sum aiflow-"$ver"-linux.tar.gz aiflow-"$ver"-macos.tar.gz aiflow-"$ver"-windows.zip \
             > "aiflow-$ver-SHA256SUMS.txt"
           ls -la
@@ -79,7 +96,7 @@ jobs:
           name: aiflow ${{ steps.ver.outputs.version }}
           generate_release_notes: true
           files: |
-            dist/aiflow-${{ steps.ver.outputs.version }}-linux.tar.gz
-            dist/aiflow-${{ steps.ver.outputs.version }}-macos.tar.gz
-            dist/aiflow-${{ steps.ver.outputs.version }}-windows.zip
-            dist/aiflow-${{ steps.ver.outputs.version }}-SHA256SUMS.txt
+            dist/out/aiflow-${{ steps.ver.outputs.version }}-linux.tar.gz
+            dist/out/aiflow-${{ steps.ver.outputs.version }}-macos.tar.gz
+            dist/out/aiflow-${{ steps.ver.outputs.version }}-windows.zip
+            dist/out/aiflow-${{ steps.ver.outputs.version }}-SHA256SUMS.txt

@@ -13,7 +13,7 @@ git remote get-url origin >/dev/null 2>&1 || exit 0
 
 # respect an opt-out
 if have jq && [ -f .aiflow/config.json ]; then
-  [ "$(jq -r '.sync.pullOnStart // true' .aiflow/config.json 2>/dev/null)" = "false" ] && exit 0
+  [ "$(jq -r 'if .sync.pullOnStart == null then true else .sync.pullOnStart end' .aiflow/config.json 2>/dev/null)" = "false" ] && exit 0
 fi
 
 # fast, quiet, best-effort pull of the shared issue DB

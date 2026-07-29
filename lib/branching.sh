@@ -11,8 +11,11 @@ g() { jq -r "$1 // empty" "$CFG"; }
 MODEL="$(g .git.model)"; [ -z "$MODEL" ] && MODEL=none
 [ "$MODEL" = none ] && { rm -f .aiflow/branching.json; echo "  branching: none (no governance)"; exit 0; }
 STRICT="$(g .git.strict)"; PRONLY="$(g .git.prOnly)"; AUTOREL="$(g .git.autoRelease)"
-VER="$(g .git.versionStrategy)"; TAGS="$(g .git.releaseTags)"; CHORE="$(g .git.chore)"
-: "${STRICT:=false}"; : "${PRONLY:=false}"; : "${AUTOREL:=false}"; : "${TAGS:=true}"; : "${CHORE:=false}"; : "${VER:=none}"
+VER="$(g .git.versionStrategy)"; CHORE="$(g .git.chore)"
+# null-check (not g()'s '// empty') so an explicit `releaseTags: false` survives the
+# default - jq's // treats false itself as falsy and would collapse it (aiflow-5qe)
+TAGS="$(jq -r 'if .git.releaseTags == null then true else .git.releaseTags end' "$CFG" 2>/dev/null || echo true)"
+: "${STRICT:=false}"; : "${PRONLY:=false}"; : "${AUTOREL:=false}"; : "${CHORE:=false}"; : "${VER:=none}"
 
 mkdir -p .aiflow docs
 # ---- .aiflow/branching.json (governance descriptor) ----

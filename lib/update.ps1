@@ -94,6 +94,11 @@ if (Test-Path (Join-Path $AIFLOW_HOME '.git')) {
     if (-not (Test-Path $STAGE)) { [Console]::Error.WriteLine("unexpected archive layout (no aiflow-$LATEST_VER/ directory)"); exit 1 }
 
     Write-Output "   installing into $AIFLOW_HOME..."
+    # clean bin/ and lib/ first: a plain overlay would leave files from the previous
+    # version's layout behind (e.g. lib/*.sh surviving an update to an OS-scoped
+    # .ps1-only windows archive - aiflow-cv7). templates/ and top-level files ship
+    # complete in every archive and are fully overwritten anyway.
+    Remove-Item -Path (Join-Path $AIFLOW_HOME 'bin'), (Join-Path $AIFLOW_HOME 'lib') -Recurse -Force -ErrorAction SilentlyContinue
     Copy-Item -Path (Join-Path $STAGE '*') -Destination $AIFLOW_HOME -Recurse -Force
     $NEW_VER = if (Test-Path $verFile) { (Get-Content $verFile -TotalCount 1).Trim() } else { "0.0.0" }
   } finally {

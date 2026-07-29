@@ -13,7 +13,9 @@ j() { jq -r "$1 // empty" "$CFG" 2>/dev/null; }
 
 PROJ_DIR="$(pwd)"
 # which coding agent(s) this project targets (default: claude only, for back-compat)
-AGENT_CLAUDE="$(j '.agents.claude')"; [ -z "$AGENT_CLAUDE" ] && AGENT_CLAUDE=true
+# null-check (not j()'s '// empty') so an explicit `agents.claude: false` survives the
+# default - jq's // treats false itself as falsy and would collapse it (aiflow-5qe)
+AGENT_CLAUDE="$(jq -r 'if .agents.claude == null then true else .agents.claude end' "$CFG" 2>/dev/null || echo true)"
 AGENT_COPILOT="$(j '.agents.copilot')"; [ -z "$AGENT_COPILOT" ] && AGENT_COPILOT=false
 AGENT_CODEX="$(j '.agents.codex')"; [ -z "$AGENT_CODEX" ] && AGENT_CODEX=false
 CODEXSAVER_ON="$(j '.codexsaver.enabled')"; [ -z "$CODEXSAVER_ON" ] && CODEXSAVER_ON=false

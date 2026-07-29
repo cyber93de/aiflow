@@ -52,7 +52,7 @@ if command -v jq >/dev/null 2>&1 && [ -f .aiflow/config.json ]; then
   echo
   echo "this project (.aiflow/config.json):"
   printf "  agents:  claude=%s copilot=%s codex=%s  codexsaver=%s\n" \
-    "$(jq -r '.agents.claude // true' .aiflow/config.json)" \
+    "$(jq -r 'if .agents.claude == null then true else .agents.claude end' .aiflow/config.json)" \
     "$(jq -r '.agents.copilot // false' .aiflow/config.json)" \
     "$(jq -r '.agents.codex // false' .aiflow/config.json)" \
     "$(jq -r '.codexsaver.enabled // false' .aiflow/config.json)"

@@ -7,6 +7,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-07-29
+
+### Added
+- **Native PowerShell parity for every core tool script** — all 10 `lib/*.sh` scripts
+  (init, doctor, settings, install-deps, upgrade, ollama, update, project-update, apply,
+  branching) now have behavior-equivalent `lib/*.ps1` twins, and `bin/aiflow.ps1` calls them
+  directly. Windows needs **no Git Bash / WSL at all** anymore — the 0.4.1/0.4.2 launcher
+  workarounds (slash normalization, explicit Git-Bash resolution) are gone entirely.
+- **OS-scoped release archives** — `aiflow-*-windows.zip` ships only the PowerShell scripts
+  (`bin/aiflow.ps1`, `lib/*.ps1`, `install.ps1`); `linux`/`macos` tar.gz only the bash ones.
+  `templates/` still ships complete (both shells) to every OS, since a project may target
+  either shell regardless of host.
+
+### Fixed
+- jq's `// true` default collapsed an explicitly-set `false` config value back to `true`
+  (`agents.claude`, `release.tag.enabled`, `sync.pullOnStart`, `caveman.enabled`,
+  `git.releaseTags`) — replaced with a null-check idiom in bash and PowerShell alike.
+- `aiflow protect` compared the `.vcs` config *object* against `"github"` and therefore never
+  reached the actual `gh` branch-protection calls (pre-existing in both shell twins).
+- Windows PowerShell 5.1 misparsed two UTF-8-without-BOM scripts containing em-dashes
+  (`0x94` reads as a closing quote in ANSI) — tool scripts are ASCII-only now.
+
 ## [0.4.2] — 2026-07-27
 
 ### Fixed

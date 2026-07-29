@@ -487,6 +487,16 @@ Copilot/Codex route models through their own settings**)**. Manage models with `
 - **Route by difficulty:** trivial/background steps may run on cheap/local models via
   `aiflow shell --router` **(Claude Code only)**; reserve top models for hard reasoning. Measure
   with `aiflow cost` (Claude Code usage only).
+- **Model routing for audit-only subagents** — a separate, Claude-Code-native mechanism from the
+  router above (no external tool, always available). Controlled by `.aiflow/config.json →
+  modelRouting.enabled` (default **on**). When on, `aiflow apply` stamps `model: haiku` into the
+  frontmatter of exactly 5 subagents that only do mechanical/background checks, not deep
+  reasoning: **docs-sync**, **test-gap-advisor**, **dependency-auditor**, **performance-advisor**,
+  **onboarder** — so they run on Haiku 4.5 instead of the session's main model. Every other
+  subagent (`implementer`, `architect`, `security-advisor`, `reviewer`, `planner`,
+  `quality-check`, `requirements-check`, `accessibility-checker`, `modernization-advisor`,
+  `tester`) always keeps the session's default model — they need real reasoning. Toggle it with
+  `aiflow change-settings` **(Claude Code only)**.
 - CLI output is filtered by **rtk** before reaching context **(Claude Code only)** —
   errors/diffs are preserved.
 - **Copilot:** apply the [token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization)'s

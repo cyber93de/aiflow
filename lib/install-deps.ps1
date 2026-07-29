@@ -18,7 +18,16 @@ $OS = 'windows'
 
 function Cfg($jsonPath, $default) {
   if ((Have jq) -and (Test-Path '.aiflow/config.json')) {
-    return (& jq -r "$jsonPath // `"$default`"" '.aiflow/config.json')
+    if ([string]::IsNullOrEmpty($default)) {
+      # PowerShell's native-exe argument passing silently drops an EMPTY STRING argument
+      # (unlike bash, which execs the argv array as-is) - '--arg d ""' would vanish and
+      # shift every argument after it, so an empty default can't go through --arg at all.
+      # '// empty' needs no default value argument, sidestepping the issue entirely.
+      return (& jq -r "$jsonPath // empty" '.aiflow/config.json')
+    }
+    # --arg (not an embedded "..." in the filter text): a single argument containing literal
+    # quote characters is also mangled by PowerShell's native-exe argument passing.
+    return (& jq -r --arg d "$default" "$jsonPath // `$d" '.aiflow/config.json')
   }
   return $default
 }

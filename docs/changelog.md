@@ -3,7 +3,7 @@ layout: default
 title: Changelog
 parent: Support
 nav_order: 4
-description: "aiflow changelog and release history: 0.4.0 real multi-agent tooling (CLI installs, Copilot token-optimization, CodexSaver, open-ralph-wiggum), 0.3.1 release-process hotfix, 0.3.0 agent-agnostic core + gitflow automation + Skills, 0.2.0 cross-platform scripts + self-update, 0.1.1 quality-gate release, and the 0.1.0 first public release."
+description: "aiflow changelog and release history: 0.6.0 model routing for audit subagents, ponytail YAGNI skill, memory-setup skill; 0.5.0 native PowerShell (no more Git Bash on Windows) + OS-scoped release archives; 0.4.0 real multi-agent tooling (CLI installs, Copilot token-optimization, CodexSaver, open-ralph-wiggum); 0.3.0 agent-agnostic core + gitflow automation + Skills; 0.2.0 cross-platform scripts + self-update; 0.1.1 quality-gate release; and the 0.1.0 first public release."
 ---
 
 # Changelog
@@ -12,6 +12,66 @@ description: "aiflow changelog and release history: 0.4.0 real multi-agent tooli
 aiflow follows [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/). The authoritative, always-current changelog lives in the
 repository: **[CHANGELOG.md](https://github.com/Cyber93de/aiflow/blob/main/CHANGELOG.md)**.
+
+## 0.6.0 — cheap-model audit routing, ponytail, memory-setup skill
+
+Highlights:
+
+- **Model routing for audit-only subagents** — `modelRouting.enabled` (on by default) stamps
+  `model: haiku` into the frontmatter of the 5 subagents that only do mechanical/background
+  checks (**docs-sync**, **test-gap-advisor**, **dependency-auditor**, **performance-advisor**,
+  **onboarder**), so they run on Haiku 4.5 instead of the session's main model — every other
+  subagent keeps the session default since it needs real reasoning. Toggle it with
+  `aiflow change-settings`.
+- **ponytail** — a new YAGNI decision-ladder [skill](agents#slash-commands-and-skills) (off by default): before new
+  code, dependencies, or abstractions, checks whether it needs to exist at all, is already in the
+  codebase, is stdlib, a native platform feature, an installed dependency, or a one-liner — only
+  then writes the minimum-viable new code. `/ponytail-review` audits a diff for over-engineering
+  regardless of the toggle. Inspired by [dietrichgebert/ponytail](https://github.com/dietrichgebert/ponytail),
+  reimplemented (not vendored) the same way as caveman.
+- **memory-setup skill** — `AGENTS.md`'s Memory section shrank to a short toggle + essentials; the
+  full context-routing stack, team preferences, and Ollama routing detail moved to a dedicated,
+  auto-offered [skill](agents#slash-commands-and-skills). REST/Database rules and the Ralph-loop decision (both
+  needed reliably on every relevant task) stay inline in `AGENTS.md` rather than moving to a
+  skill — skills are Claude-Code-only and pattern-matched, not a guaranteed load.
+
+## 0.5.1 — reliability fixes for `aiflow update` and `install-deps.ps1`
+
+Highlights:
+
+- **`aiflow update` no longer leaves stale files behind** after the 0.5.0 OS-split — it now
+  removes the old `bin/`/`lib/` before installing the new archive.
+- **`install-deps.ps1`'s DeepSeek/uv/bun auto-install path fixed** — a PowerShell native-exe
+  argument-passing quirk was silently mangling a `jq` filter and crashing the installer.
+
+## 0.5.0 — native PowerShell, no more Git Bash on Windows
+
+Highlights:
+
+- **Every core tool script now has a behavior-equivalent PowerShell twin** (`lib/*.ps1` for all
+  10 `lib/*.sh` scripts) — **Windows needs no Git Bash or WSL at all anymore**, removing the
+  0.4.1/0.4.2 launcher workarounds entirely.
+- **OS-scoped release archives** — the Windows zip ships only PowerShell scripts, the Linux/macOS
+  tarballs only bash; `templates/` still ships both shells to every OS since a generated project
+  may target either regardless of host.
+- Fixed a `jq` default-value bug that could silently flip an explicitly-set `false` config value
+  back to `true`, and a PowerShell 5.1 mis-parse of UTF-8 em-dashes in two tool scripts.
+
+## 0.4.2 — Windows launcher fix (bash.exe resolution)
+
+Highlights:
+
+- **`aiflow init` and every bash-backed subcommand fixed on Windows** — plain `bash` on `PATH`
+  often resolves to WSL's stub, which can't parse Windows-style paths at all. The launcher now
+  resolves Git for Windows' own `bash.exe` explicitly.
+
+## 0.4.1 — Windows launcher fix (path normalization)
+
+Highlights:
+
+- **`aiflow init` fixed on Windows** — the PowerShell launcher built `AIFLOW_HOME` with
+  backslashes, which mangled when interpolated into forward-slash bash paths. Normalized once,
+  up front.
 
 ## 0.4.0 — real multi-agent tooling
 

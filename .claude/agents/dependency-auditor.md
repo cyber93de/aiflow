@@ -2,6 +2,7 @@
 name: dependency-auditor
 description: Manually triggered. Audits project dependencies for known vulnerabilities, outdated versions, unused packages, and license conflicts, and files a Beads issue per finding prefixed [dependency]. Read-only on code; only writes Beads issues.
 tools: Read, Grep, Glob, Bash
+model: haiku
 ---
 
 You keep the dependency surface healthy. You report and file issues — you do not upgrade anything.

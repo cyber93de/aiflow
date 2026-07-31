@@ -359,9 +359,17 @@ sites, Next.js/Astro/Hugo/Jekyll/VuePress/VitePress/React/Vue/Svelte/Angular/…
 Graph/Twitter Cards, JSON-LD structured data, robots.txt/sitemap.xml, canonical URLs, Core Web
 Vitals, GitHub Pages specifics. It offers itself whenever web content is present or being
 created/changed; never applies non-trivial changes without confirming first, and ends with an SEO
-report. Copilot/Codex have no auto-offer mechanism for this — read
-`.claude/skills/seo-optimization/SKILL.md` directly as a manual checklist instead. Add more skills
-by dropping a new `<name>/SKILL.md` into `.claude/skills/`.
+report. aiflow also ships **ponytail** — a YAGNI decision ladder (does it need to exist? already
+in the codebase? stdlib? native platform feature? installed dependency? a one-liner? only then
+write it) applied before any new code/dependency/abstraction, plus `/ponytail-review` to audit a
+diff for over-engineering. Toggled by `.aiflow/config.json → ponytail.enabled`/`.mode`
+(`full`/`lite`/`ultra`, default **off** — enable via `aiflow change-settings`); when off the skill
+is present but inert (see `.claude/skills/ponytail/SKILL.md` §"only applies when ... enabled").
+aiflow also ships **memory-setup** — the full memory/context-routing picture (§8 has the
+short version + the toggle). Copilot/Codex have no auto-offer mechanism for any of these skills —
+read the `SKILL.md` directly as a manual checklist instead (Codex reads it via this file's
+pointer; Copilot see the summary in `.github/copilot-instructions.md`). Add more skills by
+dropping a new `<name>/SKILL.md` into `.claude/skills/`.
 
 ---
 
@@ -432,47 +440,17 @@ on the task yourself until AC are met, checking back against §4 at each step.
 ## 8. Memory (optional)
 
 Persistent project memory is **toggled by `AIFLOW_MEMORY` at the top of this file** (set by
-`aiflow init` / `aiflow change-settings`).
-- `off`: no memory dir is used; rely on Beads + this file.
-- `on`: store durable facts in `.claude/memory/` with an index in `.claude/MEMORY.md`
-  **(Claude Code only path** — Copilot/Codex have no equivalent persistent-memory feature today;
-  read these files as plain markdown for the same context if your tool can browse the repo**)**.
-  `aiflow` seeds two files: `project-aim.md` (goal + target architecture) and
-  `dev-environment.md` (OS, IDE, VCS host — so the agent picks correct commands).
+`aiflow init` / `aiflow change-settings`, config key `memory.enabled`; `off` by default until then).
+When **on**: store durable, non-obvious facts (decisions, gotchas, env quirks — never things
+already in code, git history, or Beads) in `.claude/memory/` with an index in `.claude/MEMORY.md`;
+learning intensity is `.aiflow/config.json → memory.intensity` (`aggressive`/`normal`/`light`/`off`).
+Refresh graphify + cocoindex-code together with `aiflow index` after significant changes.
 
-When **on**: save only non-obvious, durable facts (decisions, gotchas, env quirks) —
-never things already in code, git history, or Beads.
-
-**Learning intensity** is set in `.aiflow/config.json → memory.intensity` and written to
-`.claude/memory/memory-policy.md` (read it): `aggressive` (default — learn after every
-non-trivial task + refresh the graph), `normal`, `light`, or `off`.
-
-**Context stack (route the question, don't scan files):** `.claude/memory/memory-policy.md`
-holds the full routing table. In short:
-- **Beads** (`bd`) — current task, dependencies, decisions, session state.
-- **memory files** (`.claude/memory/`) — durable prose facts / gotchas / env quirks.
-- **graphify** (MCP) — *structural* graph: where a symbol is defined, who calls it, dependency
-  direction. Exact, no re-scan.
-- **cocoindex-code** (`ccc` / MCP) — *semantic* RAG: "find code about concept X", AST-aware,
-  local embeddings (no key), ~70% fewer tokens than reading files.
-- **context7** (MCP) — external library/framework docs.
-
-MCP servers are wired per agent (`.mcp.json` for Claude Code, `.codex/config.toml` for Codex CLI,
-`.vscode/mcp.json` for Copilot in VS Code) from the same `.aiflow/config.json` — any agent that
-supports MCP gets the same graphify/cocoindex-code/context7 access.
-
-Rule: hit graphify (structure) + cocoindex-code (semantics) to locate the few relevant chunks,
-then open only those files. Refresh **both** indexes after significant changes with a single
-command: `aiflow index` (runs `graphify build` + `ccc index`, incremental).
-
-**Shared team preferences:** if `.aiflow/team-prefs.json` exists it holds versioned,
-team/user-wide preferences (code style, language, conventions) that override per-language
-defaults in §3. It is committed so the whole team inherits it; personal tweaks stay local.
-
-**Local models (Ollama):** when `.aiflow/config.json → ollama` is enabled, its models are
-wired into `.aiflow/router-config.json`; run easy/background steps on them via
-`aiflow shell --router` **(Claude Code only** — launches Claude Code via claude-code-router;
-Copilot/Codex route models through their own settings**)**. Manage models with `aiflow ollama`.
+Full detail — what to save, the context-routing stack (Beads vs memory files vs graphify vs
+cocoindex-code vs context7, in priority order), shared team preferences (`.aiflow/team-prefs.json`),
+and local-model (Ollama) routing — lives in the **memory-setup** skill
+(`.claude/skills/memory-setup/SKILL.md`, Claude Code auto-offers it; Copilot/Codex: read it
+directly, or the live routing table in `.claude/memory/memory-policy.md` once memory is on).
 
 ---
 
@@ -487,6 +465,19 @@ Copilot/Codex route models through their own settings**)**. Manage models with `
 - **Route by difficulty:** trivial/background steps may run on cheap/local models via
   `aiflow shell --router` **(Claude Code only)**; reserve top models for hard reasoning. Measure
   with `aiflow cost` (Claude Code usage only).
+- **Model routing for audit-only subagents** — a separate, Claude-Code-native mechanism from the
+  router above (no external tool, always available). Controlled by `.aiflow/config.json →
+  modelRouting.enabled` (default **on**). When on, `aiflow apply` stamps `model: haiku` into the
+  frontmatter of exactly 5 subagents that only do mechanical/background checks, not deep
+  reasoning: **docs-sync**, **test-gap-advisor**, **dependency-auditor**, **performance-advisor**,
+  **onboarder** — so they run on Haiku 4.5 instead of the session's main model. Every other
+  subagent (`implementer`, `architect`, `security-advisor`, `reviewer`, `planner`,
+  `quality-check`, `requirements-check`, `accessibility-checker`, `modernization-advisor`,
+  `tester`) always keeps the session's default model — they need real reasoning. Toggle it with
+  `aiflow change-settings` **(Claude Code only)**.
+- **Ponytail** — `.aiflow/config.json → ponytail.enabled`/`.mode` (default off). When on, the
+  **ponytail** skill (§5) applies a YAGNI decision ladder before new code/dependencies/
+  abstractions; `/ponytail-review` audits a diff for over-engineering regardless of the toggle.
 - CLI output is filtered by **rtk** before reaching context **(Claude Code only)** —
   errors/diffs are preserved.
 - **Copilot:** apply the [token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization)'s

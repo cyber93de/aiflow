@@ -122,7 +122,17 @@ and offers to run it automatically. Ships with seo-optimization: SEO for any web
 project/framework (HTML, GitHub Pages, static sites, Next.js, Astro, Hugo, Jekyll, VuePress,
 VitePress, React, Vue, Svelte, Angular) — meta tags, Open Graph/Twitter Cards, JSON-LD structured
 data, robots.txt/sitemap.xml, canonical URLs, Core Web Vitals, GitHub Pages specifics; ends with
-an SEO report. Autonomy: the Ralph loop (open-ralph-wiggum, agent-agnostic: Claude Code/Codex
+an SEO report. Also ships ponytail: a YAGNI decision ladder (needed? already in the codebase?
+stdlib? platform feature? installed dependency? one-liner? only then write it) applied before new
+code/dependencies/abstractions; off by default, toggle via ponytail.enabled/.mode
+(full/lite/ultra); /ponytail-review audits a diff for over-engineering regardless of the toggle.
+Also ships memory-setup: the full memory/context-routing stack (Beads/memory files/graphify/
+cocoindex-code/context7 priority order, team-prefs, Ollama routing) — AGENTS.md §8 keeps only the
+toggle + essentials, the rest lives in this skill. REST/Database rules (§3b/§3c, MANDATORY) and
+the Ralph-loop decision rule (§6, needed every task) stay inline in AGENTS.md rather than moving
+to a skill, since skills are Claude-Code-only and pattern-matched (not guaranteed to fire), which
+would risk silently dropping enforcement for Codex/Copilot and for rules needed on every task.
+Autonomy: the Ralph loop (open-ralph-wiggum, agent-agnostic: Claude Code/Codex
 CLI/Copilot CLI via `--agent`; interactive `/ralph-loop` is Claude Code-only; headless
 `aiflow ralph` / CI works with any); if not specified, the implementer decides from its
 pre-analysis.
@@ -175,7 +185,7 @@ requirements-check / dependency-check / test-gap / perf-check / docs-check · ho
 release [--yes] [--push] · protect · cost · doctor · upgrade · update · project-update · version.
 
 ## Config schema (essentials)
-.aiflow/config.json fields: caveman{enabled,mode}, rtk{enabled}, router{enabled}, graphify{enabled},
+.aiflow/config.json fields: caveman{enabled,mode}, rtk{enabled}, ponytail{enabled,mode}, router{enabled}, graphify{enabled},
 taskmaster{enabled}, mcp{filesystem,context7,cocoindex}, memory{enabled,graph,intensity=off|light|
 normal|aggressive}, agents{claude,copilot,codex} (which agent-specific files get rendered),
 claude{auth}, vcs{system=git|svn|none}, remote{type,baseUrl,api,tokenEnv,mcp},

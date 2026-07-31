@@ -350,7 +350,7 @@ Zwei verschiedene Claude-Code-Mechanismen, beide dabei:
   `/arch "<Frage>"`.
 - **Audits:** `/security-check`, `/quality-check`, `/requirements-check`, `/dependency-check`,
   `/test-gap`, `/perf-check`, `/docs-check`, `/a11y-check` (strikt WCAG), `/modernize-check`
-  (Brownfield-Modernisierungsbericht).
+  (Brownfield-Modernisierungsbericht), `/ponytail-review` (Over-Engineering-Audit des aktuellen Diffs).
 - **Brownfield / Orientierung:** `/onboard`, `/explain <pfad>`, `/standup`.
 
 Beads und die Ralph-Schleife gibt es auch als Plugin-Commands (`/beads:ready`, `/beads:decision`,
@@ -366,8 +366,17 @@ wird nachgefragt):
   GitHub-Pages-Spezifika (Base-URL, 404, Social Preview, RSS). Bietet sich automatisch an, wenn
   Web-Inhalte vorhanden sind/entstehen; endet mit SEO-Bericht (umgesetzt / offen / Priorität /
   Empfehlungen).
+- **ponytail** — YAGNI-Entscheidungsleiter vor neuem Code: muss es überhaupt existieren? schon im
+  Code vorhanden? in der Standardbibliothek? native Plattform-Funktion? bereits installierte
+  Abhängigkeit? eine Zeile? erst dann der minimal nötige neue Code. Standardmäßig aus — aktivieren
+  mit `ponytail.enabled`/`.mode` (`full`/`lite`/`ultra`) via `aiflow init` oder
+  `aiflow change-settings`. `/ponytail-review` prüft ein Diff unabhängig vom Schalter auf
+  Over-Engineering.
+- **memory-setup** — das volle Memory-/Context-Routing-Bild: was speichern, Priorität
+  (Beads → Memory-Dateien → graphify → cocoindex-code → context7), geteilte Team-Präferenzen,
+  Ollama-Routing. AGENTS.md §8 behält nur Schalter + Essenzielles; der Rest steht hier.
 
-Eigene Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen — siehe das mitgelieferte für
+Eigene Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen — siehe die mitgelieferten für
 das erwartete Frontmatter (`name`, `description`) und die Struktur.
 
 ---
@@ -632,6 +641,7 @@ den Rest:
   schaltet caveman + rtk mit einem Flag ab.
 - **Graph + RAG** — aus graphify/cocoindex antworten statt ganze Dateien lesen (~70 % weniger).
 - **Model-Routing** — leichte/Hintergrund-Schritte an günstige oder lokale (Ollama) Modelle via `aiflow shell --router`.
+- **ponytail** (Standard aus) — weniger Tokens für Code, den niemand gebraucht hat; siehe §8.
 - **Erst messen** — `aiflow cost` (ccusage) zeigt echte Ausgaben, damit du das Richtige optimierst.
 
 ---
@@ -791,7 +801,7 @@ aiflow bündelt nichts — es installiert/ruft externe Tools auf, jedes unter ei
 <sub>**Themen / Keywords:** Claude Code · Anthropic Claude · AI Coding Agent · agentische
 Software-Delivery · MCP (Model Context Protocol) · Beads · Dolt · graphify · Code-Wissensgraph ·
 CocoIndex · cocoindex-code · semantische Codesuche · RAG · Context7 · Ollama · lokales LLM ·
-claude-code-router · rtk · caveman · Token-Optimierung · Ralph-Loop · gitflow · Conventional Commits ·
+claude-code-router · rtk · caveman · ponytail · YAGNI · Token-Optimierung · Ralph-Loop · gitflow · Conventional Commits ·
 GitHub · GitLab · Bitbucket · Forgejo · Gitea. &nbsp;·&nbsp; Empfohlene GitHub-Repo-Topics:
 `claude-code`, `anthropic`, `ai-agent`, `mcp`, `beads`, `rag`, `code-search`, `ollama`, `context7`,
-`rtk`, `caveman`, `developer-tools`, `cli`.</sub>
+`rtk`, `caveman`, `ponytail`, `developer-tools`, `cli`.</sub>

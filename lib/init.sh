@@ -59,6 +59,9 @@ else
   [ "$CAVE_ON" = true ] && CAVE_MODE="$(ask 'caveman mode (full recommended / lite / ultra)' full)"
   RTK_ON="$(ask_yn 'Save tokens by filtering CLI output with rtk?' y)"
 fi
+PONYTAIL_ON="$(ask_yn 'Use ponytail (YAGNI skill: reuse/simplify before writing new code)?' n)"
+PONYTAIL_MODE=full
+[ "$PONYTAIL_ON" = true ] && PONYTAIL_MODE="$(ask 'ponytail mode (full recommended / lite / ultra)' full)"
 GRAPHIFY_ON="$(ask_yn 'Use graphify (structural code graph: imports/call-graph) for memory?' y)"
 COCO_ON="$(ask_yn 'Use cocoindex-code (semantic code RAG search, local, ~70% fewer tokens)?' y)"
 TM_ON="$(ask_yn 'Use claude-task-master for task decomposition?' y)"
@@ -79,6 +82,9 @@ echo; echo "Coding agent(s) — aiflow renders AGENTS.md + per-agent MCP config 
 AGENT_CLAUDE="$(ask_yn 'Claude Code (subagents, hooks, slash-commands, Ralph loop - the full feature set)' y)"
 AGENT_COPILOT="$(ask_yn 'GitHub Copilot (AGENTS.md via .github/copilot-instructions.md + .vscode/mcp.json)' n)"
 AGENT_CODEX="$(ask_yn 'OpenAI Codex CLI (reads AGENTS.md directly + .codex/config.toml)' n)"
+
+# ---- model routing: cheap-model default for audit-only subagents (Claude Code only, on by default) ----
+MODELROUTING_ON=true
 
 # ---- CodexSaver: optional cost-aware MCP router for Codex CLI (needs a provider API key) ----
 CODEXSAVER_ON=false; CODEXSAVER_PROVIDER=deepseek; CODEXSAVER_KEYENV=DEEPSEEK_API_KEY
@@ -187,12 +193,14 @@ cat > .aiflow/config.json <<EOF
 {
   "caveman":   { "enabled": $CAVE_ON, "mode": "$CAVE_MODE" },
   "rtk":       { "enabled": $RTK_ON },
+  "ponytail":  { "enabled": $PONYTAIL_ON, "mode": "$PONYTAIL_MODE" },
   "router":    { "enabled": $ROUTER_ON },
   "graphify":  { "enabled": $GRAPHIFY_ON },
   "taskmaster":{ "enabled": $TM_ON },
   "mcp":       { "filesystem": $FS_ON, "context7": $CTX7_ON, "cocoindex": $COCO_ON },
   "memory":    { "enabled": $MEM_ON, "graph": $MEM_GRAPH, "intensity": "$MEM_INT" },
   "agents":    { "claude": $AGENT_CLAUDE, "copilot": $AGENT_COPILOT, "codex": $AGENT_CODEX },
+  "modelRouting": { "enabled": $MODELROUTING_ON },
   "codexsaver":{ "enabled": $CODEXSAVER_ON, "provider": "$CODEXSAVER_PROVIDER", "apiKeyEnv": "$CODEXSAVER_KEYENV" },
   "claude":    { "auth": "$CLAUDE_AUTH" },
   "vcs":       { "system": "$VCS_SYS" },

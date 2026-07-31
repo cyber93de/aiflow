@@ -30,6 +30,9 @@ else
   CAVE_MODE="$(ask 'caveman mode (full/lite/ultra)' "$(j .caveman.mode)")"
   RTK_ON="$(ask_yn 'rtk CLI-output filtering?' "$(dyn "$(j .rtk.enabled)")")"
 fi
+PONYTAIL_ON="$(ask_yn 'ponytail (YAGNI skill: reuse/simplify before new code)?' "$(dyn "$(j .ponytail.enabled)")")"
+PONYTAIL_MODE="$(j .ponytail.mode)"; [ -z "$PONYTAIL_MODE" ] && PONYTAIL_MODE=full
+[ "$PONYTAIL_ON" = true ] && PONYTAIL_MODE="$(ask 'ponytail mode (full/lite/ultra)' "$PONYTAIL_MODE")"
 GRAPHIFY_ON="$(ask_yn 'graphify structural code graph?' "$(dyn "$(j .graphify.enabled)")")"
 COCO_ON="$(ask_yn 'cocoindex-code semantic RAG search?' "$(dyn "$(j .mcp.cocoindex)")")"
 TM_ON="$(ask_yn 'claude-task-master?' "$(dyn "$(j .taskmaster.enabled)")")"
@@ -50,6 +53,10 @@ CUR_AGENT_CLAUDE="$(j .agents.claude)"; [ -z "$CUR_AGENT_CLAUDE" ] && CUR_AGENT_
 AGENT_CLAUDE="$(ask_yn 'Claude Code (full feature set)?' "$(dyn "$CUR_AGENT_CLAUDE")")"
 AGENT_COPILOT="$(ask_yn 'GitHub Copilot (AGENTS.md + .vscode/mcp.json)?' "$(dyn "$(j .agents.copilot)")")"
 AGENT_CODEX="$(ask_yn 'OpenAI Codex CLI (AGENTS.md + .codex/config.toml)?' "$(dyn "$(j .agents.codex)")")"
+
+# model routing: cheap-model default for audit-only subagents (Claude Code only)
+MODELROUTING_DEF="$(j .modelRouting.enabled)"; [ -z "$MODELROUTING_DEF" ] && MODELROUTING_DEF=true
+MODELROUTING_ON="$(ask_yn 'model routing (route the 5 audit-only subagents to haiku)?' "$(dyn "$MODELROUTING_DEF")")"
 
 # CodexSaver: optional cost-aware MCP router for Codex CLI
 CODEXSAVER_ON=false; CODEXSAVER_PROVIDER="$(j .codexsaver.provider)"; [ -z "$CODEXSAVER_PROVIDER" ] && CODEXSAVER_PROVIDER=deepseek
@@ -143,10 +150,12 @@ fi
 
 jq -n \
   --argjson cave "$CAVE_ON" --arg cmode "$CAVE_MODE" \
-  --argjson rtk "$RTK_ON" --argjson router "$ROUTER_ON" --argjson gfy "$GRAPHIFY_ON" \
+  --argjson rtk "$RTK_ON" --argjson ptail "$PONYTAIL_ON" --arg ptmode "$PONYTAIL_MODE" \
+  --argjson router "$ROUTER_ON" --argjson gfy "$GRAPHIFY_ON" \
   --argjson tm "$TM_ON" --argjson fs "$FS_ON" --argjson ctx7 "$CTX7_ON" --argjson coco "$COCO_ON" \
   --argjson mem "$MEM_ON" --argjson memg "$MEM_GRAPH" --arg memi "$MEM_INT" \
   --argjson agclaude "$AGENT_CLAUDE" --argjson agcopilot "$AGENT_COPILOT" --argjson agcodex "$AGENT_CODEX" \
+  --argjson modelrouting "$MODELROUTING_ON" \
   --argjson csaver "$CODEXSAVER_ON" --arg csprov "$CODEXSAVER_PROVIDER" --arg cskeyenv "$CODEXSAVER_KEYENV" \
   --arg cauth "$CLAUDE_AUTH" --arg vsys "$VCS_SYS" \
   --arg rtype "$REMOTE_TYPE" --arg rurl "$REMOTE_URL" --arg rapi "$REMOTE_API" --arg rtok "$REMOTE_TOKENENV" --arg rmcp "$REMOTE_MCP" \
@@ -157,10 +166,11 @@ jq -n \
   --arg aim "$AIM" --arg arch "$ARCH" --arg os "$OS" --arg ide "$IDE" \
   --arg gmodel "$GIT_MODEL" --argjson gstrict "$GIT_STRICT" --argjson gpr "$GIT_PRONLY" \
   --argjson gauto "$GIT_AUTOREL" --arg gver "$GIT_VER" --argjson gtags "$GIT_TAGS" --argjson gchore "$GIT_CHORE" \
-  '{caveman:{enabled:$cave,mode:$cmode},rtk:{enabled:$rtk},router:{enabled:$router},
+  '{caveman:{enabled:$cave,mode:$cmode},rtk:{enabled:$rtk},ponytail:{enabled:$ptail,mode:$ptmode},router:{enabled:$router},
     graphify:{enabled:$gfy},taskmaster:{enabled:$tm},mcp:{filesystem:$fs,context7:$ctx7,cocoindex:$coco},
     memory:{enabled:$mem,graph:$memg,intensity:$memi},
     agents:{claude:$agclaude,copilot:$agcopilot,codex:$agcodex},
+    modelRouting:{enabled:$modelrouting},
     codexsaver:{enabled:$csaver,provider:$csprov,apiKeyEnv:$cskeyenv},
     claude:{auth:$cauth},
     vcs:{system:$vsys},

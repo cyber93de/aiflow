@@ -105,11 +105,14 @@ if (Test-Path '.aiflow/config.json') {
 if ($cfgObj) {
   Write-Output ""
   Write-Output "this project (.aiflow/config.json):"
-  Write-Output ("  agents:  claude={0} copilot={1} codex={2}  codexsaver={3}" -f `
+  $ponytailStatus = if ((Get-JVal $cfgObj "ponytail.enabled" $false) -eq 'true') { Get-JVal $cfgObj "ponytail.mode" "full" } else { "off" }
+  Write-Output ("  agents:  claude={0} copilot={1} codex={2}  codexsaver={3}  modelRouting={4}  ponytail={5}" -f `
     (Get-JVal $cfgObj "agents.claude" $true), `
     (Get-JVal $cfgObj "agents.copilot" $false), `
     (Get-JVal $cfgObj "agents.codex" $false), `
-    (Get-JVal $cfgObj "codexsaver.enabled" $false))
+    (Get-JVal $cfgObj "codexsaver.enabled" $false), `
+    (Get-JVal $cfgObj "modelRouting.enabled" $true), `
+    $ponytailStatus)
   $baseUrl = Get-JVal $cfgObj "remote.baseUrl" ""
   if ([string]::IsNullOrEmpty($baseUrl)) { $baseUrl = "public" }
   Write-Output ("  remote:  {0} ({1}) - host MCP: {2}" -f `

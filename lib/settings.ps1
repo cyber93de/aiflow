@@ -58,6 +58,10 @@ if ($NoTokenSave) {
   $CAVE_MODE = Ask 'caveman mode (full/lite/ultra)' (J '.caveman.mode')
   $RTK_ON = AskYn 'rtk CLI-output filtering?' (Dyn (J '.rtk.enabled'))
 }
+$PONYTAIL_ON = AskYn 'ponytail (YAGNI skill: reuse/simplify before new code)?' (Dyn (J '.ponytail.enabled'))
+$PONYTAIL_MODE = J '.ponytail.mode'
+if (-not $PONYTAIL_MODE) { $PONYTAIL_MODE = 'full' }
+if ($PONYTAIL_ON -eq 'true') { $PONYTAIL_MODE = Ask 'ponytail mode (full/lite/ultra)' $PONYTAIL_MODE }
 $GRAPHIFY_ON = AskYn 'graphify structural code graph?' (Dyn (J '.graphify.enabled'))
 $COCO_ON = AskYn 'cocoindex-code semantic RAG search?' (Dyn (J '.mcp.cocoindex'))
 $TM_ON = AskYn 'claude-task-master?' (Dyn (J '.taskmaster.enabled'))
@@ -81,6 +85,11 @@ if (-not $CUR_AGENT_CLAUDE) { $CUR_AGENT_CLAUDE = 'true' }
 $AGENT_CLAUDE = AskYn 'Claude Code (full feature set)?' (Dyn $CUR_AGENT_CLAUDE)
 $AGENT_COPILOT = AskYn 'GitHub Copilot (AGENTS.md + .vscode/mcp.json)?' (Dyn (J '.agents.copilot'))
 $AGENT_CODEX = AskYn 'OpenAI Codex CLI (AGENTS.md + .codex/config.toml)?' (Dyn (J '.agents.codex'))
+
+# model routing: cheap-model default for audit-only subagents (Claude Code only)
+$MODELROUTING_DEF = J '.modelRouting.enabled'
+if (-not $MODELROUTING_DEF) { $MODELROUTING_DEF = 'true' }
+$MODELROUTING_ON = AskYn 'model routing (route the 5 audit-only subagents to haiku)?' (Dyn $MODELROUTING_DEF)
 
 # CodexSaver: optional cost-aware MCP router for Codex CLI
 $CODEXSAVER_ON = 'false'
@@ -208,12 +217,14 @@ if ($VCS_SYS -eq 'git') {
 $cfgOut = [ordered]@{
   caveman = [ordered]@{ enabled = ($CAVE_ON -eq 'true'); mode = $CAVE_MODE }
   rtk = [ordered]@{ enabled = ($RTK_ON -eq 'true') }
+  ponytail = [ordered]@{ enabled = ($PONYTAIL_ON -eq 'true'); mode = $PONYTAIL_MODE }
   router = [ordered]@{ enabled = ($ROUTER_ON -eq 'true') }
   graphify = [ordered]@{ enabled = ($GRAPHIFY_ON -eq 'true') }
   taskmaster = [ordered]@{ enabled = ($TM_ON -eq 'true') }
   mcp = [ordered]@{ filesystem = ($FS_ON -eq 'true'); context7 = ($CTX7_ON -eq 'true'); cocoindex = ($COCO_ON -eq 'true') }
   memory = [ordered]@{ enabled = ($MEM_ON -eq 'true'); graph = ($MEM_GRAPH -eq 'true'); intensity = $MEM_INT }
   agents = [ordered]@{ claude = ($AGENT_CLAUDE -eq 'true'); copilot = ($AGENT_COPILOT -eq 'true'); codex = ($AGENT_CODEX -eq 'true') }
+  modelRouting = [ordered]@{ enabled = ($MODELROUTING_ON -eq 'true') }
   codexsaver = [ordered]@{ enabled = ($CODEXSAVER_ON -eq 'true'); provider = $CODEXSAVER_PROVIDER; apiKeyEnv = $CODEXSAVER_KEYENV }
   claude = [ordered]@{ auth = $CLAUDE_AUTH }
   vcs = [ordered]@{ system = $VCS_SYS }

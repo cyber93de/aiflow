@@ -4,8 +4,9 @@ description: >-
   aiflow turns any repository into a governed, AI-driven software-delivery pipeline —
   agent-agnostic across Claude Code, GitHub Copilot, and OpenAI Codex CLI via a shared
   AGENTS.md — with durable Beads task memory, a code knowledge graph (graphify) plus semantic
-  RAG (cocoindex), context7 live docs, specialist agents, gitflow branching + release automation,
-  Ollama local models, model routing, team collaboration, and token savings via caveman and rtk.
+  RAG (cocoindex), context7 live docs, specialist agents and Skills (ponytail YAGNI, memory-setup,
+  seo-optimization), gitflow branching + release automation, Ollama local models, model routing,
+  team collaboration, and token savings via caveman, rtk, and haiku audit routing.
   One command, project-scoped, vendor-neutral, MIT-licensed.
 remote_theme: just-the-docs/just-the-docs
 

@@ -3,7 +3,7 @@ layout: default
 title: config.json schema
 parent: Reference
 nav_order: 1
-description: "Reference for aiflow's .aiflow/config.json: caveman, rtk, router, graphify, cocoindex, context7, memory, claude auth, vcs, remote, sync, ollama, teamPrefs, git."
+description: "Reference for aiflow's .aiflow/config.json: caveman, rtk, ponytail, modelRouting, router, graphify, cocoindex, context7, memory, claude auth, vcs, remote, sync, ollama, teamPrefs, git."
 ---
 
 # `.aiflow/config.json` schema
@@ -22,12 +22,14 @@ live in `.env`.
 {
   "caveman":  { "enabled": true, "mode": "full" },      // full | lite | ultra
   "rtk":      { "enabled": true },                       // CLI-output filtering
+  "ponytail": { "enabled": false, "mode": "full" },      // full | lite | ultra; YAGNI skill, off by default
   "router":   { "enabled": false },                      // claude-code-router; auto-on with Ollama
   "graphify": { "enabled": true },                       // structural code graph MCP
   "taskmaster": { "enabled": false },                    // claude-task-master decomposition
   "mcp":      { "filesystem": true, "context7": true, "cocoindex": true },
   "memory":   { "enabled": true, "graph": true, "intensity": "aggressive" }, // off|light|normal|aggressive
   "agents":   { "claude": true, "copilot": false, "codex": false }, // which coding agent(s) to render for
+  "modelRouting": { "enabled": true },                   // haiku for the 5 audit-only subagents (Claude Code only)
   "claude":   { "auth": "apikey" },                      // apikey | oauth (OAuth wins if both env set)
   "vcs":      { "system": "git" },                       // git | svn | none
   "remote": {
@@ -55,6 +57,8 @@ live in `.env`.
 | Field | Renders |
 |-------|---------|
 | `agents.*` | which per-agent files get rendered: `.mcp.json`/`.claude/*` (claude), `.vscode/mcp.json`+`.github/copilot-instructions.md` (copilot), `.codex/config.toml` (codex) |
+| `modelRouting.enabled` | stamps/strips `model: haiku` on the 5 audit-only subagents (Claude Code only) |
+| `ponytail.enabled`/`.mode` | gates the ponytail skill's decision ladder (self-checked at invocation, not file-rendered) |
 | `mcp.*` + `remote.mcp` + `gitkraken.enabled` | the servers in `.mcp.json` (and the enabled agents' equivalents) |
 | `remote.*` | host MCP env (`GITHUB_HOST` / `GITLAB_API_URL` / `GITEA_URL`) + Beads owner/repo + the matching predefined release-publish workflow (`.github/workflows/release.yml`, `.gitlab-ci.yml`, `.gitea/workflows/release.yml`, `.forgejo/workflows/release.yml`, `bitbucket-pipelines.yml`) |
 | `vcs.system` | git init / git hooks / branching (git only) |

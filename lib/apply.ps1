@@ -218,7 +218,12 @@ if ($AGENT_COPILOT) {
 if ($AGENT_CLAUDE) {
   function Set-ModelRoutingLine([string]$path, [string]$mode) {
     if (-not (Test-Path $path)) { return }
-    $raw = [System.IO.File]::ReadAllText($path)
+    # [System.IO.File] resolves relative paths against [Environment]::CurrentDirectory, which
+    # PowerShell does NOT keep in sync with Set-Location/Get-Location - a raw relative path here
+    # can silently read/write the wrong file. Resolve through Get-Location first (same pattern
+    # Write-JsonFile already uses above).
+    $full = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $path))
+    $raw = [System.IO.File]::ReadAllText($full)
     # templates/.claude/agents/*.md check out CRLF on Windows (no .gitattributes override) -
     # match the file's own line ending so we only ever touch the model: line, nothing else.
     $crlf = $raw.Contains("`r`n")
@@ -244,7 +249,7 @@ if ($AGENT_CLAUDE) {
       $out.Add($line)
     }
     $newText = ($out -join $eol) + $(if ($hadTrailingNewline) { $eol } else { '' })
-    [System.IO.File]::WriteAllText($path, $newText, (New-Object System.Text.UTF8Encoding($false)))
+    [System.IO.File]::WriteAllText($full, $newText, (New-Object System.Text.UTF8Encoding($false)))
   }
   $mrMode = if ($MODELROUTING_ON) { 'add' } else { 'strip' }
   foreach ($n in @('docs-sync', 'test-gap-advisor', 'dependency-auditor', 'performance-advisor', 'onboarder')) {

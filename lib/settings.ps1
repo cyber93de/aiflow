@@ -82,6 +82,11 @@ $AGENT_CLAUDE = AskYn 'Claude Code (full feature set)?' (Dyn $CUR_AGENT_CLAUDE)
 $AGENT_COPILOT = AskYn 'GitHub Copilot (AGENTS.md + .vscode/mcp.json)?' (Dyn (J '.agents.copilot'))
 $AGENT_CODEX = AskYn 'OpenAI Codex CLI (AGENTS.md + .codex/config.toml)?' (Dyn (J '.agents.codex'))
 
+# model routing: cheap-model default for audit-only subagents (Claude Code only)
+$MODELROUTING_DEF = J '.modelRouting.enabled'
+if (-not $MODELROUTING_DEF) { $MODELROUTING_DEF = 'true' }
+$MODELROUTING_ON = AskYn 'model routing (route the 5 audit-only subagents to haiku)?' (Dyn $MODELROUTING_DEF)
+
 # CodexSaver: optional cost-aware MCP router for Codex CLI
 $CODEXSAVER_ON = 'false'
 $CODEXSAVER_PROVIDER = J '.codexsaver.provider'
@@ -214,6 +219,7 @@ $cfgOut = [ordered]@{
   mcp = [ordered]@{ filesystem = ($FS_ON -eq 'true'); context7 = ($CTX7_ON -eq 'true'); cocoindex = ($COCO_ON -eq 'true') }
   memory = [ordered]@{ enabled = ($MEM_ON -eq 'true'); graph = ($MEM_GRAPH -eq 'true'); intensity = $MEM_INT }
   agents = [ordered]@{ claude = ($AGENT_CLAUDE -eq 'true'); copilot = ($AGENT_COPILOT -eq 'true'); codex = ($AGENT_CODEX -eq 'true') }
+  modelRouting = [ordered]@{ enabled = ($MODELROUTING_ON -eq 'true') }
   codexsaver = [ordered]@{ enabled = ($CODEXSAVER_ON -eq 'true'); provider = $CODEXSAVER_PROVIDER; apiKeyEnv = $CODEXSAVER_KEYENV }
   claude = [ordered]@{ auth = $CLAUDE_AUTH }
   vcs = [ordered]@{ system = $VCS_SYS }

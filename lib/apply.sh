@@ -18,6 +18,9 @@ PROJ_DIR="$(pwd)"
 AGENT_CLAUDE="$(jq -r 'if .agents.claude == null then true else .agents.claude end' "$CFG" 2>/dev/null || echo true)"
 AGENT_COPILOT="$(j '.agents.copilot')"; [ -z "$AGENT_COPILOT" ] && AGENT_COPILOT=false
 AGENT_CODEX="$(j '.agents.codex')"; [ -z "$AGENT_CODEX" ] && AGENT_CODEX=false
+# model routing: cheap-model default for audit-only subagents (Claude Code only). Same
+# null-check as AGENT_CLAUDE above - jq's '// empty' would collapse an explicit `false`.
+MODELROUTING_ON="$(jq -r 'if .modelRouting.enabled == null then true else .modelRouting.enabled end' "$CFG" 2>/dev/null || echo true)"
 CODEXSAVER_ON="$(j '.codexsaver.enabled')"; [ -z "$CODEXSAVER_ON" ] && CODEXSAVER_ON=false
 CAVEMAN_ON="$(j '.caveman.enabled')"; CAVEMAN_MODE="$(j '.caveman.mode')"
 RTK_ON="$(j '.rtk.enabled')"
@@ -147,6 +150,39 @@ if [ "$AGENT_COPILOT" = "true" ]; then
   echo "  .vscode/mcp.json rendered for GitHub Copilot (VS Code)"
 fi
 rm -f "$tmp"
+
+# ---------- model routing: stamp/strip 'model: haiku' on the 5 audit-only subagents ----------
+# (Claude Code only - Copilot/Codex have no subagent concept). Only these 5 files ever get
+# touched; every other .claude/agents/*.md stays byte-identical regardless of the toggle.
+if [ "$AGENT_CLAUDE" = "true" ]; then
+  stamp_model_line() { # file mode(add|strip)
+    local f="$1" mode="$2" firstline crlf=""
+    [ -f "$f" ] || return 0
+    # templates/.claude/agents/*.md check out CRLF on Windows (no .gitattributes override) -
+    # match the file's own line ending so we only ever touch the model: line, nothing else.
+    IFS= read -r firstline < "$f"
+    case "$firstline" in *$'\r') crlf=1 ;; esac
+    awk -v mode="$mode" -v crlf="$crlf" '
+      function bare(s) { sub(/\r$/, "", s); return s }
+      BEGIN { infm=0; done=0; nl=(crlf=="1")?"\r":"" }
+      NR==1 && bare($0)=="---" { infm=1; print; next }
+      infm && bare($0)=="---" {
+        if (mode=="add" && !done) { print "model: haiku" nl; done=1 }
+        infm=0; print; next
+      }
+      infm && bare($0) ~ /^model:[ \t]/ {
+        if (mode=="add") { if (!done) { print "model: haiku" nl; done=1 }; next }
+        next
+      }
+      { print }
+    ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+  }
+  MR_MODE=strip; [ "$MODELROUTING_ON" = "true" ] && MR_MODE=add
+  for n in docs-sync test-gap-advisor dependency-auditor performance-advisor onboarder; do
+    stamp_model_line ".claude/agents/$n.md" "$MR_MODE"
+  done
+  echo "  model routing: 5 audit subagents -> $([ "$MODELROUTING_ON" = "true" ] && echo 'haiku' || echo 'session default')"
+fi
 
 # ---------- release workflow (host-specific, tag-triggered; never overwrites an existing one) ----------
 # Publishes a release entry/note on the host whenever a version tag is pushed. Doesn't bump

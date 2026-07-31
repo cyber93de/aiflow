@@ -51,11 +51,12 @@ else echo "  [MISS] npx        needs node (for ccusage + claude-code-templates)"
 if command -v jq >/dev/null 2>&1 && [ -f .aiflow/config.json ]; then
   echo
   echo "this project (.aiflow/config.json):"
-  printf "  agents:  claude=%s copilot=%s codex=%s  codexsaver=%s\n" \
+  printf "  agents:  claude=%s copilot=%s codex=%s  codexsaver=%s  modelRouting=%s\n" \
     "$(jq -r 'if .agents.claude == null then true else .agents.claude end' .aiflow/config.json)" \
     "$(jq -r '.agents.copilot // false' .aiflow/config.json)" \
     "$(jq -r '.agents.codex // false' .aiflow/config.json)" \
-    "$(jq -r '.codexsaver.enabled // false' .aiflow/config.json)"
+    "$(jq -r '.codexsaver.enabled // false' .aiflow/config.json)" \
+    "$(jq -r 'if .modelRouting.enabled == null then true else .modelRouting.enabled end' .aiflow/config.json)"
   printf "  remote:  %s (%s) — host MCP: %s\n" \
     "$(jq -r '.remote.type // "?"' .aiflow/config.json)" \
     "$(jq -r '.remote.baseUrl // "" | if .=="" then "public" else . end' .aiflow/config.json)" \

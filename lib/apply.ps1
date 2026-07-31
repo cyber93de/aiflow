@@ -46,6 +46,8 @@ $PROJ_DIR = (Get-Location).Path
 $AGENT_CLAUDE = [bool](Get-JVal $cfgObj 'agents.claude' $true)
 $AGENT_COPILOT = [bool](Get-JVal $cfgObj 'agents.copilot' $false)
 $AGENT_CODEX = [bool](Get-JVal $cfgObj 'agents.codex' $false)
+# model routing: cheap-model default for audit-only subagents (Claude Code only)
+$MODELROUTING_ON = [bool](Get-JVal $cfgObj 'modelRouting.enabled' $true)
 $CODEXSAVER_ON = [bool](Get-JVal $cfgObj 'codexsaver.enabled' $false)
 $CAVEMAN_ON = [bool](Get-JVal $cfgObj 'caveman.enabled' $false)
 $CAVEMAN_MODE = Get-JVal $cfgObj 'caveman.mode' ''
@@ -208,6 +210,52 @@ if ($AGENT_COPILOT) {
   }
   Write-JsonFile '.vscode/mcp.json' $vscodeOut
   Write-Output "  .vscode/mcp.json rendered for GitHub Copilot (VS Code)"
+}
+
+# ---------- model routing: stamp/strip 'model: haiku' on the 5 audit-only subagents ----------
+# (Claude Code only - Copilot/Codex have no subagent concept). Only these 5 files ever get
+# touched; every other .claude/agents/*.md stays byte-identical regardless of the toggle.
+if ($AGENT_CLAUDE) {
+  function Set-ModelRoutingLine([string]$path, [string]$mode) {
+    if (-not (Test-Path $path)) { return }
+    # [System.IO.File] resolves relative paths against [Environment]::CurrentDirectory, which
+    # PowerShell does NOT keep in sync with Set-Location/Get-Location - a raw relative path here
+    # can silently read/write the wrong file. Resolve through Get-Location first (same pattern
+    # Write-JsonFile already uses above).
+    $full = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $path))
+    $raw = [System.IO.File]::ReadAllText($full)
+    # templates/.claude/agents/*.md check out CRLF on Windows (no .gitattributes override) -
+    # match the file's own line ending so we only ever touch the model: line, nothing else.
+    $crlf = $raw.Contains("`r`n")
+    $eol = if ($crlf) { "`r`n" } else { "`n" }
+    $hadTrailingNewline = $raw.EndsWith("`n") -or $raw.EndsWith("`r")
+    $lines = [System.Collections.Generic.List[string]]($raw -split "`r`n|`n|`r")
+    if ($hadTrailingNewline -and $lines.Count -gt 0 -and $lines[$lines.Count - 1] -ceq '') {
+      $lines.RemoveAt($lines.Count - 1)
+    }
+    $out = New-Object System.Collections.Generic.List[string]
+    $infm = $false; $done = $false
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+      $line = $lines[$i]
+      if ($i -eq 0 -and $line -ceq '---') { $infm = $true; $out.Add($line); continue }
+      if ($infm -and $line -ceq '---') {
+        if ($mode -eq 'add' -and -not $done) { $out.Add('model: haiku'); $done = $true }
+        $infm = $false; $out.Add($line); continue
+      }
+      if ($infm -and $line -cmatch '^model:[ \t]') {
+        if ($mode -eq 'add' -and -not $done) { $out.Add('model: haiku'); $done = $true }
+        continue
+      }
+      $out.Add($line)
+    }
+    $newText = ($out -join $eol) + $(if ($hadTrailingNewline) { $eol } else { '' })
+    [System.IO.File]::WriteAllText($full, $newText, (New-Object System.Text.UTF8Encoding($false)))
+  }
+  $mrMode = if ($MODELROUTING_ON) { 'add' } else { 'strip' }
+  foreach ($n in @('docs-sync', 'test-gap-advisor', 'dependency-auditor', 'performance-advisor', 'onboarder')) {
+    Set-ModelRoutingLine (Join-Path '.claude/agents' "$n.md") $mrMode
+  }
+  Write-Output "  model routing: 5 audit subagents -> $(if ($MODELROUTING_ON) { 'haiku' } else { 'session default' })"
 }
 
 # ---------- release workflow (host-specific, tag-triggered; never overwrites an existing one) ----------

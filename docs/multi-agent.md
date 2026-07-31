@@ -99,7 +99,7 @@ without cutting quality.
 
 | Agent | Approach |
 |-------|----------|
-| Claude Code | **caveman** (terse output) + **rtk** (CLI-output filtering) + graph/RAG retrieval instead of reading whole files. |
+| Claude Code | **caveman** (terse output) + **rtk** (CLI-output filtering) + graph/RAG retrieval instead of reading whole files + **haiku model routing** for the 5 audit-only subagents + the optional **ponytail** YAGNI skill. |
 | GitHub Copilot | `.github/copilot-instructions.md` applies the [token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization)'s highest-ROI techniques: output control, "landmines only" context files, stable model/tool-set per thread. |
 | OpenAI Codex CLI | Optional [CodexSaver](https://github.com/fendouai/CodexSaver) (`codexsaver.enabled`) — an MCP tool that routes cheap/bounded work (docs, tests, explanation, search) to a cheaper worker (Pi Agent by default, or another provider like DeepSeek), keeping Codex for architecture/security/final review. Needs Python + a provider API key (`codexsaver.apiKeyEnv` in `.env`) — `aiflow install-deps` installs it (clone + editable pip install, since it has no published package) when enabled. `apply.sh` owns `.codex/config.toml` and appends CodexSaver's entry itself, pointing at the stable script path its own `codexsaver install` creates — so re-running `aiflow apply` never clobbers or duplicates it. |
 

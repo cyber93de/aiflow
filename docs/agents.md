@@ -3,7 +3,7 @@ layout: default
 title: Agents
 parent: Agents & Workflows
 nav_order: 1
-description: "aiflow's Claude Code subagents in detail: what architect, planner, implementer, reviewer, tester, the audit agents, accessibility-checker, modernization-advisor, and the onboarder do and watch for. Plus Skills and slash-commands, and what GitHub Copilot / OpenAI Codex CLI users do instead."
+description: "aiflow's Claude Code subagents in detail: what architect, planner, implementer, reviewer, tester, the audit agents, accessibility-checker, modernization-advisor, and the onboarder do and watch for. Plus Skills (seo-optimization, ponytail YAGNI, memory-setup) and slash-commands, and what GitHub Copilot / OpenAI Codex CLI users do instead."
 ---
 
 # Agents — the full roster
@@ -126,9 +126,15 @@ so the product owner can triage (except the two report-only agents).
 Beads and the Ralph loop also ship as plugin commands (`/beads:ready`, `/beads:decision`, `/ralph-loop`).
 
 **Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`: Claude Code matches the skill's
-`description` against what you're doing and offers to run it, no `/name` needed. Ships with
-**seo-optimization** (SEO for any web-facing project/framework). Add your own by dropping a new
-`<name>/SKILL.md` into `.claude/skills/`.
+`description` against what you're doing and offers to run it, no `/name` needed. Ships with:
+
+- **seo-optimization** — SEO for any web-facing project/framework.
+- **ponytail** — YAGNI decision ladder before new code/dependencies/abstractions; off by default
+  (`ponytail.enabled`/`.mode`). `/ponytail-review` audits a diff for over-engineering regardless.
+- **memory-setup** — the full memory/context-routing picture (see [Memory](memory)) — what to
+  save, source priority, team preferences, Ollama routing.
+
+Add your own by dropping a new `<name>/SKILL.md` into `.claude/skills/`.
 
 ## Customising an agent
 

@@ -3,7 +3,7 @@ layout: default
 title: Features & advantages
 parent: Getting Started
 nav_order: 3
-description: "aiflow features: multi-agent support (Claude Code, GitHub Copilot, OpenAI Codex CLI), Beads task memory, code graph + semantic RAG, context7, Ollama, agents, gitflow release automation, team sync, and per-agent token savings (caveman/rtk, Copilot token-optimization guide, CodexSaver)."
+description: "aiflow features: multi-agent support (Claude Code, GitHub Copilot, OpenAI Codex CLI), Beads task memory, code graph + semantic RAG, context7, Ollama, agents, Skills (seo-optimization, ponytail YAGNI, memory-setup), gitflow release automation, team sync, and per-agent token savings (caveman/rtk, haiku model routing, Copilot token-optimization guide, CodexSaver)."
 ---
 
 # Features
@@ -26,8 +26,9 @@ description: "aiflow features: multi-agent support (Claude Code, GitHub Copilot,
 | **Remote host** | GitHub, GitHub Enterprise, GitLab, self-managed GitLab, Bitbucket, Forgejo, Gitea, or a custom URL — token-based |
 | **Host MCP** | The matching git-host MCP is wired automatically per remote type |
 | **Models** | Claude (API key *or* OAuth) + optional **Ollama** local models, selectable & auto-installed |
-| **Model routing** | claude-code-router sends easy/background work to cheap/local models |
+| **Model routing** | claude-code-router sends easy/background work to cheap/local models; separately, `modelRouting.enabled` routes 5 audit-only subagents to Haiku 4.5 |
 | **Agents** | 5 delivery + 9 audit/checker + 1 brownfield specialist subagents |
+| **Skills** | Auto-offered: seo-optimization, **ponytail** (YAGNI decision ladder, off by default), memory-setup |
 | **Autonomy** | Ralph loop (interactive / headless / containerised / CI) |
 | **Quality** | Google style, conventional commits, format/lint/test git hooks, architect+quality-gate review, static analysis on every change, objective metric targets (0 new smells/duplicates, 0 warnings), >80 % coverage + BDD E2E gates, leveled logging, `.http` files for REST endpoints, DB rules §3c (3NF+FKs for new schemas, brownfield schemas handled with care) |
 | **Branching** | simple / gitflow / none, PR-only, auto-release, SemVer/CalVer |
@@ -47,6 +48,8 @@ guessing or re-reading dozens of files. See [Memory](memory).
 - **CodexSaver** (Codex CLI, optional) — routes cheap/bounded work to a cheaper MCP worker.
 - **graph + RAG retrieval** — answer from graphify/cocoindex instead of reading whole files (~70% fewer). Agent-agnostic.
 - **model routing** — send easy/background steps to cheap or local (Ollama) models. Agent-agnostic.
+- **haiku audit routing** (Claude Code, on by default) — the 5 audit-only subagents run on Haiku 4.5.
+- **ponytail** (off by default) — fewer tokens spent writing and reviewing code nobody needed.
 - **measure first** — `aiflow cost` (ccusage) shows real spend.
 
 See [Token optimization](token-optimization) for the full per-agent detail.

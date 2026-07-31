@@ -3,7 +3,7 @@ layout: default
 title: Token optimization
 parent: Concepts
 nav_order: 2
-description: "Cut AI coding agent token cost with aiflow: caveman terse output and rtk CLI-output filtering for Claude Code, the Copilot token-optimization guide, CodexSaver for Codex CLI, graph + RAG retrieval instead of reading files, and cheap/local model routing."
+description: "Cut AI coding agent token cost with aiflow: caveman terse output and rtk CLI-output filtering for Claude Code, the Copilot token-optimization guide, CodexSaver for Codex CLI, graph + RAG retrieval instead of reading files, cheap/local model routing, haiku model routing for audit subagents, and the ponytail YAGNI skill."
 ---
 
 # Token optimization
@@ -78,6 +78,26 @@ aiflow shell --router
 ```
 
 See [Models & context7](models).
+
+## Model routing for audit-only subagents (Claude Code only)
+
+A separate, always-available mechanism from the router above — no external tool, no Ollama
+needed. `modelRouting.enabled` (on by default) stamps `model: haiku` into the frontmatter of the
+5 subagents that only do mechanical/background checks — **docs-sync**, **test-gap-advisor**,
+**dependency-auditor**, **performance-advisor**, **onboarder** — so they run on Haiku 4.5 instead
+of the session's main model. Every other subagent (implementer, architect, security-advisor,
+reviewer, planner, quality-check, requirements-check, accessibility-checker,
+modernization-advisor, tester) always keeps the session default since it needs real reasoning.
+Toggle it with `aiflow change-settings`.
+
+## ponytail — fewer tokens spent on code nobody needed
+
+Off by default (`ponytail.enabled`/`.mode: full|lite|ultra`). A YAGNI decision ladder the agent
+applies before writing new code, adding a dependency, or introducing an abstraction: does it need
+to exist at all, is it already in the codebase, is it stdlib, a native platform feature, an
+installed dependency, or a one-liner — only then does it write the minimum-viable new code.
+`/ponytail-review` audits the current diff for over-engineering regardless of the toggle. See
+[Agents → Skills](agents#slash-commands-and-skills).
 
 ## Measure first
 

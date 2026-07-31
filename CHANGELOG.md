@@ -7,6 +7,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **ponytail** — a YAGNI decision-ladder skill (`.claude/skills/ponytail/`, Claude Code) applied
+  before writing new code/dependencies/abstractions, plus `/ponytail-review` to audit a diff for
+  over-engineering. Off by default; toggle with `ponytail.enabled`/`.mode`
+  (`full`/`lite`/`ultra`) via `aiflow init` or `aiflow change-settings`. Copilot gets a pointer in
+  `copilot-instructions.md`; Codex reads it via `AGENTS.md` directly.
+- **memory-setup skill** — `AGENTS.md` §8 (Memory) shrank from a full explainer to a short
+  toggle + essentials; the full context-routing stack, team preferences, and Ollama routing detail
+  moved to `.claude/skills/memory-setup/SKILL.md` (Claude Code auto-offers it). §3b/§3c (REST/
+  Database, both MANDATORY) and §6 (Ralph loop, decided per-task by the implementer) stay inline —
+  extracting rules that must apply reliably on every task into a Claude-Code-only, pattern-matched
+  skill would risk them silently not firing, especially for Codex/Copilot which have no skill
+  auto-offer mechanism at all.
+
 ## [0.5.1] — 2026-07-29
 
 ### Fixed

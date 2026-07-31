@@ -24,6 +24,7 @@ MODELROUTING_ON="$(jq -r 'if .modelRouting.enabled == null then true else .model
 CODEXSAVER_ON="$(j '.codexsaver.enabled')"; [ -z "$CODEXSAVER_ON" ] && CODEXSAVER_ON=false
 CAVEMAN_ON="$(j '.caveman.enabled')"; CAVEMAN_MODE="$(j '.caveman.mode')"
 RTK_ON="$(j '.rtk.enabled')"
+PONYTAIL_ON="$(j '.ponytail.enabled')"; PONYTAIL_MODE="$(j '.ponytail.mode')"; [ -z "$PONYTAIL_MODE" ] && PONYTAIL_MODE=full
 ROUTER_ON="$(j '.router.enabled')"
 GRAPHIFY_ON="$(j '.graphify.enabled')"
 TASKMASTER_ON="$(j '.taskmaster.enabled')"
@@ -183,6 +184,12 @@ if [ "$AGENT_CLAUDE" = "true" ]; then
   done
   echo "  model routing: 5 audit subagents -> $([ "$MODELROUTING_ON" = "true" ] && echo 'haiku' || echo 'session default')"
 fi
+
+# ---------- ponytail (YAGNI skill): self-gates via .aiflow/config.json, nothing to render here ----------
+# templates/.claude/skills/ponytail/SKILL.md and templates/.claude/commands/ponytail-review.md read
+# ponytail.enabled/mode from config at invocation time (same pattern as caveman.sh) - this line is
+# status output only, so `aiflow apply` shows the current toggle like every other feature above.
+echo "  ponytail: $([ "$PONYTAIL_ON" = "true" ] && echo "on (mode=$PONYTAIL_MODE)" || echo "off")"
 
 # ---------- release workflow (host-specific, tag-triggered; never overwrites an existing one) ----------
 # Publishes a release entry/note on the host whenever a version tag is pushed. Doesn't bump

@@ -52,6 +52,8 @@ $CODEXSAVER_ON = [bool](Get-JVal $cfgObj 'codexsaver.enabled' $false)
 $CAVEMAN_ON = [bool](Get-JVal $cfgObj 'caveman.enabled' $false)
 $CAVEMAN_MODE = Get-JVal $cfgObj 'caveman.mode' ''
 $RTK_ON = [bool](Get-JVal $cfgObj 'rtk.enabled' $false)
+$PONYTAIL_ON = [bool](Get-JVal $cfgObj 'ponytail.enabled' $false)
+$PONYTAIL_MODE = Get-JVal $cfgObj 'ponytail.mode' 'full'
 $ROUTER_ON = [bool](Get-JVal $cfgObj 'router.enabled' $false)
 $GRAPHIFY_ON = [bool](Get-JVal $cfgObj 'graphify.enabled' $false)
 $TASKMASTER_ON = [bool](Get-JVal $cfgObj 'taskmaster.enabled' $false)
@@ -257,6 +259,9 @@ if ($AGENT_CLAUDE) {
   }
   Write-Output "  model routing: 5 audit subagents -> $(if ($MODELROUTING_ON) { 'haiku' } else { 'session default' })"
 }
+
+# ---------- ponytail (YAGNI skill): self-gates via .aiflow/config.json, nothing to render here ----------
+Write-Output "  ponytail: $(if ($PONYTAIL_ON) { "on (mode=$PONYTAIL_MODE)" } else { 'off' })"
 
 # ---------- release workflow (host-specific, tag-triggered; never overwrites an existing one) ----------
 # Publishes a release entry/note on the host whenever a version tag is pushed. Doesn't bump

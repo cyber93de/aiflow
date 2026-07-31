@@ -58,6 +58,10 @@ if ($NoTokenSave) {
   $CAVE_MODE = Ask 'caveman mode (full/lite/ultra)' (J '.caveman.mode')
   $RTK_ON = AskYn 'rtk CLI-output filtering?' (Dyn (J '.rtk.enabled'))
 }
+$PONYTAIL_ON = AskYn 'ponytail (YAGNI skill: reuse/simplify before new code)?' (Dyn (J '.ponytail.enabled'))
+$PONYTAIL_MODE = J '.ponytail.mode'
+if (-not $PONYTAIL_MODE) { $PONYTAIL_MODE = 'full' }
+if ($PONYTAIL_ON -eq 'true') { $PONYTAIL_MODE = Ask 'ponytail mode (full/lite/ultra)' $PONYTAIL_MODE }
 $GRAPHIFY_ON = AskYn 'graphify structural code graph?' (Dyn (J '.graphify.enabled'))
 $COCO_ON = AskYn 'cocoindex-code semantic RAG search?' (Dyn (J '.mcp.cocoindex'))
 $TM_ON = AskYn 'claude-task-master?' (Dyn (J '.taskmaster.enabled'))
@@ -213,6 +217,7 @@ if ($VCS_SYS -eq 'git') {
 $cfgOut = [ordered]@{
   caveman = [ordered]@{ enabled = ($CAVE_ON -eq 'true'); mode = $CAVE_MODE }
   rtk = [ordered]@{ enabled = ($RTK_ON -eq 'true') }
+  ponytail = [ordered]@{ enabled = ($PONYTAIL_ON -eq 'true'); mode = $PONYTAIL_MODE }
   router = [ordered]@{ enabled = ($ROUTER_ON -eq 'true') }
   graphify = [ordered]@{ enabled = ($GRAPHIFY_ON -eq 'true') }
   taskmaster = [ordered]@{ enabled = ($TM_ON -eq 'true') }

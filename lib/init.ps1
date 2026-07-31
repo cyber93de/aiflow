@@ -98,6 +98,9 @@ if ($NoTokenSave) {
   if ($CAVE_ON -eq 'true') { $CAVE_MODE = Ask 'caveman mode (full recommended / lite / ultra)' 'full' }
   $RTK_ON = AskYn 'Save tokens by filtering CLI output with rtk?' 'y'
 }
+$PONYTAIL_ON = AskYn 'Use ponytail (YAGNI skill: reuse/simplify before writing new code)?' 'n'
+$PONYTAIL_MODE = 'full'
+if ($PONYTAIL_ON -eq 'true') { $PONYTAIL_MODE = Ask 'ponytail mode (full recommended / lite / ultra)' 'full' }
 $GRAPHIFY_ON = AskYn 'Use graphify (structural code graph: imports/call-graph) for memory?' 'y'
 $COCO_ON = AskYn 'Use cocoindex-code (semantic code RAG search, local, ~70% fewer tokens)?' 'y'
 $TM_ON = AskYn 'Use claude-task-master for task decomposition?' 'y'
@@ -247,6 +250,7 @@ function Write-JsonFile($path, $obj) {
 $cfgOut = [ordered]@{
   caveman = [ordered]@{ enabled = ($CAVE_ON -eq 'true'); mode = $CAVE_MODE }
   rtk = [ordered]@{ enabled = ($RTK_ON -eq 'true') }
+  ponytail = [ordered]@{ enabled = ($PONYTAIL_ON -eq 'true'); mode = $PONYTAIL_MODE }
   router = [ordered]@{ enabled = ($ROUTER_ON -eq 'true') }
   graphify = [ordered]@{ enabled = ($GRAPHIFY_ON -eq 'true') }
   taskmaster = [ordered]@{ enabled = ($TM_ON -eq 'true') }

@@ -59,6 +59,9 @@ else
   [ "$CAVE_ON" = true ] && CAVE_MODE="$(ask 'caveman mode (full recommended / lite / ultra)' full)"
   RTK_ON="$(ask_yn 'Save tokens by filtering CLI output with rtk?' y)"
 fi
+PONYTAIL_ON="$(ask_yn 'Use ponytail (YAGNI skill: reuse/simplify before writing new code)?' n)"
+PONYTAIL_MODE=full
+[ "$PONYTAIL_ON" = true ] && PONYTAIL_MODE="$(ask 'ponytail mode (full recommended / lite / ultra)' full)"
 GRAPHIFY_ON="$(ask_yn 'Use graphify (structural code graph: imports/call-graph) for memory?' y)"
 COCO_ON="$(ask_yn 'Use cocoindex-code (semantic code RAG search, local, ~70% fewer tokens)?' y)"
 TM_ON="$(ask_yn 'Use claude-task-master for task decomposition?' y)"
@@ -190,6 +193,7 @@ cat > .aiflow/config.json <<EOF
 {
   "caveman":   { "enabled": $CAVE_ON, "mode": "$CAVE_MODE" },
   "rtk":       { "enabled": $RTK_ON },
+  "ponytail":  { "enabled": $PONYTAIL_ON, "mode": "$PONYTAIL_MODE" },
   "router":    { "enabled": $ROUTER_ON },
   "graphify":  { "enabled": $GRAPHIFY_ON },
   "taskmaster":{ "enabled": $TM_ON },

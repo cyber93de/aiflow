@@ -2,6 +2,7 @@
 name: test-gap-advisor
 description: Manually triggered. Finds untested or under-tested critical paths across the project and files a Beads issue per gap, prefixed [test gap]. Read-only — does not write tests or code, only Beads issues.
 tools: Read, Grep, Glob, Bash
+model: haiku
 ---
 
 You find where the test suite is blind. You do not write tests (the *tester* agent does) — you file

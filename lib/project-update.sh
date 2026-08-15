@@ -3,7 +3,7 @@
 # templates, then re-apply config.
 #
 # Refreshed (mechanical, always safe to overwrite): .aiflow/*.sh+ps1, .claude/hooks/*.sh+ps1,
-# docker/run.sh+ps1.
+# docker/run.sh+ps1, .github/scripts/* (aiflow's CI helpers - not meant to be edited).
 # Refreshed (agent definitions - see backup rule below): AGENTS.md, CLAUDE.md,
 # .github/copilot-instructions.md, .claude/agents/*.md, .claude/commands/*.md,
 # .claude/skills/*/SKILL.md.
@@ -12,8 +12,21 @@
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
 # diff/reapply your customisations. Identical files are overwritten silently (nothing lost).
 # NEVER touched: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map, ...),
-# and .aiflow/config.json's own content (only meta.aiflowVersion is stamped at the end) - your
-# project aim, task history, and learned memory always survive a project-update.
+# .github/workflows/* (yours to extend - see below), and .aiflow/config.json's own content (only
+# meta.aiflowVersion is stamped at the end) - your project aim, task history, and learned memory
+# always survive a project-update.
+#
+# Why scripts but not workflows: the helpers aiflow ships into .github/scripts/ are mechanical and
+# not meant to be edited, so they are simply overwritten. .github/workflows/ci.yml ships as a
+# starting point that projects are expected to extend with their own jobs - overwriting it (or
+# even backing it up and replacing it) would throw that away on every update. So a workflow step
+# that needs a new helper is ADVISED at the very end of this run, never written. The one-way
+# coupling is deliberate: the script is always present, so a project that adopts the step never
+# hits a missing file; a project that ignores the advice just carries an unused script.
+# Caveat: unlike .aiflow/ or .claude/hooks/, .github/scripts/ is a conventional shared directory,
+# not an aiflow-owned namespace. A project file whose NAME collides with a shipped helper is
+# overwritten without a .bak - so keep your own CI scripts under a name aiflow does not ship
+# (today: check-frontmatter.py), or in a directory of your own.
 set -uo pipefail
 
 AIFLOW_HOME="${AIFLOW_HOME:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
@@ -29,6 +42,12 @@ for f in "$TPL"/.aiflow/*.sh "$TPL"/.aiflow/*.ps1; do cp -f "$f" ".aiflow/$(base
 for f in "$TPL"/.claude/hooks/*.sh "$TPL"/.claude/hooks/*.ps1; do cp -f "$f" ".claude/hooks/$(basename "$f")"; done
 for f in "$TPL"/docker/run.sh "$TPL"/docker/run.ps1; do cp -f "$f" "docker/$(basename "$f")"; done
 shopt -u nullglob
+# trailing /. so a subdirectory is merged into the destination, not nested one level deeper on
+# every run (cp -rf dir dst/dir would give dst/dir/dir the second time round).
+if [ -d "$TPL/.github/scripts" ]; then
+  mkdir -p .github/scripts
+  cp -rf "$TPL"/.github/scripts/. .github/scripts/
+fi
 chmod +x .aiflow/*.sh .claude/hooks/*.sh docker/*.sh 2>/dev/null || true
 echo "   scripts refreshed"
 
@@ -89,3 +108,23 @@ TMP="$(mktemp)"
 jq --arg v "$NEW_VER" '.meta.aiflowVersion = $v' "$CFG" > "$TMP" && mv "$TMP" "$CFG"
 echo ">> project-update done. Stamped .aiflow/config.json meta.aiflowVersion=$NEW_VER"
 echo "   Untouched, as always: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map)."
+
+# ---- CI advice: helpers WE ship that no workflow of yours references (never rewrite a workflow) ----
+# Iterates the TEMPLATE's helpers, not the project's: only aiflow-shipped scripts have a matching
+# step to point at. grep -F so a filename is matched literally, not as a regex.
+if [ -d .github/workflows ]; then
+  WF_MISSING=()
+  shopt -s nullglob
+  for f in "$TPL"/.github/scripts/*; do
+    base="$(basename "$f")"
+    grep -rqsF -- "$base" .github/workflows/ || WF_MISSING+=("$base")
+  done
+  shopt -u nullglob
+  if [ "${#WF_MISSING[@]}" -gt 0 ]; then
+    echo ""
+    echo "   note: .github/workflows/ is yours - project-update never rewrites it. These aiflow CI"
+    echo "   helpers are now present, but no workflow under .github/workflows/ references them:"
+    for b in "${WF_MISSING[@]}"; do echo "        .github/scripts/$b"; done
+    echo "   Copy the matching step from $TPL/.github/workflows/ci.yml to enforce it."
+  fi
+fi

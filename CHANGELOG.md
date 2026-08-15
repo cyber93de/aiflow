@@ -63,6 +63,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the real check). Generated projects get the same script and a matching `ci.yml` step, so a
   broken agent definition surfaces as a red build instead of an agent that quietly stops
   existing. Needs `python3` + PyYAML in CI — pinned via `actions/setup-python` in both workflows.
+- **`aiflow project-update` now also refreshes `.github/scripts/*`**, so an existing project picks
+  up aiflow's CI helpers (like the frontmatter guard above) instead of only ever getting them at
+  `init` time. `.github/workflows/*` is still never rewritten — `ci.yml` ships as a starting point
+  you extend, and replacing it on every update would throw your jobs away. A helper that no
+  workflow calls yet is listed at the end of the run with a pointer to the matching template step.
+  The coupling is one-way on purpose: the script is always there, so adopting the step can never
+  fail on a missing file. Implemented in both twins (`lib/project-update.sh` and the native
+  `lib/project-update.ps1`).
+- **CI now runs the render test** it always claimed to: a `render` job inits a project, then puts it
+  through a `project-update` round-trip (helper deleted + workflow step stripped → helper restored,
+  `ci.yml` byte-identical, advisory printed, a project-owned CI script neither deleted nor advised
+  on) and runs the frontmatter guard inside the generated project. A `render-windows` job does the
+  same round-trip through `project-update.ps1`, so a feature added to a `.sh` twin only can no
+  longer ship broken on Windows.
 
 ## [0.5.1] — 2026-07-29
 

@@ -645,7 +645,8 @@ aiflow cost [...]                  Token-/Kosten-Baseline via ccusage
 aiflow doctor                      Voraussetzungen + Projekt-Zusammenfassung prüfen
 aiflow upgrade                     gebündelte Toolchain aktualisieren
 aiflow update                      aiflow selbst aktualisieren (git pull, oder GitHub-Release-Download bei Nicht-Git-Install)
-aiflow project-update               DIESES Projekt auffrischen (Skripte + Agent-Defs; angepasste Dateien -> *.bak)
+aiflow project-update               DIESES Projekt auffrischen (Skripte inkl. .github/scripts + Agent-Defs;
+                                    angepasste Dateien -> *.bak; .github/workflows bleibt unangetastet)
 aiflow version
 ```
 

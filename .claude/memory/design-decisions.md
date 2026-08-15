@@ -23,7 +23,16 @@ Why things are the way they are. Change these only deliberately.
 - **Token-saving on by default.** caveman (terse output) + rtk (CLI-output filtering) default ON;
   intensive graph-memory learning default ON (`memory.intensity = aggressive`).
 - **Windows + POSIX parity is mandatory.** Add a subcommand to both `bin/aiflow` and `bin/aiflow.ps1`
-  and keep help text + README EN/DE + docs consistent.
+  and keep help text + README EN/DE + docs consistent. Several `lib/*.ps1` are **full native
+  implementations, not shims** (`project-update.ps1` among them) — changing the `.sh` alone ships a
+  feature that silently does not exist on Windows.
+- **`.github/scripts/` is aiflow-owned, `.github/workflows/` is project-owned** (2026-08-15).
+  `project-update` overwrites the shipped CI helpers mechanically but never rewrites a workflow —
+  `ci.yml` ships as a starting point projects extend, so replacing it would eat their jobs. A helper
+  no workflow references is *advised* at the end of the run instead. One-way on purpose: the script
+  is always present, so adopting the step can never fail on a missing file. Caveat: `.github/scripts/`
+  is a conventional shared directory, not an aiflow namespace — a project file whose name collides
+  with a shipped helper is overwritten without a `.bak`.
 - **No funding.** No Sponsors/Ko-fi/BuyMeACoffee/PayPal anywhere. The ask is feedback, a ⭐, and bug
   reports. Ideas and criticism explicitly welcomed.
 - **Branding.** Owner account is **Cyber93de** (`github.com/Cyber93de/aiflow`); MIT © 2026 Cyber93de.

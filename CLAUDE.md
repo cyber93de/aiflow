@@ -99,6 +99,13 @@ AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no
   `.aiflow/config.json`'s `meta.aiflowVersion` stamp. `init.sh` copies `templates/` into a target
   project, asks the Q&A, writes `.aiflow/config.json`; `apply.sh` renders everything
   (`.mcp.json`, hooks, memory, branching) from that config — **idempotent**.
+  **Decision (2026-08-15):** `project-update` refreshes `.github/scripts/*` mechanically but never
+  rewrites `.github/workflows/*` — `ci.yml` ships as a starting point projects extend, so replacing
+  it would eat their jobs. A shipped helper no workflow references is *advised* at the end of the
+  run instead. One-way on purpose: the script is always present, so adopting the step can never hit
+  a missing file. See also `.claude/memory/design-decisions.md`.
+  **Several `lib/*.ps1` are full native implementations, not shims** (`project-update.ps1`,
+  `apply.ps1`, …) — editing only the `.sh` ships a feature that silently does not exist on Windows.
 - **`templates/`** — everything a generated project receives: `AGENTS.md` (agent-agnostic operating
   rules incl. quality gates §3a/§3b/§3c; `CLAUDE.md` there is a one-line `@AGENTS.md` import),
   `.github/copilot-instructions.md`, `.claude/agents|commands|hooks`, `.aiflow/*.sh` helpers, git

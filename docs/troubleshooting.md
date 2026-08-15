@@ -50,7 +50,7 @@ That's the branching model. Use a proper branch/PR. See [Workflows](workflows).
 ## A project's hooks/scripts feel out of date, or a fix in a new aiflow release isn't showing up
 Two separate steps: `aiflow update` brings the *installed CLI* (`AIFLOW_HOME`) up to the
 latest release; `aiflow project-update` then refreshes *this project's* mechanical scripts
-(`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) from those templates and re-applies
+(`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`, `.github/scripts/*`) from those templates and re-applies
 config. Updating the CLI alone doesn't touch existing projects — that's deliberate, so a
 project never changes underneath you without asking. Compare the project's stamped
 version (`meta.aiflowVersion` in `.aiflow/config.json`) against `aiflow version`

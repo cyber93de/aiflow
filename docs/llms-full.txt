@@ -45,12 +45,15 @@ hooks/checks. `aiflow update` self-updates the CLI install: `git pull --ff-only`
 is a git checkout; otherwise it checks the GitHub Releases API for a newer version, downloads the
 matching per-OS archive, verifies it against the published `SHA256SUMS.txt`, and installs it over
 `AIFLOW_HOME`. `aiflow project-update` refreshes one project from the installed templates:
-mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) always, plus agent definitions
+mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`, `.github/scripts/*`) always,
+plus agent definitions
 (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/agents/*`,
 `.claude/commands/*`, `.claude/skills/*`) — any of those that was customised (differs from the
 incoming template) is renamed to `<file>.bak` first, never deleted, and reported so you can
 reapply your changes; identical files are overwritten silently. Never touches `.beads/`,
-`.claude/memory/*`, or your `.aiflow/config.json` project settings (aim, architecture) — only
+`.claude/memory/*`, `.github/workflows/*` (yours to extend — a shipped CI helper that no workflow
+calls yet is advised at the end of the run, never written in), or your `.aiflow/config.json`
+project settings (aim, architecture) — only
 `meta.aiflowVersion` is stamped (each project stamps the aiflow version it was generated with, and
 is prompted to upgrade when it falls behind the installed CLI).
 

@@ -63,6 +63,117 @@ jobs:
             .claude/agents .claude/commands .claude/skills \
             templates/.claude/agents templates/.claude/commands templates/.claude/skills
 
+  render:
+    name: Render + project-update round-trip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: init a project, then bring it forward with project-update
+        run: |
+          set -euo pipefail
+          proj="$RUNNER_TEMP/rendertest"
+          AIFLOW_HOME="$PWD" bash lib/init.sh "$proj" --yes --no-beads --no-install-deps
+          test -f "$proj/AGENTS.md" || { echo "::error::init produced no AGENTS.md"; exit 1; }
+          test -f "$proj/.github/scripts/check-frontmatter.py" \
+            || { echo "::error::init did not ship the CI helpers"; exit 1; }
+
+          # Simulate a project generated before the helper existed: no .github/scripts, and the
+          # workflow step that calls it stripped out. project-update must restore the script,
+          # leave the workflow byte-identical, and say so.
+          rm -rf "$proj/.github/scripts"
+          sed -i '/# Agent roster guard/,/^[[:space:]]*$/d' "$proj/.github/workflows/ci.yml"
+          # NOT `! grep -q …`: bash exempts !-inverted commands from set -e, so that asserts nothing.
+          if grep -q check-frontmatter "$proj/.github/workflows/ci.yml"; then
+            echo "::error::simulation did not strip the guard step"; exit 1
+          fi
+          cp "$proj/.github/workflows/ci.yml" "$RUNNER_TEMP/ci-before.yml"
+          # a project's OWN script must survive and must NOT be advised on
+          mkdir -p "$proj/.github/scripts" && echo 'echo mine' > "$proj/.github/scripts/deploy.sh"
+
+          out="$(cd "$proj" && AIFLOW_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/lib/project-update.sh" 2>&1)"
+          echo "$out"
+
+          test -f "$proj/.github/scripts/check-frontmatter.py" \
+            || { echo "::error::project-update did not restore the CI helper"; exit 1; }
+          test -f "$proj/.github/scripts/deploy.sh" \
+            || { echo "::error::project-update deleted a project-owned CI script"; exit 1; }
+          cmp -s "$RUNNER_TEMP/ci-before.yml" "$proj/.github/workflows/ci.yml" \
+            || { echo "::error::project-update rewrote .github/workflows/ci.yml"; exit 1; }
+          grep -q 'no workflow under' <<<"$out" \
+            || { echo "::error::no advisory for the uncalled helper"; exit 1; }
+          grep -q 'check-frontmatter.py' <<<"$out" \
+            || { echo "::error::advisory did not name the helper"; exit 1; }
+          if grep -q 'deploy.sh' <<<"$out"; then
+            echo "::error::advised on a project-owned script"; exit 1
+          fi
+          echo "render + project-update round-trip OK"
+
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      - name: guard runs inside the generated project
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pyyaml
+          cd "$RUNNER_TEMP/rendertest"
+          python .github/scripts/check-frontmatter.py --selftest
+          python .github/scripts/check-frontmatter.py \
+            .claude/agents .claude/commands .claude/skills
+
+  render-windows:
+    name: project-update parity (PowerShell twin)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      # lib/*.ps1 are full native implementations, not shims — a feature added to the .sh alone
+      # silently does not exist on Windows. This runs the twin over the same round-trip.
+      - name: init (bash) then project-update (PowerShell)
+        shell: bash
+        run: |
+          set -euo pipefail
+          proj="$RUNNER_TEMP/rendertest-ps"
+          AIFLOW_HOME="$PWD" bash lib/init.sh "$proj" --yes --no-beads --no-install-deps
+          rm -rf "$proj/.github/scripts"
+          # [[:space:]] not ^$ — the checkout may be CRLF here, and a range that never ends would
+          # truncate the workflow to its first lines while every later assertion still passed.
+          sed -i '/# Agent roster guard/,/^[[:space:]]*$/d' "$proj/.github/workflows/ci.yml"
+          if grep -q check-frontmatter "$proj/.github/workflows/ci.yml"; then
+            echo "::error::simulation did not strip the guard step"; exit 1
+          fi
+          if [ "$(wc -l < "$proj/.github/workflows/ci.yml")" -lt 20 ]; then
+            echo "::error::sed truncated the workflow instead of removing one step"; exit 1
+          fi
+          cp "$proj/.github/workflows/ci.yml" "$RUNNER_TEMP/ci-before-ps.yml"
+          # a project's OWN script must survive the twin and must NOT be advised on
+          mkdir -p "$proj/.github/scripts" && echo 'echo mine' > "$proj/.github/scripts/deploy.sh"
+      - name: assert the twin restores the helper and leaves the workflow alone
+        shell: pwsh
+        run: |
+          $proj = Join-Path $env:RUNNER_TEMP 'rendertest-ps'
+          Set-Location $proj
+          $env:AIFLOW_HOME = $env:GITHUB_WORKSPACE
+          $out = & (Join-Path $env:GITHUB_WORKSPACE 'lib/project-update.ps1') 2>&1 | Out-String
+          Write-Output $out
+          if (-not (Test-Path '.github/scripts/check-frontmatter.py')) {
+            Write-Output "::error::PowerShell twin did not restore the CI helper"; exit 1
+          }
+          $before = (Get-FileHash (Join-Path $env:RUNNER_TEMP 'ci-before-ps.yml')).Hash
+          if ((Get-FileHash '.github/workflows/ci.yml').Hash -ne $before) {
+            Write-Output "::error::PowerShell twin rewrote .github/workflows/ci.yml"; exit 1
+          }
+          if (-not (Test-Path '.github/scripts/deploy.sh')) {
+            Write-Output "::error::PowerShell twin deleted a project-owned CI script"; exit 1
+          }
+          if ($out -notmatch 'no workflow under') {
+            Write-Output "::error::PowerShell twin printed no advisory"; exit 1
+          }
+          if ($out -notmatch 'check-frontmatter\.py') {
+            Write-Output "::error::advisory did not name the helper"; exit 1
+          }
+          if ($out -match 'deploy\.sh') {
+            Write-Output "::error::advised on a project-owned script"; exit 1
+          }
+          Write-Output "project-update parity OK"
+
   powershell:
     name: PowerShell parse
     runs-on: windows-latest

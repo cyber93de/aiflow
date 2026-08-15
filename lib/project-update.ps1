@@ -2,7 +2,7 @@
 # templates, then re-apply config.
 #
 # Refreshed (mechanical, always safe to overwrite): .aiflow/*.sh+ps1, .claude/hooks/*.sh+ps1,
-# docker/run.sh+ps1.
+# docker/run.sh+ps1, .github/scripts/* (aiflow's CI helpers - not meant to be edited).
 # Refreshed (agent definitions - see backup rule below): AGENTS.md, CLAUDE.md,
 # .github/copilot-instructions.md, .claude/agents/*.md, .claude/commands/*.md,
 # .claude/skills/*/SKILL.md.
@@ -11,8 +11,21 @@
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
 # diff/reapply your customisations. Identical files are overwritten silently (nothing lost).
 # NEVER touched: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map, ...),
-# and .aiflow/config.json's own content (only meta.aiflowVersion is stamped at the end) - your
-# project aim, task history, and learned memory always survive a project-update.
+# .github/workflows/* (yours to extend - see below), and .aiflow/config.json's own content (only
+# meta.aiflowVersion is stamped at the end) - your project aim, task history, and learned memory
+# always survive a project-update.
+#
+# Why scripts but not workflows: the helpers aiflow ships into .github/scripts/ are mechanical and
+# not meant to be edited, so they are simply overwritten. .github/workflows/ci.yml ships as a
+# starting point that projects are expected to extend with their own jobs - overwriting it (or
+# even backing it up and replacing it) would throw that away on every update. So a workflow step
+# that needs a new helper is ADVISED at the very end of this run, never written. The one-way
+# coupling is deliberate: the script is always present, so a project that adopts the step never
+# hits a missing file; a project that ignores the advice just carries an unused script.
+# Caveat: unlike .aiflow/ or .claude/hooks/, .github/scripts/ is a conventional shared directory,
+# not an aiflow-owned namespace. A project file whose NAME collides with a shipped helper is
+# overwritten without a .bak - so keep your own CI scripts under a name aiflow does not ship
+# (today: check-frontmatter.py), or in a directory of your own.
 $ErrorActionPreference = 'Stop'
 
 $AIFLOW_HOME = if ($env:AIFLOW_HOME) { $env:AIFLOW_HOME } else { Split-Path -Parent $PSScriptRoot }
@@ -56,6 +69,12 @@ if (Test-Path $hooksSrc) {
     ForEach-Object { Copy-Item -Path $_.FullName -Destination (Join-Path '.claude/hooks' $_.Name) -Force }
 }
 Copy-Twins (Join-Path $TPL 'docker') 'docker' @('run.sh', 'run.ps1')
+$ciScriptsSrc = Join-Path $TPL '.github/scripts'
+if (Test-Path $ciScriptsSrc) {
+  New-Item -ItemType Directory -Force -Path '.github/scripts' | Out-Null
+  # copy the CONTENTS, so a subdirectory is merged rather than nested one level deeper per run
+  Copy-Item -Path (Join-Path $ciScriptsSrc '*') -Destination '.github/scripts' -Recurse -Force
+}
 # no chmod +x equivalent needed on Windows - the exec bit is a POSIX concept.
 Write-Output "   scripts refreshed"
 
@@ -138,3 +157,22 @@ Set-JsonProperty $cfgObj.meta "aiflowVersion" $newVer
 Write-JsonFile $CFG $cfgObj
 Write-Output ">> project-update done. Stamped .aiflow/config.json meta.aiflowVersion=$newVer"
 Write-Output "   Untouched, as always: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map)."
+
+# ---- CI advice: helpers WE ship that no workflow of yours references (never rewrite a workflow) ----
+# Iterates the TEMPLATE's helpers, not the project's: only aiflow-shipped scripts have a matching
+# step to point at. -SimpleMatch so a filename is matched literally, not as a regex.
+if ((Test-Path '.github/workflows') -and (Test-Path $ciScriptsSrc)) {
+  $wfMissing = @()
+  foreach ($h in (Get-ChildItem -Path $ciScriptsSrc -ErrorAction SilentlyContinue)) {
+    $hit = Get-ChildItem -Path '.github/workflows' -File -Recurse -ErrorAction SilentlyContinue |
+      Select-String -SimpleMatch -Pattern $h.Name -List -ErrorAction SilentlyContinue
+    if (-not $hit) { $wfMissing += $h.Name }
+  }
+  if ($wfMissing.Count -gt 0) {
+    Write-Output ""
+    Write-Output "   note: .github/workflows/ is yours - project-update never rewrites it. These aiflow CI"
+    Write-Output "   helpers are now present, but no workflow under .github/workflows/ references them:"
+    foreach ($b in $wfMissing) { Write-Output "        .github/scripts/$b" }
+    Write-Output ("   Copy the matching step from " + (Join-Path $TPL '.github/workflows/ci.yml') + " to enforce it.")
+  }
+}

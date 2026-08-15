@@ -78,8 +78,8 @@ python3 .github/scripts/check-twins.py .
 # rendered copies (.aiflow/, .claude/hooks/, .github/scripts/) vs templates/ — content drift too
 python3 .github/scripts/check-rendered.py --selftest
 python3 .github/scripts/check-rendered.py .
-# bin/aiflow gates `ralph`/`close-sync` on `[ -x .aiflow/... ]`, so the exec bit must be in the
-# index — core.filemode=false on Windows hides a lost bit until a fresh Linux clone
+# `init` renders these 100755 and bd-close-sync.sh documents a direct call, so the mode is part of
+# the rendered copy — and core.filemode=false on Windows drops it without telling you
 git ls-files -s '.aiflow/*.sh' | awk '$1 != "100755"'   # must print nothing
 # all JSON templates/configs
 find . -name '*.json' -not -path './.git/*' -not -path './.beads/*' -exec jq empty {} +
@@ -96,6 +96,13 @@ powershell -NoProfile -Command '
   if ($err) { exit 1 }'
 # render test: init into a temp dir and inspect the generated project
 AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no-install-deps
+# POSIX-only behaviour (file modes, `[ -x ]`, symlinks): Git-Bash forces `-x` true for a *.sh
+# file whatever its mode, so a mode-dependent bug is INVISIBLE here — verify on ext4 rather than
+# concluding it cannot be tested. Prints "TRUE" under Git-Bash, "FALSE" under WSL:
+d=$(mktemp -d); printf '#!/bin/sh\n' > "$d/x.sh"; chmod 644 "$d/x.sh"
+[ -x "$d/x.sh" ] && echo "-x TRUE at 644" || echo "-x FALSE at 644"
+wsl -e bash -lc 'd=$(mktemp -d); printf "#!/bin/sh\n" > "$d/x.sh"; chmod 644 "$d/x.sh"
+  [ -x "$d/x.sh" ] && echo "-x TRUE at 644" || echo "-x FALSE at 644"'
 ```
 
 ## Architecture Overview

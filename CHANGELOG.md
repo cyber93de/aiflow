@@ -54,6 +54,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   auto-offer mechanism at all.
 
 ### Fixed
+- **`aiflow ralph` and `aiflow close-sync` claimed the script was missing when it wasn't.** Both
+  gated on `[ -x .aiflow/… ]` while the other three `.aiflow` commands gated on `[ -f ]` — and all
+  five invoke the script via `bash <path>`, which never needed the executable bit. A project
+  developed on Windows commits `.aiflow/*.sh` without it, so a colleague on Linux was told to
+  "Run `aiflow init` first" for a file sitting right there. All five branches now use `[ -f ]`,
+  matching what `bin/aiflow.ps1` has always done.
 - **The `reviewer` subagent never appeared in Claude Code's agent roster**, so `/review-ac` had no
   agent to dispatch and the §4.6 review gate only worked through the inline fallback in the
   command. Cause: its frontmatter `description` was an unquoted YAML scalar containing `": "`
@@ -91,9 +97,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `.aiflow/`, `.claude/hooks/` and `.github/scripts/` against their `templates/` originals byte for
   byte, so content drift in aiflow's own self-hosted copies — a missing file, a hand-added one, or
   an edited one — fails the build too. A third step asserts that `.aiflow/*.sh` are `100755` in the
-  git index, because `bin/aiflow` gates `aiflow ralph` and `aiflow close-sync` on the executable
-  bit: content comparison cannot see it, and `core.filemode=false` on Windows hides a lost bit
-  until someone clones on Linux and gets told to run `aiflow init` first.
+  git index: `aiflow init` renders them executable and `bd-close-sync.sh` documents a direct call,
+  so the mode is part of the rendered copy — but byte comparison cannot see it and
+  `core.filemode=false` on Windows drops it silently.
 - **Docs and `.gitignore` still described the pre-open-ralph-wiggum loop.** `aiflow ralph` has run
   on [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum) for a while, which keeps its
   iteration history in `.ralph/ralph-history.json` — but generated projects still ignored the

@@ -77,7 +77,7 @@ case "$cmd" in
   update)  bash "$AIFLOW_HOME/lib/update.sh" "$@" ;;    # self-update the aiflow install (git pull, or GitHub-release download if not a git checkout)
   project-update) bash "$AIFLOW_HOME/lib/project-update.sh" "$@" ;;  # refresh this project's aiflow scripts from the installed templates
   close-sync|bd-sync)                                  # on Beads issue close: prompt push + dolt-sync
-    if [ -x ".aiflow/bd-close-sync.sh" ]; then bash ".aiflow/bd-close-sync.sh" "$@";
+    if [ -f ".aiflow/bd-close-sync.sh" ]; then bash ".aiflow/bd-close-sync.sh" "$@";
     else echo "No .aiflow/bd-close-sync.sh (enable sync-on-close via 'aiflow change-settings')." >&2; exit 1; fi ;;
   index)                                               # refresh ALL code memory: structural graph + semantic RAG
     did=0
@@ -91,7 +91,7 @@ case "$cmd" in
     ;;
   ralph)
     load_env
-    if [ -x ".aiflow/ralph-headless.sh" ]; then
+    if [ -f ".aiflow/ralph-headless.sh" ]; then
       bash ".aiflow/ralph-headless.sh" "$@"
     else
       echo "No .aiflow/ralph-headless.sh in this project. Run 'aiflow init' first." >&2

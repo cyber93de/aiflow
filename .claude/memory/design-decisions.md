@@ -38,9 +38,9 @@ Why things are the way they are. Change these only deliberately.
   `ralph-headless.sh` still on the pre-open-ralph-wiggum design — so `aiflow protect` was broken on
   both platforms here and every audit command was broken on Windows. Refresh it by copying
   `templates/.aiflow/*.sh` + `*.ps1`, then `git update-index --chmod=+x .aiflow/*.sh` (`core.filemode`
-  is false here, so a local `chmod` is not recorded and `bin/aiflow`'s `[ -x … ]` gates fail on a
-  fresh clone) and re-stamp `.meta.aiflowVersion` in `.aiflow/config.json` from `VERSION` — that is
-  `project-update`'s full mechanical block, and skipping the stamp makes interactive `aiflow`
+  is false here, so a local `chmod` never reaches the index and the exec-bit CI step below goes red
+  on the pushed tree) and re-stamp `.meta.aiflowVersion` in `.aiflow/config.json` from `VERSION` —
+  that is `project-update`'s full mechanical block, and skipping the stamp makes interactive `aiflow`
   commands offer the `project-update` that the next sentence forbids. Do **not** run
   `aiflow project-update` in this repo — it would also overwrite this repo's own `AGENTS.md`,
   `CLAUDE.md` and agent definitions with the template versions. Enforced since 2026-08-15 by
@@ -51,13 +51,20 @@ Why things are the way they are. Change these only deliberately.
   and `.github/scripts/` on the same rule (the two guards themselves are exempted — they are about
   aiflow's own structure and never ship to a project). The executable bit — the other half of the
   refresh recipe — is a separate CI step in the same job, because content comparison cannot see it:
-  `.aiflow/*.sh` must be **100755 in the index**. Reason, precisely: `bin/aiflow:80` and `:94`
-  *gate* `close-sync` and `ralph` on `[ -x ".aiflow/…" ]` before invoking them via `bash`, so a
-  100644 bit does not break execution — it makes those two commands claim the script is absent
-  ("Run 'aiflow init' first") on a fresh Linux clone. The other `.aiflow` branches (`:103`, `:112`,
-  `:121`) gate on `[ -f ]` and are unaffected; that inconsistency is aiflow-wrn. `bin/aiflow`,
-  `lib/*.sh`, `install.sh` and everything under `templates/` stay 100644 on purpose — the installer
-  and `init`/`project-update` chmod them on copy. **Not** covered: `.beads/hooks/*` are executed in
+  `.aiflow/*.sh` must be **100755 in the index**. Originally this was load-bearing: `bin/aiflow`
+  *gated* `close-sync` and `ralph` on `[ -x ".aiflow/…" ]`, so a 100644 bit made those two commands
+  claim the script was absent ("Run 'aiflow init' first") on a fresh Linux clone. **Since
+  aiflow-wrn those gates are `[ -f ]`, like the other three** — every branch invokes via
+  `bash <path>`, which works at 100644, so do **not** re-derive the `[ -x ]`-gate justification.
+  Two live reasons remain: `.aiflow/bd-close-sync.sh:6` documents its usage as a direct
+  `.aiflow/bd-close-sync.sh <issue-id>` call (the only *user-facing* one — `run-agent.sh` and
+  `version.sh` document bare-name calls too; unifying all three is aiflow-ozo),
+  which genuinely needs the bit; and `lib/init.sh:37` + `lib/apply.sh:414` `chmod +x` on copy, so
+  every rendered project gets 100755 — the assertion is what keeps this repo's self-hosted
+  `.aiflow/` matching that **in mode**, which `check-rendered.py` cannot see because it compares
+  bytes. `bin/aiflow`, `lib/*.sh`, `install.sh` and everything under `templates/` stay 100644 on
+  purpose — the installer and `init`/`project-update` chmod them on copy.
+  **Not** covered: `.beads/hooks/*` are executed in
   place by git (`core.hooksPath`) and are 100644 — see aiflow-vly. Verified by `chmod -x`-ing a
   file in a scratch clone; re-run that check if the CI step changes.
 - **`.github/scripts/` is aiflow-owned, `.github/workflows/` is project-owned** (2026-08-15).

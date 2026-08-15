@@ -38,6 +38,18 @@ server set (`mcp.*`, `remote.mcp`, `gitkraken.enabled`).
    (Ollama/cost providers), `.aiflow/team-prefs.json`, and `.aiflow/bd-close-sync.sh`.
 3. `lib/install-deps.sh` installs only the enabled tools (user-space).
 
+## Windows prerequisites (before anything else)
+aiflow's own CLI runs in PowerShell + Git Bash. Anything that COMPILES NATIVE CODE (C/C++,
+`node-gyp`, Python C-extensions, `uv`-built tools) must run in WSL, never MinGW/MSYS2 — two
+parallel toolchains cause ABI/header mismatches, `PATH` collisions between the two `sh.exe`s, and
+builds that differ from Linux CI. Required setup, in order: (1) enable hardware virtualisation in
+the BIOS/UEFI — Intel VT-x, AMD SVM Mode; (2) `wsl --install` in an admin PowerShell (enables WSL +
+Virtual Machine Platform), reboot; (3) `wsl --install -d Ubuntu`, start it once, confirm
+`wsl -l -v` reports VERSION 2; (4) inside WSL `sudo apt install -y build-essential` for gcc/g++,
+plus `cmake`/`python3-dev`/a cross-toolchain as the project needs. Projects that compile native
+code should live inside the WSL filesystem, not under `/mnt/c`. `aiflow doctor` reports all four
+steps on Windows and never installs MinGW.
+
 Every script a project invokes on its own (Claude Code hooks, `.aiflow/*` checks, `docker/run.*`)
 ships as a `.sh` + `.ps1` pair; `apply.sh` picks the interpreter per `dev.os` when writing
 `.claude/settings.json`'s hook commands — Windows projects need no Git-Bash for their own

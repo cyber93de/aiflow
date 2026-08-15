@@ -59,25 +59,105 @@ function Npmg($pkg) {
   if ($LASTEXITCODE -ne 0) { WarnMsg "failed: npm i -g $pkg"; return $false }
   return $true
 }
+# ---- PATH + native toolchain ------------------------------------------------------------
+# winget/scoop write the new binary's directory into the *registry* PATH; the already-running
+# session never sees it, so a tool installed two lines up looks "missing" to the next check and
+# to 'aiflow doctor' (aiflow-sx6). Rebuild $env:Path from Machine+User after each such install.
+$script:NeedsRestart = @()
+function Update-PathFromRegistry {
+  $machine = [Environment]::GetEnvironmentVariable('PATH', 'Machine')
+  $user = [Environment]::GetEnvironmentVariable('PATH', 'User')
+  $merged = @($machine, $user) | Where-Object { $_ }
+  if ($merged) { $env:Path = ($merged -join ';') }
+}
+function Install-WinPkg($cmdName, $wingetId, $scoopName) {
+  $ok = $false
+  if (Have winget) {
+    & winget install --id $wingetId -e --source winget --accept-source-agreements --accept-package-agreements
+    $ok = ($LASTEXITCODE -eq 0)
+  }
+  if (-not $ok -and (Have scoop)) { & scoop install $scoopName; $ok = ($LASTEXITCODE -eq 0) }
+  if (-not $ok) { return $false }
+  Update-PathFromRegistry
+  if (-not (Have $cmdName)) { $script:NeedsRestart += $cmdName }
+  return $true
+}
+# WSL is where native code gets compiled on Windows - never MinGW/MSYS2 (aiflow-sq3).
+function Test-WslReady {
+  if (-not (Have wsl)) { return $false }
+  & wsl.exe -e true 2>$null
+  return ($LASTEXITCODE -eq 0)
+}
+function Install-BuildToolchain {
+  # only called when something actually needs a C/C++ compiler
+  if (Test-WslReady) {
+    & wsl.exe -e sh -c "command -v g++ >/dev/null" 2>$null
+    if ($LASTEXITCODE -eq 0) { return $true }
+    Say "installing build-essential inside WSL (native builds do NOT use MinGW)"
+    & wsl.exe -e sh -c "sudo apt-get update -qq && sudo apt-get install -y build-essential"
+    if ($LASTEXITCODE -ne 0) { WarnMsg "run inside WSL: sudo apt update && sudo apt install -y build-essential" }
+    return $true
+  }
+  WarnMsg "no WSL - native builds need it. Admin PowerShell: wsl --install  then  wsl --install -d Ubuntu"
+  WarnMsg "do NOT install MinGW/MSYS2 for this: https://cyber93de.github.io/aiflow/installation#windows-prerequisites-do-this-first"
+  return $false
+}
+
 function InstallUv {
   # same official installer lib/install-deps.sh runs on Windows (human-approved, aiflow-bkl)
-  if (Have uv) { return }
-  Say "installing uv (for graphify)"
+  if (Have uv) { return $true }
+  Say "installing uv (for graphify / cocoindex-code)"
   try { Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression }
   catch { WarnMsg "install uv manually: https://docs.astral.sh/uv/" }
   $env:Path = "$env:USERPROFILE\.local\bin;$env:USERPROFILE\.cargo\bin;$env:Path"
+  Update-PathFromRegistry
+  if (-not (Have uv)) { WarnMsg "uv still not on PATH after install - open a new shell, or add %USERPROFILE%\.local\bin to PATH"; return $false }
+  return $true
 }
 function InstallRtk {
+  # rtk-ai/rtk. There is no winget/scoop package; the upstream installer is a POSIX shell
+  # script, so on Windows it runs through Git Bash. Verify instead of assuming (aiflow-3ds).
   Say "installing rtk"
-  WarnMsg "install rtk manually: https://www.rtk-ai.app/docs/getting-started/installation/"
+  $sh = Get-Command bash -ErrorAction SilentlyContinue
+  if ($sh) {
+    & bash -lc "curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh" 2>$null
+  }
+  $env:Path = "$env:USERPROFILE\.rtk\bin;$env:USERPROFILE\.local\bin;$env:Path"
+  Update-PathFromRegistry
+  if (-not (Have rtk)) {
+    WarnMsg "rtk install did not produce an 'rtk' on PATH. Get it from the repo:"
+    WarnMsg "    https://github.com/rtk-ai/rtk        (clone + follow its README/install.sh)"
+    WarnMsg "    docs: https://www.rtk-ai.app/docs/getting-started/installation/"
+    return $false
+  }
+  return $true
+}
+function InstallGraphify {
+  # PyPI package name is 'graphifyy' (two y's) - upstream repo: Graphify-Labs/graphify.
+  # Errors used to be silenced, so a failure looked like success (aiflow-zw8).
+  if (-not (InstallUv)) { return $false }
+  Say "graphify (structural code graph)"
+  & uv tool install graphifyy
+  if ($LASTEXITCODE -ne 0) {
+    WarnMsg "uv tool install graphifyy failed - retrying from the upstream repo"
+    & uv tool install "git+https://github.com/Graphify-Labs/graphify"
+    if ($LASTEXITCODE -ne 0) {
+      WarnMsg "install graphify manually: https://github.com/Graphify-Labs/graphify"
+      WarnMsg "    uv tool install graphifyy   ||   uv tool install git+https://github.com/Graphify-Labs/graphify"
+      return $false
+    }
+  }
+  $env:Path = "$env:USERPROFILE\.local\bin;$env:Path"
+  if (-not (Have graphify)) { WarnMsg "graphify installed but not on PATH - add %USERPROFILE%\.local\bin (uv tool dir) to PATH"; return $false }
+  & graphify install
+  if ($LASTEXITCODE -ne 0) { WarnMsg "'graphify install' failed - run it manually once" }
+  return $true
 }
 function InstallDolt {
   # Beads backend (bd runs a dolt sql-server)
   if (Have dolt) { return }
   Say "installing dolt (Beads database backend)"
-  if (Have winget) { & winget install --id DoltHub.Dolt -e --source winget }
-  elseif (Have scoop) { & scoop install dolt }
-  else { WarnMsg "install dolt manually: https://docs.dolthub.com/introduction/installation" }
+  if (-not (Install-WinPkg dolt 'DoltHub.Dolt' 'dolt')) { WarnMsg "install dolt manually: https://docs.dolthub.com/introduction/installation" }
 }
 function InstallVcsCli {
   # remote host: new schema .remote.type, fallback to legacy string .vcs
@@ -87,17 +167,13 @@ function InstallVcsCli {
     'github' {
       if (-not (Have gh)) {
         Say "GitHub CLI"
-        if (Have winget) { & winget install --id GitHub.cli -e }
-        elseif (Have scoop) { & scoop install gh }
-        else { WarnMsg "install gh: https://cli.github.com" }
+        if (-not (Install-WinPkg gh 'GitHub.cli' 'gh')) { WarnMsg "install gh: https://cli.github.com" }
       }
     }
     'gitlab' {
       if (-not (Have glab)) {
         Say "GitLab CLI"
-        if (Have winget) { & winget install --id glab.glab -e }
-        elseif (Have scoop) { & scoop install glab }
-        else { WarnMsg "install glab: https://gitlab.com/gitlab-org/cli" }
+        if (-not (Install-WinPkg glab 'glab.glab' 'glab')) { WarnMsg "install glab: https://gitlab.com/gitlab-org/cli" }
       }
     }
     'custom' {
@@ -111,9 +187,7 @@ function InstallVcsCli {
 function InstallOllama {
   if (Have ollama) { return }
   Say "installing ollama (local models)"
-  if (Have winget) { & winget install --id Ollama.Ollama -e }
-  elseif (Have scoop) { & scoop install ollama }
-  else { WarnMsg "install ollama: https://ollama.com/download" }
+  if (-not (Install-WinPkg ollama 'Ollama.Ollama' 'ollama')) { WarnMsg "install ollama: https://ollama.com/download" }
 }
 function InstallBun {
   # runtime open-ralph-wiggum needs
@@ -188,10 +262,7 @@ if (-not (Have bd)) {
 if (-not (Have ralph)) { InstallBun; Say "ralph-wiggum (Ralph loop)"; Npmg '@th0rgal/ralph-wiggum' | Out-Null }
 if (-not (Have jq)) {
   Say "jq"
-  $installed = $false
-  if (Have winget) { & winget install --id jqlang.jq -e; $installed = ($LASTEXITCODE -eq 0) }
-  if (-not $installed -and (Have scoop)) { & scoop install jq; $installed = ($LASTEXITCODE -eq 0) }
-  if (-not $installed) { WarnMsg "install jq: https://jqlang.github.io/jq/" }
+  if (-not (Install-WinPkg jq 'jqlang.jq' 'jq')) { WarnMsg "install jq: https://jqlang.github.io/jq/" }
 }
 InstallVcsCli   # gh or glab to match the configured VCS host
 
@@ -199,22 +270,20 @@ InstallVcsCli   # gh or glab to match the configured VCS host
 if ($TM -eq 'true' -and -not (Have task-master)) { Say "claude-task-master"; Npmg 'task-master-ai' | Out-Null }
 if ($ROUTER -eq 'true' -and -not (Have ccr)) { Say "claude-code-router"; Npmg '@musistudio/claude-code-router' | Out-Null }
 if ($RTK -eq 'true' -and -not (Have rtk)) { InstallRtk }
-if ($GFY -eq 'true' -and -not (Have graphify)) {
-  InstallUv
-  Say "graphify"
-  & uv tool install graphifyy 2>$null
-  $gfyOk = $false
-  if ($LASTEXITCODE -eq 0) { & graphify install 2>$null; $gfyOk = ($LASTEXITCODE -eq 0) }
-  if (-not $gfyOk) { WarnMsg "install graphify manually: uv tool install graphifyy && graphify install" }
-}
-# cocoindex-code (semantic RAG code search; 'ccc' CLI + MCP; local embeddings, no API key)
+if ($GFY -eq 'true' -and -not (Have graphify)) { InstallGraphify | Out-Null }
+# cocoindex-code (semantic RAG code search; 'ccc' CLI + MCP; local embeddings, no API key).
+# Builds native wheels -> needs a C/C++ toolchain, which on Windows means WSL, never MinGW.
 if ($COCO -eq 'true' -and -not (Have ccc)) {
-  InstallUv
+  if (InstallUv) {
+    if (-not (Install-BuildToolchain)) { WarnMsg "cocoindex-code may fail to build without a C/C++ toolchain" }
+  }
   Say "cocoindex-code (ccc)"
-  & uv tool install 'cocoindex-code[full]' 2>$null
+  & uv tool install 'cocoindex-code[full]'
   $cocoOk = ($LASTEXITCODE -eq 0)
   if (-not $cocoOk -and (Have pipx)) { & pipx install 'cocoindex-code[full]'; $cocoOk = ($LASTEXITCODE -eq 0) }
   if (-not $cocoOk) { WarnMsg "install cocoindex-code manually: uv tool install 'cocoindex-code[full]'  (or pipx)" }
+  $env:Path = "$env:USERPROFILE\.local\bin;$env:Path"
+  if (-not (Have ccc)) { WarnMsg "cocoindex-code installed but 'ccc' is not on PATH - add the uv tool dir (%USERPROFILE%\.local\bin)" }
 }
 if ($All -or $OLLAMA -eq 'true') {
   InstallOllama
@@ -235,4 +304,11 @@ if (Test-Path '.aiflow/config.json') {
   try { & (Join-Path $PSScriptRoot 'apply.ps1') *> $null } catch {}
 }
 Write-Output ""
+# Anything winget/scoop installed that a PATH refresh still couldn't surface only becomes
+# usable in a NEW shell - say so instead of letting the next command report it as missing.
+if ($script:NeedsRestart.Count -gt 0) {
+  Write-Output ("  ! installed but not yet on this shell's PATH: " + ($script:NeedsRestart -join ' '))
+  Write-Output "    Open a NEW terminal (VS Code: fully restart it) before running 'aiflow doctor'."
+  Write-Output ""
+}
 Write-Output "Done. Verify with: aiflow doctor"

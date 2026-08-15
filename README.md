@@ -131,6 +131,20 @@ question, every default, first feature end-to-end).
 
 **Prerequisites:** [Node.js](https://nodejs.org) (LTS). Everything else aiflow can install for you.
 
+> **Windows: do this before you clone.** aiflow itself runs in PowerShell + Git Bash, but anything
+> that **compiles native code** (C/C++, `node-gyp`, Python C-extensions) belongs in **WSL** — never
+> MinGW/MSYS2. Skipping this is the #1 cause of a failed Windows setup.
+> 1. Enable **Intel VT-x** / **AMD SVM Mode** in the BIOS/UEFI (Task Manager → Performance → CPU →
+>    *Virtualization: Enabled*).
+> 2. Admin PowerShell: `wsl --install` → reboot (enables WSL + Virtual Machine Platform).
+> 3. `wsl --install -d Ubuntu`, start it once; `wsl -l -v` must show **VERSION 2**.
+> 4. Inside WSL: `sudo apt update && sudo apt install -y build-essential` → `gcc`/`g++`; add
+>    `cmake`, `python3-dev`, a cross-toolchain, … as your project needs.
+>
+> Full walkthrough incl. why not MinGW:
+> [docs — Windows prerequisites](https://cyber93de.github.io/aiflow/installation#windows-prerequisites-do-this-first).
+> `aiflow doctor` checks all four steps.
+
 ### Windows (PowerShell)
 ```powershell
 git clone https://github.com/Cyber93de/aiflow.git

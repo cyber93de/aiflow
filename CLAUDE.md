@@ -78,6 +78,9 @@ python3 .github/scripts/check-twins.py .
 # rendered copies (.aiflow/, .claude/hooks/, .github/scripts/) vs templates/ — content drift too
 python3 .github/scripts/check-rendered.py --selftest
 python3 .github/scripts/check-rendered.py .
+# bin/aiflow gates `ralph`/`close-sync` on `[ -x .aiflow/... ]`, so the exec bit must be in the
+# index — core.filemode=false on Windows hides a lost bit until a fresh Linux clone
+git ls-files -s '.aiflow/*.sh' | awk '$1 != "100755"'   # must print nothing
 # all JSON templates/configs
 find . -name '*.json' -not -path './.git/*' -not -path './.beads/*' -exec jq empty {} +
 # advisory lint

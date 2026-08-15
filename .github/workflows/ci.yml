@@ -83,6 +83,29 @@ jobs:
       # survived in this repo (aiflow-30k).
       - name: Check rendered copies against the templates
         run: python .github/scripts/check-rendered.py .
+      # bin/aiflow:80,94 GATE close-sync and ralph on `[ -x .aiflow/... ]` before invoking them
+      # via bash, so a 100644 bit does not break execution — it makes those two commands claim
+      # the script is missing ("Run 'aiflow init' first") on a fresh Linux clone. Content
+      # comparison cannot see the bit and core.filemode=false on Windows hides it locally, so a
+      # cp-based refresh committed from there drops it silently (aiflow-30k). Everything else
+      # (bin/aiflow, lib/*.sh, install.sh, templates/**) is deliberately 100644 — the installer
+      # and init/project-update chmod on copy.
+      - name: Check .aiflow/*.sh are executable in the index
+        run: |
+          set -euo pipefail
+          all="$(git ls-files -s '.aiflow/*.sh')"
+          if [ -z "$all" ]; then
+            echo "::error::no .aiflow/*.sh tracked - this check is looking at the wrong path"
+            exit 1
+          fi
+          bad="$(printf '%s\n' "$all" | awk '$1 != "100755"')"
+          if [ -n "$bad" ]; then
+            printf '%s\n' "$bad" | while read -r mode _ _ path; do
+              echo "::error file=$path::$path is $mode in the index, expected 100755 - run 'git update-index --chmod=+x $path'"
+            done
+            exit 1
+          fi
+          echo "all $(printf '%s\n' "$all" | wc -l | tr -d ' ') .aiflow/*.sh are 100755"
 
   render:
     name: Render + project-update round-trip

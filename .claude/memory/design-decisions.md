@@ -49,8 +49,17 @@ Why things are the way they are. Change these only deliberately.
   one, or **content** drift all go red. Line-ending-only differences are ignored;
   `config.json`/`branching.json` are project state and never compared. It covers `.claude/hooks/`
   and `.github/scripts/` on the same rule (the two guards themselves are exempted — they are about
-  aiflow's own structure and never ship to a project). It cannot see the executable bit, which is
-  the other half of the refresh recipe — see aiflow-vgs.
+  aiflow's own structure and never ship to a project). The executable bit — the other half of the
+  refresh recipe — is a separate CI step in the same job, because content comparison cannot see it:
+  `.aiflow/*.sh` must be **100755 in the index**. Reason, precisely: `bin/aiflow:80` and `:94`
+  *gate* `close-sync` and `ralph` on `[ -x ".aiflow/…" ]` before invoking them via `bash`, so a
+  100644 bit does not break execution — it makes those two commands claim the script is absent
+  ("Run 'aiflow init' first") on a fresh Linux clone. The other `.aiflow` branches (`:103`, `:112`,
+  `:121`) gate on `[ -f ]` and are unaffected; that inconsistency is aiflow-wrn. `bin/aiflow`,
+  `lib/*.sh`, `install.sh` and everything under `templates/` stay 100644 on purpose — the installer
+  and `init`/`project-update` chmod them on copy. **Not** covered: `.beads/hooks/*` are executed in
+  place by git (`core.hooksPath`) and are 100644 — see aiflow-vly. Verified by `chmod -x`-ing a
+  file in a scratch clone; re-run that check if the CI step changes.
 - **`.github/scripts/` is aiflow-owned, `.github/workflows/` is project-owned** (2026-08-15).
   `project-update` overwrites the shipped CI helpers mechanically but never rewrites a workflow —
   `ci.yml` ships as a starting point projects extend, so replacing it would eat their jobs. A helper

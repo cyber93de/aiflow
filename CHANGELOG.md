@@ -83,7 +83,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   guard in the same job (`.github/scripts/check-rendered.py`) compares this repo's rendered
   `.aiflow/`, `.claude/hooks/` and `.github/scripts/` against their `templates/` originals byte for
   byte, so content drift in aiflow's own self-hosted copies — a missing file, a hand-added one, or
-  an edited one — fails the build too.
+  an edited one — fails the build too. A third step asserts that `.aiflow/*.sh` are `100755` in the
+  git index, because `bin/aiflow` gates `aiflow ralph` and `aiflow close-sync` on the executable
+  bit: content comparison cannot see it, and `core.filemode=false` on Windows hides a lost bit
+  until someone clones on Linux and gets told to run `aiflow init` first.
 - **Docs and `.gitignore` still described the pre-open-ralph-wiggum loop.** `aiflow ralph` has run
   on [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum) for a while, which keeps its
   iteration history in `.ralph/ralph-history.json` — but generated projects still ignored the

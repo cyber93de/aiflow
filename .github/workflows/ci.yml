@@ -20,14 +20,16 @@ jobs:
           fail=0
           while IFS= read -r f; do
             bash -n "$f" || { echo "::error file=$f::bash syntax error"; fail=1; }
-          done < <(find bin lib templates install.sh -type f \( -name '*.sh' -o -name 'aiflow' \) 2>/dev/null)
+          done < <(find bin lib templates install.sh -type f \
+                     \( -name '*.sh' -o -name 'aiflow' -o -path '*/.githooks/*' \) 2>/dev/null)
           exit $fail
 
       - name: shellcheck (advisory)
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q shellcheck
           # advisory: don't fail the build on style, only on real errors (-S error)
-          find bin lib templates install.sh -type f \( -name '*.sh' -o -name 'aiflow' \) -print0 \
+          find bin lib templates install.sh -type f \
+            \( -name '*.sh' -o -name 'aiflow' -o -path '*/.githooks/*' \) -print0 \
             | xargs -0 shellcheck -S error || true
 
   json:

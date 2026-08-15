@@ -11,9 +11,11 @@
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
 # diff/reapply your customisations. Identical files are overwritten silently (nothing lost).
 # NEVER touched: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map, ...),
-# .github/workflows/* (yours to extend - see below), and .aiflow/config.json's own content (only
-# meta.aiflowVersion is stamped at the end) - your project aim, task history, and learned memory
-# always survive a project-update.
+# .github/workflows/* (yours to extend - see below), .githooks/* (enforcement policy you are
+# expected to tune; refreshing it would need the .bak rule and a decision of its own - aiflow-y23,
+# so a hook improvement reaches an existing project only if you copy it yourself), and
+# .aiflow/config.json's own content (only meta.aiflowVersion is stamped at the end) - your project
+# aim, task history, and learned memory always survive a project-update.
 #
 # Why scripts but not workflows: the helpers aiflow ships into .github/scripts/ are mechanical and
 # not meant to be edited, so they are simply overwritten. .github/workflows/ci.yml ships as a

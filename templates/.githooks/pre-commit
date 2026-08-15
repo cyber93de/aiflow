@@ -9,7 +9,9 @@ fail() { echo "✗ pre-commit: $1" >&2; exit 1; }
 echo "• pre-commit: format + lint + tests"
 
 # 1) Format staged files in place (Google style), then re-stage.
-staged="$(git diff --cached --name-only --diff-filter=ACM)"
+# quotePath=false: git otherwise renders a non-ASCII path as "\303\274ber", whose leading quote
+# defeats every match below - the file would silently skip formatting and the roster check.
+staged="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACM)"
 while IFS= read -r f; do
   [ -f "$f" ] || continue
   case "$f" in
@@ -24,7 +26,30 @@ while IFS= read -r f; do
   git add "$f" 2>/dev/null || true
 done <<< "$staged"
 
-# 2) Lint + tests by detected stack (best-effort; fails the commit on error).
+# 2) Agent roster guard: invalid frontmatter silently drops an agent from Claude Code's roster
+# (a command/skill quietly falls back to its body text). CI catches it, but only after a push -
+# here it costs a second, so it runs before the slow stack tests below.
+# Herestring, not `printf | grep -q`: grep exits on the first match, and once the staged list
+# outgrows the pipe buffer printf dies of SIGPIPE, which under `pipefail` reads as "no match" -
+# the guard would silently skip on exactly the big commits that need it most.
+guard=".github/scripts/check-frontmatter.py"
+if [ -f "$guard" ] && grep -q '^\.claude/\(agents\|commands\|skills\)/' <<< "$staged"; then
+  py=""
+  # --selftest, not `import yaml`: it proves interpreter version, PyYAML AND the guard's own
+  # logic in one 0.4s run. A bare import probe passes on Python < 3.9, where the guard then
+  # crashes on its PEP-585 annotations and would block the commit as if the roster were broken.
+  for c in python3 python; do
+    have "$c" && "$c" "$guard" --selftest >/dev/null 2>&1 && { py="$c"; break; }
+  done
+  if [ -n "$py" ]; then
+    "$py" "$guard" .claude/agents .claude/commands .claude/skills \
+      || fail "invalid frontmatter somewhere in the agent/command/skill roster (errors above)"
+  else
+    echo "  note: skipping the frontmatter guard - needs python3/python + PyYAML (pip install pyyaml), or its self-test failed" >&2
+  fi
+fi
+
+# 3) Lint + tests by detected stack (best-effort; fails the commit on error).
 if [ -f package.json ]; then
   have npx && npx --no-install eslint . >/dev/null 2>&1 || true
   if grep -q '"test"' package.json; then npm test --silent || fail "npm test failed"; fi

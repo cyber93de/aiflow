@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **The agent-roster check now runs in `pre-commit`, not just in CI.** Staging any file under
+  `.claude/agents|commands|skills` runs `.github/scripts/check-frontmatter.py` over the roster and
+  **blocks the commit** on invalid frontmatter — the same failure that used to cost a push, a red
+  build and a round trip. It needs `python3`/`python` with PyYAML: without them the hook prints a
+  note and continues, so a missing toolchain never blocks a commit and CI stays the backstop.
+  Applies to newly generated projects; existing ones keep their current hook (`aiflow
+  project-update` deliberately does not overwrite `.githooks/`, which is yours to tune).
 - **Nine new Skills**, so the delivery agents stop working generically on a stack they were never
   told about. Technology: **stack-embedded** (C/C++ firmware — HAL/driver separation, no allocation
   after init, ISR discipline, watchdog, host tests against a mocked HAL), **stack-mobile**

@@ -411,8 +411,10 @@ fails to parse is **silently dropped** from the roster; a command or skill silen
 its body text as the description, so it stops matching the trigger words you wrote. The usual
 cause is an unquoted `description:` containing `": "` — YAML reads that as a nested mapping key.
 Quote any description containing a colon (`description: "… two hats: architect …"`, single quotes
-if the text itself contains double quotes). CI enforces this
-(`.github/scripts/check-frontmatter.py`).
+if the text itself contains double quotes). The `pre-commit` hook checks this whenever you stage
+an agent/command/skill file, and CI enforces it on every push
+(`.github/scripts/check-frontmatter.py`). The hook needs `python3`/`python` + PyYAML; without them
+it says so and skips, so CI stays the backstop.
 
 ---
 

@@ -86,7 +86,9 @@ YAML (the `": "` reads as a nested mapping key) and nothing warns you: a skill o
 falls back to its body text as the description — so it stops matching the trigger words you wrote
 — and an **agent** with a broken frontmatter block is dropped from the roster entirely. Wrap the
 value in double quotes, or single quotes if the text itself contains double quotes. The generated
-CI runs `.github/scripts/check-frontmatter.py` over every agent, command, and skill to catch it.
+project's `pre-commit` hook runs `.github/scripts/check-frontmatter.py` over every agent, command,
+and skill as soon as you stage one, and CI runs it again on every push. The hook needs
+`python3`/`python` + PyYAML; without them it says so and skips, so CI stays the backstop.
 
 For projects that use `aiflow project-update`, skills are refreshed from the templates like agents
 and commands — a customised file is backed up to `<file>.bak` first, never overwritten silently.

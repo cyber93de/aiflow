@@ -126,15 +126,14 @@ so the product owner can triage (except the two report-only agents).
 Beads and the Ralph loop also ship as plugin commands (`/beads:ready`, `/beads:decision`, `/ralph-loop`).
 
 **Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`: Claude Code matches the skill's
-`description` against what you're doing and offers to run it, no `/name` needed. Ships with:
+`description` against what you're doing and offers to run it, no `/name` needed. Ships with
+technology-stack skills (**stack-embedded**, **stack-mobile**, **stack-web-frontend**,
+**stack-backend**), integration/data skills (**api-design**, **messaging-events**,
+**data-storage**, **cloud-native**), and cross-cutting ones (**security**, **seo-optimization**,
+**ponytail**, **memory-setup**).
 
-- **seo-optimization** — SEO for any web-facing project/framework.
-- **ponytail** — YAGNI decision ladder before new code/dependencies/abstractions; off by default
-  (`ponytail.enabled`/`.mode`). `/ponytail-review` audits a diff for over-engineering regardless.
-- **memory-setup** — the full memory/context-routing picture (see [Memory](memory)) — what to
-  save, source priority, team preferences, Ollama routing.
-
-Add your own by dropping a new `<name>/SKILL.md` into `.claude/skills/`.
+An **agent** is a role (who acts, with what authority, in what order); a **skill** is knowledge
+several roles need. Full catalogue and the skill-versus-agent rule: **[Skills](skills)**.
 
 ## Customising an agent
 

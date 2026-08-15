@@ -8,6 +8,31 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Nine new Skills**, so the delivery agents stop working generically on a stack they were never
+  told about. Technology: **stack-embedded** (C/C++ firmware — HAL/driver separation, no allocation
+  after init, ISR discipline, watchdog, host tests against a mocked HAL), **stack-mobile**
+  (Flutter/Dart, Kotlin/Android, Swift/iOS — layering, one state-management choice, process death,
+  offline/sync, Keystore/Keychain, store constraints), **stack-web-frontend** (Angular/React/Vue —
+  feature slices, server vs client state, XSS and token handling, Core Web Vitals budgets, i18n,
+  a11y), **stack-backend** (Spring/Quarkus/Jakarta, .NET, Rust, Node, Go, Python — hexagonal
+  layering with ports, transaction boundaries, 12-factor config, timeouts/retries/breakers,
+  observability, FOSS-first). Integration and data: **api-design** (REST versioning, status codes,
+  pagination, idempotency, `problem+json`, OpenAPI, `.http` files; when SOAP is legitimate and how
+  to migrate off it; GraphQL/gRPC trade-offs), **messaging-events** (broker choice, at-least-once
+  with idempotent consumers, transactional outbox, ordering, schema evolution, DLQs, sagas),
+  **data-storage** (relational default, when NoSQL is actually justified, embedded DBs, Redis with
+  designed cache invalidation, Elasticsearch as a *derived* read layer), **cloud-native**
+  (container images, K8s probes/limits/rollout/secrets, EC2, modular monolith before microservices).
+  Cross-cutting: **security** — OWASP Top 10 as the review raster plus ASVS levels, IAM least
+  privilege (roles over per-user grants, short-lived credentials, rotation), API authN/authZ,
+  secrets, crypto, and supply-chain safety; the `security-advisor` now reads that same raster
+  instead of restating its own.
+- **`docs/skills.md`** — the skill catalogue plus the rule the split follows: an **agent** is a
+  role (who acts, with what authority, in what order, what it hands to whom), a **skill** is
+  knowledge several roles need. Both may exist for one topic. Rules that must fire on *every* task
+  (§2 architecture, §3a/§3b/§3c gates) deliberately stay inline in `AGENTS.md` — a skill is offered
+  by pattern match, and Copilot/Codex get no auto-offer at all, so those two get an explicit
+  "open the matching SKILL.md yourself" instruction in `copilot-instructions.md`.
 - **ponytail** — a YAGNI decision-ladder skill (`.claude/skills/ponytail/`, Claude Code) applied
   before writing new code/dependencies/abstractions, plus `/ponytail-review` to audit a diff for
   over-engineering. Off by default; toggle with `ponytail.enabled`/`.mode`

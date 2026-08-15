@@ -351,25 +351,60 @@ Customise them by editing the markdown in `.claude/agents/` (see README.md §8 "
 entry points — they work from any shell regardless of which coding agent invoked them; only the
 automatic in-session dispatch (subagents, slash-commands) is Claude Code-specific.
 
+### Skills
+
 **Skills** (`.claude/skills/<name>/SKILL.md`, Claude Code only) are a different mechanism from
 slash-commands: Claude Code matches a skill's `description` against the current task and offers
-to run it automatically, rather than waiting for an explicit `/command`. aiflow ships
-**seo-optimization** — SEO for any web-facing project (HTML, GitHub Pages, static sites, docs
-sites, Next.js/Astro/Hugo/Jekyll/VuePress/VitePress/React/Vue/Svelte/Angular/…): meta tags, Open
-Graph/Twitter Cards, JSON-LD structured data, robots.txt/sitemap.xml, canonical URLs, Core Web
-Vitals, GitHub Pages specifics. It offers itself whenever web content is present or being
-created/changed; never applies non-trivial changes without confirming first, and ends with an SEO
-report. aiflow also ships **ponytail** — a YAGNI decision ladder (does it need to exist? already
-in the codebase? stdlib? native platform feature? installed dependency? a one-liner? only then
-write it) applied before any new code/dependency/abstraction, plus `/ponytail-review` to audit a
-diff for over-engineering. Toggled by `.aiflow/config.json → ponytail.enabled`/`.mode`
-(`full`/`lite`/`ultra`, default **off** — enable via `aiflow change-settings`); when off the skill
-is present but inert (see `.claude/skills/ponytail/SKILL.md` §"only applies when ... enabled").
-aiflow also ships **memory-setup** — the full memory/context-routing picture (§8 has the
-short version + the toggle). Copilot/Codex have no auto-offer mechanism for any of these skills —
-read the `SKILL.md` directly as a manual checklist instead (Codex reads it via this file's
-pointer; Copilot see the summary in `.github/copilot-instructions.md`). Add more skills by
-dropping a new `<name>/SKILL.md` into `.claude/skills/`.
+to run it automatically, rather than waiting for an explicit `/command`.
+
+**Skill or agent?** An **agent** is a *role* — who acts, with what authority, in what order, what
+it hands to whom. A **skill** is *knowledge* — a checklist or a set of trade-offs that several
+roles need (the implementer writing an endpoint and the reviewer checking it should read the same
+list). Both may exist for one topic; the same-named agent then uses the skill instead of restating
+it. Rules that must fire on **every** task — the §2 architecture rules and the §3a/§3b/§3c quality
+gates — stay inline in this file: a skill is offered by pattern match, which is the wrong mechanism
+for something that must never be missed, and Copilot/Codex get no auto-offer at all.
+
+**Technology stacks** — layering, toolchain, test pyramid and the typical findings per platform:
+- **stack-embedded** — C/C++ firmware: HAL/driver separation, no allocation after init, ISR
+  discipline, watchdog, deterministic timing, host tests against a mocked HAL.
+- **stack-mobile** — Flutter/Dart, Kotlin/Android, Swift/iOS: UI→presentation→domain←data,
+  one state-management choice, process death, offline/sync, Keystore/Keychain, store constraints.
+- **stack-web-frontend** — Angular/React/Vue: feature slices, server state vs client state,
+  DTO→view-model mapping, XSS and token handling, Core Web Vitals budgets, i18n, a11y.
+- **stack-backend** — Spring/Quarkus/Jakarta, .NET, Rust, Node, Go, Python: hexagonal layering with
+  ports, transaction boundaries, 12-factor config, resilience, observability, FOSS-first choices.
+
+**Integration & data architecture:**
+- **api-design** — REST (§3b) versioning, status codes, pagination, idempotency, `problem+json`,
+  OpenAPI, `.http` files; when SOAP is legitimate and how to migrate off it; GraphQL/gRPC trade-offs.
+- **messaging-events** — when async beats synchronous; Kafka/RabbitMQ/NATS/SQS; at-least-once +
+  idempotent consumers; transactional outbox; ordering; schema evolution; DLQs; sagas.
+- **data-storage** — relational default (§3c), when NoSQL is justified, embedded DBs, Redis as a
+  cache with real invalidation, Elasticsearch as a derived read layer, indexing and migrations.
+- **cloud-native** — container images, 12-factor, K8s probes/limits/rollout/secrets, EC2 immutable
+  images, modular monolith vs microservices, observability and cost.
+
+**Cross-cutting:**
+- **security** — OWASP Top 10 as a review raster + ASVS levels, IAM least privilege (roles,
+  short-lived credentials, rotation), API authN/authZ per §3b, secrets, crypto, supply chain
+  (pinning, scanning, never `curl | sh` unverified). The **security-advisor** uses this same raster.
+- **seo-optimization** — SEO for any web-facing project (HTML, GitHub Pages, static sites,
+  Next.js/Astro/Hugo/Jekyll/VuePress/VitePress/React/Vue/Svelte/Angular/…): meta tags, Open
+  Graph/Twitter Cards, JSON-LD, robots.txt/sitemap.xml, canonical URLs, Core Web Vitals. Never
+  applies non-trivial changes without confirming first; ends with an SEO report.
+- **ponytail** — a YAGNI decision ladder (does it need to exist? already in the codebase? stdlib?
+  native platform feature? installed dependency? a one-liner? only then write it) applied before
+  any new code/dependency/abstraction, plus `/ponytail-review` to audit a diff for
+  over-engineering. Toggled by `.aiflow/config.json → ponytail.enabled`/`.mode`
+  (`full`/`lite`/`ultra`, default **off**); when off the skill is present but inert.
+- **memory-setup** — the full memory/context-routing picture (§8 has the short version + toggle).
+
+Copilot/Codex have no auto-offer mechanism for any of these — read the relevant `SKILL.md` directly
+as a manual checklist (Codex reaches it via this file's pointer; Copilot: see the summary in
+`.github/copilot-instructions.md`). Add more by dropping a `<name>/SKILL.md` into
+`.claude/skills/`; the **description is the trigger**, so write it as "invoke when …" plus the
+words that should match.
 
 ---
 

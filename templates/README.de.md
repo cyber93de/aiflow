@@ -289,10 +289,27 @@ Ziel: **passe sie an die Bedürfnisse deines Projekts an** (Markdown editieren: 
 (Beads und der Ralph-Loop sind zudem als eigene Plugin-Commands verfügbar, z. B. `/beads:ready`.)
 
 **Skills** — automatisch angeboten, `.claude/skills/<name>/SKILL.md`: Claude Code gleicht die
-`description` des Skills gegen den aktuellen Kontext ab und bietet ihn an. Mitgeliefert:
-**seo-optimization** (SEO für jedes webbasierte Projekt/Framework — Meta-Tags, Open Graph, JSON-LD
-Structured Data, robots.txt/sitemap.xml, GitHub-Pages-Spezifika; endet mit SEO-Bericht). Eigene
-Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen.
+`description` des Skills gegen den aktuellen Kontext ab und bietet ihn an. Ein **Agent** ist eine
+Rolle (wer handelt, mit welcher Befugnis, in welcher Reihenfolge); ein **Skill** ist Wissen, das
+mehrere Rollen brauchen — der Implementierer, der einen Endpunkt baut, und der Reviewer, der ihn
+prüft, lesen dieselbe Liste. Mitgeliefert:
+
+- **Technologie-Stacks:** `stack-embedded` (C/C++-Firmware — HAL-Trennung, keine Allokation nach
+  Init, ISR-Disziplin, Host-Tests gegen gemockte HAL), `stack-mobile` (Flutter/Dart, Kotlin/
+  Android, Swift/iOS), `stack-web-frontend` (Angular/React/Vue), `stack-backend` (Spring/Quarkus/
+  Jakarta, .NET, Rust, Node, Go, Python — hexagonale Schichtung, Resilienz, Observability,
+  FOSS-first).
+- **Integration & Daten:** `api-design` (REST-Versionierung/Idempotenz/OpenAPI/`.http`, SOAP wenn
+  legitim, GraphQL/gRPC), `messaging-events` (Kafka/RabbitMQ/NATS, idempotente Consumer, Outbox,
+  DLQ, Sagas), `data-storage` (SQL als Default, NoSQL wenn berechtigt, In-App-Datenbanken, Redis,
+  Elasticsearch als abgeleitete Schicht), `cloud-native` (Images, K8s, EC2, Monolith vs.
+  Microservices).
+- **Querschnitt:** `security` (OWASP Top 10 + ASVS, IAM mit Least Privilege, API-AuthN/AuthZ,
+  Secrets, Supply Chain), `seo-optimization`, `ponytail` (YAGNI-Leiter, standardmäßig aus),
+  `memory-setup`.
+
+Eigene Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen — die **description ist der
+Trigger**, also als „invoke when …" plus die passenden Stichworte formulieren.
 
 ---
 

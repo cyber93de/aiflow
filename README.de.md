@@ -358,7 +358,27 @@ Beads und die Ralph-Schleife gibt es auch als Plugin-Commands (`/beads:ready`, `
 
 **Skills** — automatisch angeboten, `.claude/skills/<name>/SKILL.md`, Claude Code gleicht die
 `description` des Skills gegen den aktuellen Kontext ab und bietet ihn an (vor größeren Änderungen
-wird nachgefragt):
+wird nachgefragt). Ein **Agent** ist eine Rolle (wer handelt, mit welcher Befugnis, in welcher
+Reihenfolge); ein **Skill** ist Wissen, das mehrere Rollen brauchen — der Implementierer, der einen
+Endpunkt baut, und der Reviewer, der ihn prüft, lesen dieselbe Liste. Vollständiger Katalog:
+[Skills](https://cyber93de.github.io/aiflow/skills).
+- **Technologie-Stacks** — **stack-embedded** (C/C++-Firmware: HAL-Trennung, keine Allokation nach
+  Init, ISR-Disziplin, Host-Tests gegen gemockte HAL), **stack-mobile** (Flutter/Dart, Kotlin/
+  Android, Swift/iOS: Schichtung, State-Management, Process Death, Offline/Sync, Keystore/
+  Keychain), **stack-web-frontend** (Angular/React/Vue: Feature-Slices, Server- vs. Client-State,
+  XSS und Token-Handling, Core Web Vitals, i18n, a11y), **stack-backend** (Spring/Quarkus/Jakarta,
+  .NET, Rust, Node, Go, Python: hexagonale Schichtung mit Ports, Transaktionsgrenzen, Resilienz,
+  Observability, FOSS-first).
+- **Integration & Daten** — **api-design** (REST-Versionierung/Idempotenz/`problem+json`/OpenAPI/
+  `.http`, wann SOAP legitim ist und wie man davon wegkommt, GraphQL-/gRPC-Abwägungen),
+  **messaging-events** (Kafka/RabbitMQ/NATS, idempotente Consumer, Transactional Outbox,
+  Reihenfolge, DLQs, Sagas), **data-storage** (SQL als Default, wann NoSQL berechtigt ist,
+  In-App-Datenbanken, Redis mit echter Cache-Invalidierung, Elasticsearch als abgeleitete
+  Leseschicht), **cloud-native** (Container-Images, K8s-Probes/Limits/Rollout/Secrets, EC2,
+  modularer Monolith vs. Microservices).
+- **security** — OWASP Top 10 als Prüfraster + ASVS-Level, IAM mit Least Privilege (Rollen,
+  kurzlebige Credentials, Rotation), API-AuthN/AuthZ, Secrets, Krypto, Supply Chain. Der
+  security-advisor nutzt dasselbe Raster.
 - **seo-optimization** — SEO für jedes webbasierte Projekt (HTML, GitHub Pages, statische Seiten,
   Doku-Seiten, Landing Pages, Blogs, Next.js, Astro, Hugo, Jekyll, VuePress, VitePress, React,
   Vue, Svelte, Angular, …): Meta-Tags, Open Graph/Twitter Cards, JSON-LD Structured Data,

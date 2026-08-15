@@ -356,7 +356,25 @@ Beads and the Ralph loop also ship plugin commands (`/beads:ready`, `/beads:deci
 
 **Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`, Claude Code matches the skill's
 `description` against what you're doing and offers to run it (confirm before it acts on anything
-non-trivial):
+non-trivial). An **agent** is a role (who acts, with what authority, in what order); a **skill** is
+knowledge several roles need — the implementer writing an endpoint and the reviewer checking it
+read the same list. Full catalogue: [Skills](https://cyber93de.github.io/aiflow/skills).
+- **Technology stacks** — **stack-embedded** (C/C++ firmware: HAL separation, no allocation after
+  init, ISR discipline, host tests against a mocked HAL), **stack-mobile** (Flutter/Dart, Kotlin/
+  Android, Swift/iOS: layering, state management, process death, offline/sync, Keystore/Keychain),
+  **stack-web-frontend** (Angular/React/Vue: feature slices, server vs client state, XSS and token
+  handling, Core Web Vitals, i18n, a11y), **stack-backend** (Spring/Quarkus/Jakarta, .NET, Rust,
+  Node, Go, Python: hexagonal layering with ports, transaction boundaries, resilience,
+  observability, FOSS-first).
+- **Integration & data** — **api-design** (REST versioning/idempotency/`problem+json`/OpenAPI/
+  `.http`, when SOAP is legitimate and how to migrate off it, GraphQL/gRPC trade-offs),
+  **messaging-events** (Kafka/RabbitMQ/NATS, idempotent consumers, transactional outbox, ordering,
+  DLQs, sagas), **data-storage** (SQL default, when NoSQL is justified, embedded DBs, Redis with
+  real cache invalidation, Elasticsearch as a derived read layer), **cloud-native** (container
+  images, K8s probes/limits/rollout/secrets, EC2, modular monolith vs microservices).
+- **security** — OWASP Top 10 as a review raster + ASVS levels, IAM least privilege (roles,
+  short-lived credentials, rotation), API authN/authZ, secrets, crypto, supply chain. The
+  security-advisor uses the same raster.
 - **seo-optimization** — SEO for any web-facing project (HTML, GitHub Pages, static sites, docs
   sites, landing pages, blogs, Next.js, Astro, Hugo, Jekyll, VuePress, VitePress, React, Vue,
   Svelte, Angular, …): meta tags, Open Graph/Twitter Cards, JSON-LD structured data, robots.txt/

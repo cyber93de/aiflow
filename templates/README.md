@@ -287,10 +287,24 @@ The shipped agents are **deliberately generic** — a strong, universal base, no
 (Beads and the Ralph loop are also available as their own plugin commands, e.g. `/beads:ready`.)
 
 **Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`: Claude Code matches the skill's
-`description` against what you're doing and offers to run it. Ships with **seo-optimization** (SEO
-for any web-facing project/framework — meta tags, Open Graph, JSON-LD structured data,
-robots.txt/sitemap.xml, GitHub Pages specifics; ends with an SEO report). Add your own by dropping
-a new `<name>/SKILL.md` into `.claude/skills/`.
+`description` against what you're doing and offers to run it. An **agent** is a role (who acts,
+with what authority, in what order); a **skill** is knowledge several roles need — the implementer
+writing an endpoint and the reviewer checking it read the same list. Ships with:
+
+- **Technology stacks:** `stack-embedded` (C/C++ firmware — HAL separation, no allocation after
+  init, ISR discipline, host tests against a mocked HAL), `stack-mobile` (Flutter/Dart, Kotlin/
+  Android, Swift/iOS), `stack-web-frontend` (Angular/React/Vue), `stack-backend` (Spring/Quarkus/
+  Jakarta, .NET, Rust, Node, Go, Python — hexagonal layering, resilience, observability, FOSS-first).
+- **Integration & data:** `api-design` (REST versioning/idempotency/OpenAPI/`.http`, SOAP when
+  legitimate, GraphQL/gRPC), `messaging-events` (Kafka/RabbitMQ/NATS, idempotent consumers,
+  outbox, DLQ, sagas), `data-storage` (SQL default, NoSQL when justified, embedded DBs, Redis,
+  Elasticsearch as a derived layer), `cloud-native` (images, K8s, EC2, monolith vs microservices).
+- **Cross-cutting:** `security` (OWASP Top 10 + ASVS, IAM least privilege, API authN/authZ,
+  secrets, supply chain), `seo-optimization`, `ponytail` (YAGNI ladder, off by default),
+  `memory-setup`.
+
+Add your own by dropping a `<name>/SKILL.md` into `.claude/skills/` — the **description is the
+trigger**, so write it as "invoke when …" plus the words that should match.
 
 ---
 

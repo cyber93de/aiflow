@@ -118,7 +118,41 @@ for whom, target architecture, quality bar. Slash-commands (Claude Code only): /
 /decompose, /plan-epic, /implement [bead] [ralph|no-ralph], /review-ac, /arch, the audit commands,
 /onboard, /explain, /standup. Skills (Claude Code only, `.claude/skills/<name>/SKILL.md`) —
 distinct from slash-commands: Claude Code matches a skill's description against the current task
-and offers to run it automatically. Ships with seo-optimization: SEO for any web-facing
+and offers to run it automatically. Skill vs agent: an AGENT is a role (who acts, with what
+authority, in what order, what it hands to whom) and lives in .claude/agents/*.md; a SKILL is
+knowledge several roles need (a checklist, the trade-offs of a technology) and lives in
+.claude/skills/*/SKILL.md. Both may exist for one topic — the same-named agent then uses the skill
+instead of restating it. Rules that must fire on EVERY task (section 2 architecture rules, sections
+3a/3b/3c quality gates) stay inline in AGENTS.md, because a skill is offered by pattern match and
+Copilot/Codex get no auto-offer at all.
+Technology-stack skills: stack-embedded (C/C++ firmware — HAL/driver separation, no allocation
+after init, ISR discipline, watchdog, deterministic timing, cross-toolchain in WSL on Windows, host
+unit tests against a mocked HAL); stack-mobile (Flutter/Dart, Kotlin/Android, Swift/iOS —
+UI->presentation->domain<-data layering, one state-management choice, process death, offline/sync,
+Keystore/Keychain, store constraints); stack-web-frontend (Angular/React/Vue — feature slices,
+server state vs client state, DTO->view-model mapping, XSS and token handling, Core Web Vitals
+budgets, i18n, a11y, Testing-Library + Playwright); stack-backend (Spring/Quarkus/Jakarta, .NET,
+Rust, Node, Go, Python — hexagonal layering with ports, transaction boundaries, 12-factor config,
+timeouts/retries/circuit breakers, observability, FOSS-first: PostgreSQL, Tomcat, Keycloak,
+Prometheus; Testcontainers over in-memory doubles).
+Integration/data skills: api-design (REST versioning, status codes, pagination, idempotency,
+problem+json, OpenAPI, .http files per section 3b; when SOAP is legitimate and how to migrate off
+it; GraphQL and gRPC trade-offs); messaging-events (when async beats synchronous; Kafka/RabbitMQ/
+NATS/SQS; at-least-once + idempotent consumers; transactional outbox; ordering/partitioning; schema
+registry compatibility; DLQs; sagas over distributed transactions); data-storage (relational
+default per section 3c, when NoSQL is actually justified, embedded DBs SQLite/Room/Drift/Realm,
+Redis as cache with designed invalidation and mandatory TTLs, Elasticsearch as a DERIVED read layer
+fed from the outbox — never the source of truth, indexing and expand-contract migrations);
+cloud-native (multi-stage non-root pinned images, 12-factor, K8s liveness vs readiness, resource
+limits, PodDisruptionBudget, secret stores, EC2 immutable images, modular monolith before
+microservices, observability and cost).
+Cross-cutting: security (OWASP Top 10 as the review raster + ASVS levels; IAM least privilege with
+roles not per-user grants, short-lived/workload credentials over static keys, rotation; API authN/
+authZ per section 3b incl. JWT alg/exp/aud/iss validation; secrets never in code/image/log/URL;
+supply chain — pinned lockfiles, CI scanning, vetted dependencies, never curl-pipe-sh unverified).
+The security-advisor agent uses this same raster so findings read identically wherever they came
+from.
+Also ships seo-optimization: SEO for any web-facing
 project/framework (HTML, GitHub Pages, static sites, Next.js, Astro, Hugo, Jekyll, VuePress,
 VitePress, React, Vue, Svelte, Angular) — meta tags, Open Graph/Twitter Cards, JSON-LD structured
 data, robots.txt/sitemap.xml, canonical URLs, Core Web Vitals, GitHub Pages specifics; ends with

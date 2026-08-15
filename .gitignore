@@ -14,8 +14,9 @@ __pycache__/
 *.pyc
 
 # aiflow self-hosting (agents/audits running in this repo)
-result.json
 .ralph/
+# legacy: leftovers from the pre-open-ralph-wiggum loop, nothing writes these any more
+result.json
 .aiflow/ralph.log
 .aiflow/runs/
 .aiflow/requirements-report.md

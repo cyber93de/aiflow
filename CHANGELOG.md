@@ -84,6 +84,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `.aiflow/`, `.claude/hooks/` and `.github/scripts/` against their `templates/` originals byte for
   byte, so content drift in aiflow's own self-hosted copies — a missing file, a hand-added one, or
   an edited one — fails the build too.
+- **Docs and `.gitignore` still described the pre-open-ralph-wiggum loop.** `aiflow ralph` has run
+  on [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum) for a while, which keeps its
+  iteration history in `.ralph/ralph-history.json` — but generated projects still ignored the
+  long-gone `result.json` and `.aiflow/ralph.log` while **not** ignoring `.ralph/`, so a project
+  could commit its Ralph history by accident. The troubleshooting entries in `README.md`/
+  `README.de.md` and the feature blurb in `docs/features.md` pointed at those same dead files.
 - **The caveman hook printed a garbled banner on Windows.** `.claude/hooks/caveman.ps1` carried an
   em-dash in a UTF-8 file with no BOM, which Windows PowerShell 5.1 reads as ANSI — the session
   banner came out as `CAVEMAN MODE ACTIVE ?" communicate…`. The template was already correct

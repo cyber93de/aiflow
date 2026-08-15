@@ -651,8 +651,9 @@ aiflow selbst braucht kein Upgrade-Tool — `upgrade` betrifft die **Dependencie
 
 - **MCP verbindet nicht:** Docker läuft? `GITHUB_TOKEN` in `.env` und über `aiflow shell` gestartet?
   Token-Scopes (repo, issues)?
-- **Ralph sofort BLOCKED:** `result.json` / `.aiflow/ralph.log` lesen — meist unklare AK oder
-  fehlender Zugang.
+- **Ralph sofort BLOCKED:** `.ralph/ralph-history.json` lesen (oder einen laufenden Loop mit
+  `ralph --status` aus einem zweiten Terminal beobachten) — meist unklare AK oder fehlender
+  Zugang.
 - **`bd`-Fehler / keine DB:** Beads braucht **dolt** — `aiflow install-deps` installiert es.
 - **Auto-Format/Lint tut nichts:** passenden Formatter installieren (AGENTS.md §3).
 - **pre-push blockt:** das ist das Branching-Modell; ordentlichen Branch/PR nutzen oder

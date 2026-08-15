@@ -66,7 +66,8 @@ security/quality/deps/test/perf/docs audits, and a real branching + release mode
 
 ### Autonomous when you want it
 The Ralph loop finishes a task unattended — locally, in a container, or in CI — and stops at
-`COMPLETE`/`BLOCKED`, writing `result.json`.
+`COMPLETE`/`BLOCKED`. It runs on [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum),
+which owns the iteration history in `.ralph/ralph-history.json`.
 
 ### Yours, not a hub
 Everything runs on your keys/tokens and your infrastructure; secrets never leave the project.

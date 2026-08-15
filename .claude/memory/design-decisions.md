@@ -43,8 +43,14 @@ Why things are the way they are. Change these only deliberately.
   `project-update`'s full mechanical block, and skipping the stamp makes interactive `aiflow`
   commands offer the `project-update` that the next sentence forbids. Do **not** run
   `aiflow project-update` in this repo — it would also overwrite this repo's own `AGENTS.md`,
-  `CLAUDE.md` and agent definitions with the template versions. `.aiflow/` is in the twin guard now,
-  so the `.ps1` half of this drift cannot come back silently.
+  `CLAUDE.md` and agent definitions with the template versions. Enforced since 2026-08-15 by
+  `.github/scripts/check-rendered.py` (same CI job as the twin guard): it compares every
+  `.aiflow/*.sh|ps1` byte for byte against `templates/.aiflow/`, so a missing file, a hand-added
+  one, or **content** drift all go red. Line-ending-only differences are ignored;
+  `config.json`/`branching.json` are project state and never compared. It covers `.claude/hooks/`
+  and `.github/scripts/` on the same rule (the two guards themselves are exempted — they are about
+  aiflow's own structure and never ship to a project). It cannot see the executable bit, which is
+  the other half of the refresh recipe — see aiflow-vgs.
 - **`.github/scripts/` is aiflow-owned, `.github/workflows/` is project-owned** (2026-08-15).
   `project-update` overwrites the shipped CI helpers mechanically but never rewrites a workflow —
   `ci.yml` ships as a starting point projects extend, so replacing it would eat their jobs. A helper

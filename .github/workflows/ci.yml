@@ -64,7 +64,7 @@ jobs:
             templates/.claude/agents templates/.claude/commands templates/.claude/skills
 
   twins:
-    name: Bash / PowerShell twin parity
+    name: Self-hosting drift (twins + rendered copies)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -72,10 +72,17 @@ jobs:
         with: { python-version: "3.12" }
       # Several lib/*.ps1 are full native implementations, not shims: a feature added to one
       # twin only ships broken on the other platform, silently. Nothing detected that before.
-      - name: Self-test the guard
+      - name: Self-test the twin guard
         run: python .github/scripts/check-twins.py --selftest
+      - name: Self-test the rendered-copy guard
+        run: python .github/scripts/check-rendered.py --selftest
       - name: Check twin pairing, dispatch and help parity
         run: python .github/scripts/check-twins.py .
+      # aiflow develops on itself: .aiflow/ here is a rendered copy of templates/.aiflow/.
+      # Pairing cannot see content drift — which is how a two-designs-old ralph-headless.sh
+      # survived in this repo (aiflow-30k).
+      - name: Check rendered copies against the templates
+        run: python .github/scripts/check-rendered.py .
 
   render:
     name: Render + project-update round-trip

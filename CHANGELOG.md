@@ -79,7 +79,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `templates/.claude/hooks/`, `templates/docker/`, `install.*`), that `bin/aiflow` and
   `bin/aiflow.ps1` dispatch the same subcommands, and that each entry point's **usage block**
   mentions every subcommand it dispatches. It found this bug on its first run. It does not compare
-  the *contents* of an existing pair — that is the remaining gap, tracked separately.
+  the *contents* of an existing pair — that is the remaining gap, tracked separately. A second
+  guard in the same job (`.github/scripts/check-rendered.py`) compares this repo's rendered
+  `.aiflow/`, `.claude/hooks/` and `.github/scripts/` against their `templates/` originals byte for
+  byte, so content drift in aiflow's own self-hosted copies — a missing file, a hand-added one, or
+  an edited one — fails the build too.
+- **The caveman hook printed a garbled banner on Windows.** `.claude/hooks/caveman.ps1` carried an
+  em-dash in a UTF-8 file with no BOM, which Windows PowerShell 5.1 reads as ANSI — the session
+  banner came out as `CAVEMAN MODE ACTIVE ?" communicate…`. The template was already correct
+  (plain ASCII); only aiflow's own rendered copy had drifted, which is exactly the class of bug the
+  new rendered-copy guard now catches.
 - **CI now runs the render test** it always claimed to: a `render` job inits a project, then puts it
   through a `project-update` round-trip (helper deleted + workflow step stripped → helper restored,
   `ci.yml` byte-identical, advisory printed, a project-owned CI script neither deleted nor advised

@@ -75,6 +75,9 @@ python3 .github/scripts/check-frontmatter.py \
 # Bash/PowerShell twin parity (pairing + `aiflow` subcommand dispatch + usage block)
 python3 .github/scripts/check-twins.py --selftest
 python3 .github/scripts/check-twins.py .
+# rendered copies (.aiflow/, .claude/hooks/, .github/scripts/) vs templates/ — content drift too
+python3 .github/scripts/check-rendered.py --selftest
+python3 .github/scripts/check-rendered.py .
 # all JSON templates/configs
 find . -name '*.json' -not -path './.git/*' -not -path './.beads/*' -exec jq empty {} +
 # advisory lint

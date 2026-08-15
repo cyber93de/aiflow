@@ -83,6 +83,15 @@ GitKraken is a client, not a host.
 - Ollama: local models, no key; `aiflow ollama add|pull|list`; qwen3-coder recommended. Selected
   models are written into `.aiflow/router-config.json` and used via `aiflow shell --router`.
 - More/cloud models via claude-code-router (~/.claude-code-router/config.json): DeepSeek, OpenRouter, Gemini.
+- Model tiers per activity (`modelRouting`, Claude Code only, on by default): `aiflow apply` stamps
+  a `model:` line into each subagent's frontmatter by the KIND of work. reasoning = opus (or fable):
+  architect, planner, reviewer, security-advisor, requirements-check, modernization-advisor,
+  orchestrator. implementation = sonnet: implementer, tester, quality-check, accessibility-checker.
+  mechanical = haiku: docs-sync, test-gap-advisor, dependency-auditor, performance-advisor,
+  onboarder. Override per tier via `modelRouting.tiers.<tier>` or per agent via
+  `modelRouting.agents.<name> = <tier>`; both survive `aiflow change-settings`.
+  `modelRouting.enabled:false` strips every `model:` line. Escalate a tier when a task turns out to
+  touch the architecture; never silently downgrade.
 
 ## Team collaboration
 Beads issues live in a shared Dolt database synced over `refs/dolt/data` on the git remote — one issue
@@ -137,6 +146,24 @@ CLI/Copilot CLI via `--agent`; interactive `/ralph-loop` is Claude Code-only; he
 `aiflow ralph` / CI works with any); if not specified, the implementer decides from its
 pre-analysis.
 
+## Architecture rules (AGENTS.md section 2, MANDATORY, every language)
+Layered architecture with an inward dependency direction: presentation/API -> application/service
+-> domain <- infrastructure. No layer skips; the domain imports nothing outward (no ORM
+annotations, HTTP types or vendor SDKs on entities); no cyclic dependencies. Embedded equivalent:
+application <-> service <-> HAL/driver, business logic never touches a register. Interfaces at
+every seam: the domain declares the port, infrastructure provides the adapter, wired by dependency
+injection, never `new`-ed in the caller. DAO/repository is the only place that talks to a data
+store (no SQL/ORM/file access elsewhere), one per aggregate. DTOs carry anything across a process
+boundary (REST/SOAP/queue/UI) and are mapped explicitly; domain objects never leave the domain —
+an entity annotated for both persistence and JSON is a review finding. Reuse before duplication;
+generics/type parameters to remove duplication, not to build speculative layers. Complexity is
+actively avoided: small single-purpose methods, guard clauses over nesting, no god classes.
+Section 2b holds the project's concrete decisions. Section 2c: rules must exist — if 2b is still a
+placeholder the architect establishes a set (its "Rule zero") into 2b AND an ADR; once recorded
+they change only via a superseding ADR; a task that does not fit is NOT implemented as-is — the
+agent stops before coding, asks in PO language with options + consequences, and the decision is
+recorded. The reviewer treats each rule as a BLOCKER, the implementer as an abort criterion.
+
 ## Quality, git, releases
 Google style for all languages; Conventional Commits; pre-commit/commit-msg/pre-push enforcement
 hooks. Quality gates on every implementation: static analysis (tool or agent-performed — no code
@@ -172,6 +199,12 @@ model/tool-set per thread. OpenAI Codex CLI gets optional CodexSaver
 (github.com/fendouai/CodexSaver, `codexsaver.enabled`) — an MCP server routing cheap/bounded work
 to a cheaper worker, needs a provider API key. Agent-agnostic: graph/RAG retrieval instead of
 reading whole files; cheap/local model routing. Measure with `aiflow cost` (ccusage).
+`/compact` is a rule, not a suggestion (AGENTS.md section 9): compact right after `aiflow init`
+(greenfield — the Q&A already wrote aim/stack/architecture into config + memory), right after the
+onboarder (brownfield — its findings are in `.claude/memory/`, AGENTS.md section 1/2 and arc42),
+after every closed bead, and before a long Ralph run or big refactor. Persist first (bead notes,
+memory file, ADR), then compact — compaction is not storage. Copilot/Codex: start a fresh thread at
+the same four points.
 
 ## Containers & CI/CD
 Headless container runs via `docker/run.sh` using Podman OR Docker (auto-detected; `AIFLOW_CONTAINER`
@@ -188,6 +221,7 @@ release [--yes] [--push] · protect · cost · doctor · upgrade · update · pr
 .aiflow/config.json fields: caveman{enabled,mode}, rtk{enabled}, ponytail{enabled,mode}, router{enabled}, graphify{enabled},
 taskmaster{enabled}, mcp{filesystem,context7,cocoindex}, memory{enabled,graph,intensity=off|light|
 normal|aggressive}, agents{claude,copilot,codex} (which agent-specific files get rendered),
+modelRouting{enabled,tiers{reasoning,implementation,mechanical},agents{<name>:<tier>}},
 claude{auth}, vcs{system=git|svn|none}, remote{type,baseUrl,api,tokenEnv,mcp},
 gitkraken{enabled}, codexsaver{enabled,provider,apiKeyEnv}, sync{askOnClose,pullOnStart}, ollama{enabled,url,models},
 teamPrefs{enabled,codeStyle}, project{aim,architecture}, dev{os,ide},

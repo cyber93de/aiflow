@@ -32,3 +32,7 @@ confirmed from what you inferred — never invent architecture.
 
 Rules: edit only memory, `AGENTS.md`, and `docs/`. Do NOT modify application code, tests, configs,
 or issues. End with a short summary of what was learned and which files you updated.
+
+Close the summary by telling the user to run **`/compact`** now: everything you learned is
+persisted in `.claude/memory/`, `AGENTS.md` and `docs/architecture/`, so the exploration transcript
+that produced it is pure context cost from here on (AGENTS.md §9).

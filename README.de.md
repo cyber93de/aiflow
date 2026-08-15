@@ -119,7 +119,8 @@ jeder Default, erstes Feature end-to-end).
 | **Remote-Host** | GitHub, GitHub Enterprise, GitLab, self-managed GitLab, Bitbucket, Forgejo, Gitea oder Custom-URL — **token-basiert** |
 | **Host-MCP** | Der passende Git-Host-MCP wird automatisch verdrahtet (je Remote-Typ) |
 | **Modelle** | Claude (API-Key *oder* OAuth) + optionale **Ollama**-Modelle, wählbar & auto-installiert |
-| **Model-Routing** | claude-code-router schickt leichte/Hintergrund-Arbeit an günstige/lokale Modelle |
+| **Model-Routing** | claude-code-router schickt leichte/Hintergrund-Arbeit an günstige/lokale Modelle; **Modell-Stufen je Tätigkeit** setzen Architektur/Planung/Review/Security auf Opus (oder Fable), Implementierung + Tests auf Sonnet, mechanische Scans auf Haiku |
+| **Architekturregeln** | Verbindlich, in jeder Sprache: Schichtenarchitektur mit Abhängigkeiten nach innen, Interfaces an jeder Schnittstelle, DAO- und DTO-Trennung, Domain-Objekte nie auf der Leitung, Wiederverwendung/Generics statt Duplikate. Passt eine Aufgabe nicht, wird **vor der Umsetzung nachgefragt** |
 | **Agenten** | 5 Delivery- + 9 Audit-/Checker- + 1 Brownfield-Spezialist-Subagenten |
 | **Autonomie** | Ralph-Schleife (interaktiv / headless / containerisiert / CI) |
 | **Qualität** | Google-Stil, Conventional Commits, Format-/Lint-/Test-Git-Hooks, Architekt+Quality-Gate-Review, statische Analyse bei jeder Änderung, objektive Metrik-Ziele (0 neue Smells/Duplikate, 0 Warnings), >80 % Coverage + BDD-E2E-Gates, Logging mit Leveln, `.http`-Dateien für REST-Endpunkte, DB-Regeln §3c (3NF+FKs für neue Schemata, Brownfield-Schemata mit Vorsicht) |

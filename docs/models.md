@@ -23,6 +23,38 @@ description: "Claude access (API key or OAuth), Ollama local models (qwen3-coder
 
 Both live in `.env` (gitignored, never global).
 
+## Model tiers per activity (subagent routing)
+
+Thinking-heavy work gets a strong model; mechanical work does not. `.aiflow/config.json →
+modelRouting` (default **on**) stamps the right model into each subagent's frontmatter whenever
+`aiflow apply` runs — Claude Code only, no external router involved.
+
+| Tier | Default model | Subagents | Why |
+|------|---------------|-----------|-----|
+| `reasoning` | **opus** (set `fable` if you prefer) | `architect`, `planner`, `reviewer`, `security-advisor`, `requirements-check`, `modernization-advisor`, `orchestrator` | Architecture, concepts, decomposition, review and security analysis are where a wrong call is expensive and long-lived. |
+| `implementation` | **sonnet** | `implementer`, `tester`, `quality-check`, `accessibility-checker` | Bounded work with explicit acceptance criteria to check against. |
+| `mechanical` | **haiku** | `docs-sync`, `test-gap-advisor`, `dependency-auditor`, `performance-advisor`, `onboarder` | Pattern-matching and enumeration — CI-grade checks, no design judgement. |
+
+Override the model per tier, or move a single agent to another tier:
+
+```jsonc
+{
+  "modelRouting": {
+    "enabled": true,
+    "tiers":  { "reasoning": "fable", "implementation": "sonnet", "mechanical": "haiku" },
+    "agents": { "implementer": "reasoning" }   // this one agent gets the reasoning model
+  }
+}
+```
+
+With `"enabled": false` every subagent runs on the session's model and the `model:` lines are
+stripped again. Toggle with `aiflow change-settings`; `tiers`/`agents` are hand-edited and survive
+that (they are carried over, not rebuilt).
+
+**Escalate, never silently downgrade:** if a "simple" task turns out to touch the architecture, it
+*is* architecture work — move it up a tier. Copilot and Codex have no subagents; pick the
+equivalent model manually and keep it stable within a thread.
+
 ## Ollama (local, no API key)
 
 Enable at `aiflow init`, or manage any time:

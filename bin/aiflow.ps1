@@ -94,6 +94,8 @@ switch ($cmd) {
   'test-gap'   { Import-DotEnv; & '.aiflow/run-agent.ps1' test-gap-advisor @rest }
   'perf-check' { Import-DotEnv; & '.aiflow/run-agent.ps1' performance-advisor @rest }
   'docs-check' { Import-DotEnv; & '.aiflow/run-agent.ps1' docs-sync @rest }
+  { $_ -in 'a11y-check','accessibility-check' } { Import-DotEnv; & '.aiflow/run-agent.ps1' accessibility-checker @rest }
+  { $_ -in 'modernize-check','modernization-check' } { Import-DotEnv; & '.aiflow/run-agent.ps1' modernization-advisor @rest }
   'onboard'    { Import-DotEnv; & '.aiflow/run-agent.ps1' onboarder @rest }
   'sync'       {
     $dir = if ($rest.Count -ge 1) { $rest[0] } else { 'both' }
@@ -135,6 +137,8 @@ USAGE
   aiflow test-gap          untested critical paths -> [test gap] Beads
   aiflow perf-check        performance audit -> [performance] Beads
   aiflow docs-check        doc/code drift -> [docs] Beads
+  aiflow a11y-check        strict WCAG accessibility audit -> [accessibility] Beads
+  aiflow modernize-check   brownfield modernisation concepts -> report for the architect
   aiflow onboard           learn an existing codebase into memory + AGENTS.md + arc42
   aiflow sync [pull|push|both]  team sync: git + Beads(dolt) pull/push (default pull at start)
   aiflow ollama [pull|add <m>|list]  manage local Ollama models (from config)

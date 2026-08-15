@@ -9,6 +9,10 @@ bin/aiflow.cmd
 .beads-credential-key
 .beads/proxieddb/
 
+# byte-cache from the CI helpers in .github/scripts/
+__pycache__/
+*.pyc
+
 # aiflow self-hosting (agents/audits running in this repo)
 result.json
 .aiflow/ralph.log

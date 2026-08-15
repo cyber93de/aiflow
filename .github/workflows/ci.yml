@@ -63,6 +63,20 @@ jobs:
             .claude/agents .claude/commands .claude/skills \
             templates/.claude/agents templates/.claude/commands templates/.claude/skills
 
+  twins:
+    name: Bash / PowerShell twin parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      # Several lib/*.ps1 are full native implementations, not shims: a feature added to one
+      # twin only ships broken on the other platform, silently. Nothing detected that before.
+      - name: Self-test the guard
+        run: python .github/scripts/check-twins.py --selftest
+      - name: Check twin pairing, dispatch and help parity
+        run: python .github/scripts/check-twins.py .
+
   render:
     name: Render + project-update round-trip
     runs-on: ubuntu-latest

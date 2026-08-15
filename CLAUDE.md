@@ -72,6 +72,9 @@ python3 .github/scripts/check-frontmatter.py --selftest   # the guard's own fixt
 python3 .github/scripts/check-frontmatter.py \
   .claude/agents .claude/commands .claude/skills \
   templates/.claude/agents templates/.claude/commands templates/.claude/skills
+# Bash/PowerShell twin parity (pairing + `aiflow` subcommand dispatch + usage block)
+python3 .github/scripts/check-twins.py --selftest
+python3 .github/scripts/check-twins.py .
 # all JSON templates/configs
 find . -name '*.json' -not -path './.git/*' -not -path './.beads/*' -exec jq empty {} +
 # advisory lint

@@ -25,7 +25,15 @@ Why things are the way they are. Change these only deliberately.
 - **Windows + POSIX parity is mandatory.** Add a subcommand to both `bin/aiflow` and `bin/aiflow.ps1`
   and keep help text + README EN/DE + docs consistent. Several `lib/*.ps1` are **full native
   implementations, not shims** (`project-update.ps1` among them) — changing the `.sh` alone ships a
-  feature that silently does not exist on Windows.
+  feature that silently does not exist on Windows. Enforced since 2026-08-15 by
+  `.github/scripts/check-twins.py` (CI job "twins"): pairing, `aiflow` subcommand dispatch parity
+  between `bin/aiflow` and `bin/aiflow.ps1`, and help-text coverage of every dispatched command.
+  It found `a11y-check` and `modernize-check` missing from the PowerShell entry point on its first
+  run — they had been printing the help text on Windows instead of running. **What it does not
+  cover:** divergence *inside* an existing pair (a step added to `lib/apply.sh` with no counterpart
+  in `lib/apply.ps1` stays invisible), and `.aiflow/` — that is rendered per-project output
+  refreshed from `templates/.aiflow/` (which is covered), not source. No allowlist for deliberate
+  single-platform scripts was needed; `TWIN_EXEMPT` exists but is deliberately empty.
 - **`.github/scripts/` is aiflow-owned, `.github/workflows/` is project-owned** (2026-08-15).
   `project-update` overwrites the shipped CI helpers mechanically but never rewrites a workflow —
   `ci.yml` ships as a starting point projects extend, so replacing it would eat their jobs. A helper

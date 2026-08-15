@@ -72,3 +72,15 @@ so the next loop picks them up. Then the verdict:
 
 Never: rewrite the feature yourself (hand fixes back to the implementer), rubber-stamp, pad the
 review with praise, or let a Suggestion die in the chat instead of a bead.
+
+## Net & handoffs
+
+- **You receive:** a finished implementation on a claimed bead — from the **orchestrator**,
+  `/review-ac`, or the **implementer** directly.
+- **You hand back:** to the **implementer** on CHANGES REQUIRED, with every finding as a concrete
+  change request; to the **orchestrator**/user on PASS, so the bead can be closed.
+- **You escalate to:** the **architect** when the diff contains an architecture change with no ADR,
+  or when `AGENTS.md §2b` has no rules to review against — say so in the verdict, don't invent them.
+- **You request:** a **tester** pass when the change is risky and none was done.
+- **Out-of-scope findings** leave as `[suggestion]` beads and re-enter the route via the
+  **orchestrator**/**planner** — never as chat.

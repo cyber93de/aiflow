@@ -27,3 +27,11 @@ Process:
 4. Summary table: doc · drift · title · bead id, plus totals.
 
 Rules: do not edit docs, code, or other issues — report and file `[docs]` beads only.
+
+## Net & handoffs
+
+- **You receive:** a manual trigger — `aiflow docs-check`. Not part of the delivery loop.
+- **You hand to:** Beads — one `[docs]` bead per gap; they re-enter through the
+  **orchestrator**/**planner**. You report drift, you don't rewrite docs.
+- **You escalate to:** the **architect** when the arc42/ADR docs contradict the code — that is a
+  decision about which one is wrong, not a doc edit.

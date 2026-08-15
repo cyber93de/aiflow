@@ -27,7 +27,7 @@ description: "aiflow features: multi-agent support (Claude Code, GitHub Copilot,
 | **Host MCP** | The matching git-host MCP is wired automatically per remote type |
 | **Models** | Claude (API key *or* OAuth) + optional **Ollama** local models, selectable & auto-installed |
 | **Model routing** | claude-code-router sends easy/background work to cheap/local models; separately, `modelRouting.enabled` routes 5 audit-only subagents to Haiku 4.5 |
-| **Agents** | 5 delivery + 9 audit/checker + 1 brownfield specialist subagents |
+| **Agents** | 1 orchestrator + 5 delivery + 9 audit/checker + 1 brownfield specialist subagents, wired into one documented network |
 | **Skills** | Auto-offered: seo-optimization, **ponytail** (YAGNI decision ladder, off by default), memory-setup |
 | **Autonomy** | Ralph loop (interactive / headless / containerised / CI) |
 | **Quality** | Google style, conventional commits, format/lint/test git hooks, architect+quality-gate review, static analysis on every change, objective metric targets (0 new smells/duplicates, 0 warnings), >80 % coverage + BDD E2E gates, leveled logging, `.http` files for REST endpoints, DB rules §3c (3NF+FKs for new schemas, brownfield schemas handled with care) |

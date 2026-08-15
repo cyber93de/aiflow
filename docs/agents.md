@@ -35,7 +35,62 @@ instead of silently building them, and deliberately consider the data/performanc
 (in-memory stores like **Redis**/**SQLite**, or **Elasticsearch** as a search/caching layer that
 decouples the database from the application).
 
+## The network
+
+`/orchestrate` is the entry point for anything that isn't a single obvious edit. The
+**orchestrator** owns the route; every step is executed by exactly one specialist, and every
+handover goes **through the bead** (`bd update <id> --notes "route: …"`) — a route that only lives
+in the conversation dies at the next `/compact`.
+
+```
+              user / VCS issue / goal
+                        │
+                  [orchestrator] ◄──────────────────────────┐
+                        │  (routes, never implements)       │
+        ┌───────────────┼───────────────┐                   │
+        ▼               ▼               ▼                   │
+   [onboarder]     [planner]      [architect]                │
+   codebase map   beads + AC +    ADR + arc42                │
+        │         agent per bead   (Rule zero: §2b)          │
+        └──────────────►│◄──────────────┘                   │
+                        ▼                                    │
+                 [implementer] ──► [tester] (risky changes)   │
+                        │               │                     │
+                        ▼◄──────────────┘                     │
+                   [reviewer] ── PASS ──► close bead ─────────┘
+                        └── CHANGES REQUIRED ──► implementer
+
+  manual, outside the loop — file beads that re-enter at the top:
+  security-advisor · quality-check · dependency-auditor · test-gap-advisor
+  performance-advisor · docs-sync · accessibility-checker · requirements-check
+  modernization-advisor (report only → architect)
+```
+
+| Agent | Receives from | Hands to |
+|-------|---------------|----------|
+| **orchestrator** | user, `/orchestrate` | planner · architect · onboarder · implementer · tester · reviewer |
+| **planner** | orchestrator, `/plan-epic`, `/decompose`, `/intake-issue` | orchestrator — a handoff block: ready beads, agent per bead, order, open decisions |
+| **architect** | orchestrator, planner, implementer, reviewer, `/arch`, modernization report | orchestrator — ADR + arc42 + a bead list for the planner |
+| **onboarder** | orchestrator, `aiflow init` (brownfield), `/onboard` | architect (the actual structure) + everyone, via memory/arc42 |
+| **implementer** | orchestrator, `/implement` | reviewer (always); tester first when risky; back to architect/planner/user when blocked |
+| **tester** | orchestrator, implementer, reviewer | reviewer; bugs back to the implementer |
+| **reviewer** | orchestrator, implementer, `/review-ac` | PASS → close · CHANGES REQUIRED → implementer · `[suggestion]` beads |
+| **audit agents** | manual trigger only | Beads (prefixed), which re-enter via orchestrator/planner |
+
+Every agent file repeats its own edges in a **"Net & handoffs"** section, so an agent started
+standalone still knows where its output belongs. Without Claude Code the route is identical, just
+manual: plan → architecture fit → implement → test if risky → review → close.
+
 ## Delivery agents (do the work)
+
+### orchestrator
+Entry point and dispatcher. Turns a goal, epic, or bead into a route: planner for beads and AC,
+architect when the change crosses module/layer boundaries (or when `AGENTS.md §2b` still has no
+rules), implementer for delivery, tester when the pre-analysis flags risk, reviewer always. One
+specialist at a time — two agents on one bead overwrite each other's edits. Writes each routing
+step into the bead, escalates PO-level decisions to the user, and turns discovered work into beads
+(`--deps discovered-from:`). Never writes code, tests, docs, or ADRs. Runs on the reasoning model
+tier. Invoke with `/orchestrate <goal | bead-id>`.
 
 ### architect
 Designs structure and protects it over time. Produces **ADRs**, arc42 updates, and a bead breakdown —
@@ -117,7 +172,8 @@ so the product owner can triage (except the two report-only agents).
 
 **Slash-commands** — explicitly triggered inside Claude Code (`.claude/commands/`):
 
-- **Delivery:** `/intake-issue <n>`, `/decompose <goal|prd>`, `/plan-epic`,
+- **Delivery:** `/orchestrate <goal|bead>` (the entry point — routes everything below),
+  `/intake-issue <n>`, `/decompose <goal|prd>`, `/plan-epic`,
   `/implement [bead] [ralph|no-ralph]`, `/review-ac`, `/arch "<question>"`.
 - **Audits:** `/security-check`, `/quality-check`, `/requirements-check`, `/dependency-check`,
   `/test-gap`, `/perf-check`, `/docs-check`, `/a11y-check`, `/modernize-check`.

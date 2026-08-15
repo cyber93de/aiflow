@@ -8,6 +8,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **The agent roster is now a network, with an orchestrator.** There was no entry point: agents
+  knew the rules but not each other, so routing lived in the user's head. New **orchestrator**
+  agent + `/orchestrate <goal|bead>` decides which specialist handles each step, dispatches exactly
+  one at a time, evaluates the result and routes on — planner → architect (when boundaries are
+  crossed, or §2b has no rules) → implementer → tester (risky changes) → reviewer → close. It never
+  writes code, and every handover is written **into the bead** (`bd update <id> --notes "route: …"`)
+  so it survives a `/compact`. The **planner** now ends with a `HANDOFF -> orchestrator` block
+  (ready beads, recommended agent per bead, order, open decisions), and **every** agent file gained
+  a "Net & handoffs" section naming who it receives from and hands to. `AGENTS.md` §5 and
+  `docs/agents.md` carry the network diagram and the edge table. The audit agents stay explicitly
+  outside the delivery loop: they only file beads, which re-enter the route at the top.
+- **`.aiflow/roster-drift.sh`** + a `roster-drift` CI job — this repo self-hosts its roster, and
+  `.claude/` had silently fallen behind `templates/.claude/` (the `ponytail` and `memory-setup`
+  skills and `/ponytail-review` were missing here for a whole release). The check compares all
+  three directories, ignoring the generated `model:` frontmatter line; `--fix` copies the templates
+  over.
 - **ponytail** — a YAGNI decision-ladder skill (`.claude/skills/ponytail/`, Claude Code) applied
   before writing new code/dependencies/abstractions, plus `/ponytail-review` to audit a diff for
   over-engineering. Off by default; toggle with `ponytail.enabled`/`.mode`
@@ -20,6 +36,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   extracting rules that must apply reliably on every task into a Claude-Code-only, pattern-matched
   skill would risk them silently not firing, especially for Codex/Copilot which have no skill
   auto-offer mechanism at all.
+
+### Fixed
+- **The Ralph loop's guard prompt only mentioned Beads in passing**, so an unattended run could
+  iterate without ever claiming, updating, or closing a bead — and since each iteration starts
+  fresh, that meant repeating work. The guard now spells out the protocol: claim (or create +
+  claim) on the first iteration, `bd show` + `bd update --notes "iteration N: …"` on every
+  iteration, `--deps discovered-from:` for anything found on the way, and `bd close --reason` only
+  when the AC are demonstrably met. It also points at `AGENTS.md §2`: a task that doesn't fit the
+  architecture is recorded as a blocker instead of built.
+- **`aiflow ralph` picked a different agent in Bash than in PowerShell** when a project had no
+  `.aiflow/config.json` (or no `jq`): the PowerShell twin defaulted to `claude-code`, the Bash one
+  passed no `--agent` at all and let ralph choose. Both default to `claude-code` now.
+- **`/implement` said "set it in-progress"** instead of claiming atomically — two agents could grab
+  the same bead. It now uses `bd update <id> --claim` (or `bd ready --claim --json`) and closes
+  with `bd close <id> --reason`, with discovered work filed as its own bead.
+- `/arch` stated it produces a bead list without saying who creates the beads (the planner does,
+  not the architect); `/ponytail-review` and the `accessibility-checker` described filing findings
+  without the actual `bd create` call. All three are explicit now.
 
 ## [0.5.1] — 2026-07-29
 

@@ -280,7 +280,8 @@ Ziel: **passe sie an die Bedürfnisse deines Projekts an** (Markdown editieren: 
 
 **Slash-Commands** — auslösbar in Claude Code (`.claude/commands/`):
 
-- **Lieferung:** `/intake-issue <n>` (GitHub/GitLab/Bitbucket-Issue → Beads), `/decompose <ziel|prd>`
+- **Lieferung:** `/orchestrate <ziel|bead>` (Einstiegspunkt — der Orchestrator routet alle Schritte darunter),
+  `/intake-issue <n>` (GitHub/GitLab/Bitbucket-Issue → Beads), `/decompose <ziel|prd>`
   (claude-task-master → Beads), `/plan-epic`, `/implement [bead] [ralph|no-ralph]`, `/review-ac`, `/arch "<frage>"`.
 - **Audits:** `/security-check`, `/quality-check`, `/requirements-check`, `/dependency-check`,
   `/test-gap`, `/perf-check`, `/docs-check`, `/a11y-check`, `/modernize-check`.

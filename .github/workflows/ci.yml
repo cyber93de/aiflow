@@ -45,6 +45,17 @@ jobs:
           done < <(find . -path ./.git -prune -o -name '*.json' -print)
           exit $fail
 
+  roster-drift:
+    name: .claude roster matches templates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # This repo self-hosts aiflow: .claude/{agents,commands,skills} must mirror
+      # templates/.claude/*. Drift means we ship a roster we don't run ourselves
+      # (CLAUDE.md "keep them in sync when templates change").
+      - name: Compare rosters
+        run: bash .aiflow/roster-drift.sh
+
   powershell:
     name: PowerShell parse
     runs-on: windows-latest

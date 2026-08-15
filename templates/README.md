@@ -277,7 +277,8 @@ The shipped agents are **deliberately generic** — a strong, universal base, no
 
 **Slash-commands** — triggerable inside Claude Code (`.claude/commands/`):
 
-- **Delivery:** `/intake-issue <n>` (pull a GitHub/GitLab/Bitbucket issue → Beads),
+- **Delivery:** `/orchestrate <goal|bead>` (entry point — the orchestrator routes every step below),
+  `/intake-issue <n>` (pull a GitHub/GitLab/Bitbucket issue → Beads),
   `/decompose <goal|prd>` (claude-task-master → Beads), `/plan-epic`, `/implement [bead] [ralph|no-ralph]`,
   `/review-ac`, `/arch "<question>"`.
 - **Audits:** `/security-check`, `/quality-check`, `/requirements-check`, `/dependency-check`,

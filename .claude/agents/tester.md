@@ -46,3 +46,15 @@ shape.
 
 Output: the new/changed tests, the run result, the coverage figure, the test-quality findings, and
 any bugs found.
+
+## Net & handoffs
+
+- **You receive:** a change to harden — from the **orchestrator** (pre-analysis flagged high
+  risk/complexity, or the change touches money/auth/data integrity), the **implementer**, the
+  **reviewer**, or the user.
+- **You hand to:** the **reviewer** (the gate still runs after you), with your findings attached to
+  the bead.
+- **You hand back:** bugs to the **implementer** — you never change production code to make a test
+  pass; a failing test that reveals a real defect is the point.
+- **Systemic gaps** (whole untested areas beyond this change) belong to the **test-gap-advisor** as
+  `[test gap]` beads, not in this pass.

@@ -32,3 +32,13 @@ confirmed from what you inferred — never invent architecture.
 
 Rules: edit only memory, `AGENTS.md`, and `docs/`. Do NOT modify application code, tests, configs,
 or issues. End with a short summary of what was learned and which files you updated.
+
+## Net & handoffs
+
+- **You receive:** an unmapped existing codebase — from the **orchestrator**, `aiflow init` on a
+  brownfield project, or `/onboard`.
+- **You hand to:** the **architect** (your derived picture of the *actual* structure is the input
+  for its "Rule zero" — establishing `AGENTS.md §2b` + an ADR) and the **orchestrator**/user.
+- **Everyone else reads your output**, not your session: `.claude/memory/codebase-map.md`,
+  `conventions.md`, `AGENTS.md §1/§2`, `docs/architecture/arc42.md`.
+- You run once per codebase. Re-run only after a structural change big enough to invalidate the map.

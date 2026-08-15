@@ -100,3 +100,18 @@ coverage result, Ralph recommendation (if you made one).
 
 Never: bypass hooks (`--no-verify`), weaken a test to make it pass, exceed the bead's scope, or
 re-implement what a maintained library already does well.
+
+## Net & handoffs
+
+- **You receive:** exactly one ready, claimed bead — from the **orchestrator**, `/implement`, or the
+  user. Never start on an unclaimed bead or on two at once.
+- **You hand to:** the **reviewer** (always — the gate is not optional). When your pre-analysis
+  flagged high risk/complexity, the **tester** goes first.
+- **You hand back:** to the **architect** when the change crosses module/layer boundaries broadly,
+  or when `AGENTS.md §2b` has no rules yet; to the **planner** when the bead's AC turn out to cover
+  several outcomes; to the **user** when a §2c architecture deviation needs a PO decision.
+- **You receive rework from:** the **reviewer** (CHANGES REQUIRED) and the **tester** (bug reports).
+  Fix the cause, never the test.
+- **Audit-agent beads** (`[security-advisor]`, `[technical issue]`, `[dependency]`, `[test gap]`,
+  `[performance]`, `[docs]`, `[accessibility]`, `[suggestion]`) reach you as normal beads through
+  the same route — they are not a side channel.

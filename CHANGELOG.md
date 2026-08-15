@@ -7,6 +7,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **New projects landed on `master` instead of `main`.** `aiflow init` called `git init` without
+  `--initial-branch=main`, so on git < 2.28 (or without a user-set `init.defaultBranch`) the
+  mainline was `master` — while the entire branching governance (`branching.json`, the `pre-push`
+  hook, `aiflow release`, `aiflow hotfix`) references `main` by name and therefore never applied.
+  `init.sh`/`init.ps1` now force `main` (with a `symbolic-ref` fallback for old git), and
+  `aiflow apply` renames an existing `master` → `main`, printing the remote-migration commands.
+  If both branches exist it refuses to touch either. Opt out with `AIFLOW_NO_BRANCH_RENAME=1`.
+  The generated `ci.yml` triggers on `[main, develop]` instead of `[main, master]`.
+
 ### Added
 - **ponytail** — a YAGNI decision-ladder skill (`.claude/skills/ponytail/`, Claude Code) applied
   before writing new code/dependencies/abstractions, plus `/ponytail-review` to audit a diff for

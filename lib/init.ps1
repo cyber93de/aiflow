@@ -287,8 +287,15 @@ if (-not (Test-Path '.env')) {
 switch ($VCS_SYS) {
   'git' {
     if (-not $NoGit -and -not (Test-Path '.git')) {
-      & git init -q
-      if ($LASTEXITCODE -eq 0) { Write-Output "  git initialised" }
+      # --initial-branch=main is mandatory: the branching governance hard-codes 'main'.
+      # Without it, git < 2.28 or an unset init.defaultBranch silently yields 'master'
+      # and nothing enforces anything (aiflow-33g). Old git -> symbolic-ref fallback.
+      & git init -q --initial-branch=main 2>$null
+      if ($LASTEXITCODE -ne 0) {
+        & git init -q
+        if ($LASTEXITCODE -eq 0) { & git symbolic-ref HEAD refs/heads/main }
+      }
+      if ($LASTEXITCODE -eq 0) { Write-Output "  git initialised (branch main)" }
     }
   }
   'svn' {

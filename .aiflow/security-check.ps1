@@ -1,17 +1,16 @@
-#!/usr/bin/env bash
 # Headless full-project security audit. Files Beads issues per finding.
-# Usage: aiflow security-check    (or: bash .aiflow/security-check.sh)
-set -uo pipefail
+# Usage: aiflow security-check    (or: powershell -File .aiflow/security-check.ps1)
+$ErrorActionPreference = 'Stop'
 
-command -v claude >/dev/null 2>&1 || { echo "ERROR: 'claude' CLI not found" >&2; exit 3; }
-if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-  echo "note: no token in env; relying on stored Claude login." >&2
-fi
-command -v bd >/dev/null 2>&1 || echo "note: 'bd' not found - findings can't be filed as Beads issues." >&2
+if (-not (Get-Command claude -ErrorAction SilentlyContinue)) { Write-Error "ERROR: 'claude' CLI not found"; exit 3 }
+if (-not $env:CLAUDE_CODE_OAUTH_TOKEN -and -not $env:ANTHROPIC_API_KEY) {
+  Write-Output "note: no token in env; relying on stored Claude login."
+}
+if (-not (Get-Command bd -ErrorAction SilentlyContinue)) { Write-Output "note: 'bd' not found - findings can't be filed as Beads issues." }
 
-MODE="${RALPH_PERMISSION_MODE:-acceptEdits}"
+$mode = if ($env:RALPH_PERMISSION_MODE) { $env:RALPH_PERMISSION_MODE } else { "acceptEdits" }
 
-read -r -d '' PROMPT <<'EOF' || true
+$prompt = @'
 Act as the security-advisor agent (see .claude/agents/security-advisor.md). Perform a full-project
 security audit of THIS repository (the whole codebase, not just the diff), using the Anthropic
 security-review methodology.
@@ -29,8 +28,8 @@ For every vulnerability you can justify:
 Do NOT modify any project code. Only read code and create Beads issues.
 Finish with a summary table (severity | location | title | bead id) and totals per severity.
 If you find nothing, say so explicitly.
-EOF
+'@
 
-echo ">> security-advisor: scanning whole project..."
-claude -p "$PROMPT" --permission-mode "$MODE"
-echo ">> security-check done. Review new beads: bd list | grep '\[security-advisor\]'"
+Write-Output ">> security-advisor: scanning whole project..."
+& claude -p $prompt --permission-mode $mode
+Write-Output ">> security-check done. Review new beads: bd list | grep '\[security-advisor\]'"

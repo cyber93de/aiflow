@@ -31,9 +31,20 @@ Why things are the way they are. Change these only deliberately.
   It found `a11y-check` and `modernize-check` missing from the PowerShell entry point on its first
   run — they had been printing the help text on Windows instead of running. **What it does not
   cover:** divergence *inside* an existing pair (a step added to `lib/apply.sh` with no counterpart
-  in `lib/apply.ps1` stays invisible), and `.aiflow/` — that is rendered per-project output
-  refreshed from `templates/.aiflow/` (which is covered), not source. No allowlist for deliberate
-  single-platform scripts was needed; `TWIN_EXEMPT` exists but is deliberately empty.
+  in `lib/apply.ps1` stays invisible). No allowlist for deliberate single-platform scripts was
+  needed; `TWIN_EXEMPT` exists but is deliberately empty.
+- **This repo's `.aiflow/` is refreshed from `templates/.aiflow/`, never hand-edited** (2026-08-15).
+  It had drifted far behind: six missing `.ps1` halves, both `protect` twins absent, and a
+  `ralph-headless.sh` still on the pre-open-ralph-wiggum design — so `aiflow protect` was broken on
+  both platforms here and every audit command was broken on Windows. Refresh it by copying
+  `templates/.aiflow/*.sh` + `*.ps1`, then `git update-index --chmod=+x .aiflow/*.sh` (`core.filemode`
+  is false here, so a local `chmod` is not recorded and `bin/aiflow`'s `[ -x … ]` gates fail on a
+  fresh clone) and re-stamp `.meta.aiflowVersion` in `.aiflow/config.json` from `VERSION` — that is
+  `project-update`'s full mechanical block, and skipping the stamp makes interactive `aiflow`
+  commands offer the `project-update` that the next sentence forbids. Do **not** run
+  `aiflow project-update` in this repo — it would also overwrite this repo's own `AGENTS.md`,
+  `CLAUDE.md` and agent definitions with the template versions. `.aiflow/` is in the twin guard now,
+  so the `.ps1` half of this drift cannot come back silently.
 - **`.github/scripts/` is aiflow-owned, `.github/workflows/` is project-owned** (2026-08-15).
   `project-update` overwrites the shipped CI helpers mechanically but never rewrites a workflow —
   `ci.yml` ships as a starting point projects extend, so replacing it would eat their jobs. A helper

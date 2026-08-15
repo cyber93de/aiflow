@@ -75,7 +75,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   from `bin/aiflow.ps1`'s dispatch *and* from its help text, so they fell through to the default
   branch and printed usage instead of running the audit. Fixed, and guarded from here on by a new
   `twins` CI job (`.github/scripts/check-twins.py`): it checks that every twinned script has both
-  a `.sh` and a `.ps1` half (`lib/`, `.claude/hooks/`, `templates/.aiflow/`,
+  a `.sh` and a `.ps1` half (`lib/`, `.aiflow/`, `.claude/hooks/`, `templates/.aiflow/`,
   `templates/.claude/hooks/`, `templates/docker/`, `install.*`), that `bin/aiflow` and
   `bin/aiflow.ps1` dispatch the same subcommands, and that each entry point's **usage block**
   mentions every subcommand it dispatches. It found this bug on its first run. It does not compare

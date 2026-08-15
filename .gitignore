@@ -15,6 +15,7 @@ __pycache__/
 
 # aiflow self-hosting (agents/audits running in this repo)
 result.json
+.ralph/
 .aiflow/ralph.log
 .aiflow/runs/
 .aiflow/requirements-report.md

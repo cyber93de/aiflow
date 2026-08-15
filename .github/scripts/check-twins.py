@@ -26,11 +26,15 @@ import sys
 import tempfile
 
 # Directories whose *.sh must have a *.ps1 next to them, and vice versa.
-# `.aiflow/` is deliberately absent: in a generated project it is rendered output that
-# `aiflow project-update` refreshes from `templates/.aiflow/` (which IS covered), not
-# source. This repo's own `.aiflow/` is stale and missing halves — tracked separately.
+# `.aiflow/` is this repo's own rendered copy of `templates/.aiflow/`. It is checked too:
+# it had drifted six `.ps1` halves and both `protect` twins behind the templates, which
+# silently broke `aiflow protect` here and every audit command on Windows (aiflow-30k).
+# Pairing only sees a missing half. The third defect in that drift, a stale
+# `ralph-headless.sh`, was content divergence against the template — see aiflow-aal; the
+# sibling case, divergence between the two halves of one pair, is aiflow-0fc.
 TWIN_DIRS = [
     "lib",
+    ".aiflow",
     ".claude/hooks",
     "templates/.aiflow",
     "templates/.claude/hooks",

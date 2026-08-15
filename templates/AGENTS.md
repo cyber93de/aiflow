@@ -406,6 +406,14 @@ as a manual checklist (Codex reaches it via this file's pointer; Copilot: see th
 `.claude/skills/`; the **description is the trigger**, so write it as "invoke when …" plus the
 words that should match.
 
+**Frontmatter must be valid YAML — nothing warns you if it isn't.** An agent whose frontmatter
+fails to parse is **silently dropped** from the roster; a command or skill silently falls back to
+its body text as the description, so it stops matching the trigger words you wrote. The usual
+cause is an unquoted `description:` containing `": "` — YAML reads that as a nested mapping key.
+Quote any description containing a colon (`description: "… two hats: architect …"`, single quotes
+if the text itself contains double quotes). CI enforces this
+(`.github/scripts/check-frontmatter.py`).
+
 ---
 
 ## 6. Ralph loop (autonomous iteration — agent-agnostic)

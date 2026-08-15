@@ -11,6 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Agent roster guard: malformed frontmatter silently drops an agent from
+      # Claude Code's roster (and a skill/command back to its body text).
+      - name: Python (frontmatter guard)
+        if: hashFiles('.claude/agents/**/*.md', '.claude/commands/**/*.md', '.claude/skills/**/SKILL.md') != ''
+        uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      - name: Agent / command / skill frontmatter
+        if: hashFiles('.claude/agents/**/*.md', '.claude/commands/**/*.md', '.claude/skills/**/SKILL.md') != ''
+        run: |
+          python -m pip install --quiet pyyaml
+          python .github/scripts/check-frontmatter.py --selftest
+          python .github/scripts/check-frontmatter.py \
+            .claude/agents .claude/commands .claude/skills
+
       # Auto-detect stack and run style + tests. Extend per project.
       - name: Node
         if: hashFiles('package.json') != ''

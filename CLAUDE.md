@@ -66,6 +66,12 @@ No build step — aiflow is Bash + PowerShell + templates. Validate like CI does
 # syntax: every shell script + the CLI entry point
 find . -name '*.sh' -not -path './.git/*' -not -path './.beads/*' -exec bash -n {} +
 bash -n bin/aiflow
+# agent/command/skill frontmatter (a bad block silently drops an agent from the roster)
+# needs PyYAML: python3 -m pip install pyyaml
+python3 .github/scripts/check-frontmatter.py --selftest   # the guard's own fixtures
+python3 .github/scripts/check-frontmatter.py \
+  .claude/agents .claude/commands .claude/skills \
+  templates/.claude/agents templates/.claude/commands templates/.claude/skills
 # all JSON templates/configs
 find . -name '*.json' -not -path './.git/*' -not -path './.beads/*' -exec jq empty {} +
 # advisory lint
@@ -97,6 +103,15 @@ AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no
   rules incl. quality gates §3a/§3b/§3c; `CLAUDE.md` there is a one-line `@AGENTS.md` import),
   `.github/copilot-instructions.md`, `.claude/agents|commands|hooks`, `.aiflow/*.sh` helpers, git
   hooks, CI workflows, docker. **Template changes are the product** — most features land here.
+- **`.github/scripts/check-frontmatter.py`** — the agent-roster guard, twinned into
+  `templates/.github/scripts/` so generated projects get it too. **Decision (2026-08-15):** it uses
+  Python + PyYAML rather than a grep heuristic or `jq`/`yq`, because the failure it catches *is* a
+  YAML parse failure — only a real parser reproduces exactly what Claude Code accepts, and a
+  heuristic would both miss cases and red-build valid files. Cost: `python3` + `pip install pyyaml`
+  in this repo's CI **and** in every generated project's CI, regardless of that project's stack
+  (both workflows pin it via `actions/setup-python`). The script is self-contained and self-testing
+  (`--selftest` runs inline fixtures: nested command, `---` inside a quoted description, missing
+  description, unquoted colon).
 - **`release-workflows/`** — per-host release-publish CI (github/gitlab/gitea/forgejo/bitbucket),
   deliberately kept **outside** `templates/` (which is blindly copied into every project) so
   `apply.sh` can copy only the one matching the chosen `remote.type`.

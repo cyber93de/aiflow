@@ -397,7 +397,12 @@ Endpunkt baut, und der Reviewer, der ihn prüft, lesen dieselbe Liste. Vollstän
   Ollama-Routing. AGENTS.md §8 behält nur Schalter + Essenzielles; der Rest steht hier.
 
 Eigene Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen — siehe die mitgelieferten für
-das erwartete Frontmatter (`name`, `description`) und die Struktur.
+das erwartete Frontmatter (`name`, `description`) und die Struktur. **Eine `description` mit
+Doppelpunkt muss in Anführungszeichen** — `description: zwei Hüte: Architekt …` ist ungültiges
+YAML, und nichts warnt davor: Skill oder Command fallen still auf ihren Fließtext als Beschreibung
+zurück (treffen also die selbst geschriebenen Trigger-Wörter nicht mehr), ein Agent verschwindet
+komplett aus dem Roster. Die generierte CI prüft das mit
+`.github/scripts/check-frontmatter.py` über alle Agents, Commands und Skills.
 
 ---
 

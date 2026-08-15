@@ -46,6 +46,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   skill would risk them silently not firing, especially for Codex/Copilot which have no skill
   auto-offer mechanism at all.
 
+### Fixed
+- **The `reviewer` subagent never appeared in Claude Code's agent roster**, so `/review-ac` had no
+  agent to dispatch and the §4.6 review gate only worked through the inline fallback in the
+  command. Cause: its frontmatter `description` was an unquoted YAML scalar containing `": "`
+  (*"one agent, two hats: software architect …"*), which YAML reads as a nested mapping key — the
+  block failed to parse and the agent was **silently dropped**. Nothing is logged for this. The
+  same bug hit the `/review-ac` command and the `seo-optimization` skill, which degrade more
+  quietly still: they fall back to their body text as the description, so the trigger wording an
+  author wrote is simply not the wording that gets matched. All descriptions are now quoted.
+- **New CI job guarding that whole failure class** — `.github/scripts/check-frontmatter.py`
+  parses the frontmatter of every agent, command, and skill file (this repo *and* `templates/`,
+  recursing into namespaced command subdirectories) and fails the build on an unparseable block
+  or a missing `description` (plus `name` for agents and skills — commands derive theirs from the
+  filename). It carries its own fixtures (`--selftest`, run in CI before
+  the real check). Generated projects get the same script and a matching `ci.yml` step, so a
+  broken agent definition surfaces as a red build instead of an agent that quietly stops
+  existing. Needs `python3` + PyYAML in CI — pinned via `actions/setup-python` in both workflows.
+
 ## [0.5.1] — 2026-07-29
 
 ### Fixed

@@ -81,5 +81,12 @@ Drop a `<name>/SKILL.md` into `.claude/skills/` with YAML frontmatter (`name`, `
 match, not as a title. Keep the body a checklist an agent can act on; if it reads like an essay it
 will not change any behaviour.
 
+**Quote a description that contains a colon.** `description: … two hats: architect …` is invalid
+YAML (the `": "` reads as a nested mapping key) and nothing warns you: a skill or command silently
+falls back to its body text as the description — so it stops matching the trigger words you wrote
+— and an **agent** with a broken frontmatter block is dropped from the roster entirely. Wrap the
+value in double quotes, or single quotes if the text itself contains double quotes. The generated
+CI runs `.github/scripts/check-frontmatter.py` over every agent, command, and skill to catch it.
+
 For projects that use `aiflow project-update`, skills are refreshed from the templates like agents
 and commands — a customised file is backed up to `<file>.bak` first, never overwritten silently.

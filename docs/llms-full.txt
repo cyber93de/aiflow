@@ -124,7 +124,11 @@ knowledge several roles need (a checklist, the trade-offs of a technology) and l
 .claude/skills/*/SKILL.md. Both may exist for one topic — the same-named agent then uses the skill
 instead of restating it. Rules that must fire on EVERY task (section 2 architecture rules, sections
 3a/3b/3c quality gates) stay inline in AGENTS.md, because a skill is offered by pattern match and
-Copilot/Codex get no auto-offer at all.
+Copilot/Codex get no auto-offer at all. Frontmatter must be valid YAML and nothing warns you if it
+isn't: an agent with an unparseable block is silently dropped from the roster, a command/skill
+falls back to its body text as the description and stops matching its trigger words. Usual cause is
+an unquoted `description:` containing a colon+space — quote it. The generated CI enforces this via
+.github/scripts/check-frontmatter.py (needs python3 + PyYAML).
 Technology-stack skills: stack-embedded (C/C++ firmware — HAL/driver separation, no allocation
 after init, ISR discipline, watchdog, deterministic timing, cross-toolchain in WSL on Windows, host
 unit tests against a mocked HAL); stack-mobile (Flutter/Dart, Kotlin/Android, Swift/iOS —

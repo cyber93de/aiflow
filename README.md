@@ -391,7 +391,11 @@ read the same list. Full catalogue: [Skills](https://cyber93de.github.io/aiflow/
   routing. AGENTS.md §8 keeps the short toggle + essentials; this skill has the rest.
 
 Add your own by dropping a new `<name>/SKILL.md` into `.claude/skills/` — see the shipped ones for
-the expected frontmatter (`name`, `description`) and structure.
+the expected frontmatter (`name`, `description`) and structure. **Quote a `description` that
+contains a colon** — `description: two hats: architect …` is invalid YAML, and nothing warns you:
+a skill or command silently falls back to its body text (so it stops matching the trigger words
+you wrote), and an agent is dropped from the roster entirely. The generated CI runs
+`.github/scripts/check-frontmatter.py` over every agent, command, and skill to catch it.
 
 ---
 

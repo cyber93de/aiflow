@@ -88,9 +88,13 @@ Why things are the way they are. Change these only deliberately.
   before a **direct** call (`"$f" --flag`), where the bit is exactly what is needed. Enforced by
   `.github/scripts/check-exec-gates.py` (CI job "shell"): within one file, an `-x` predicate whose
   operand is also passed to `bash`/`sh`/`pwsh`/`python3`/`node`/… is an error. shellcheck has no
-  rule for this and the class survived aiflow-e0o and its review unnoticed. **Not** covered:
-  a gate and its call in *different* files — resolving paths through variables across files would
-  trade the guard's zero false positives for guesswork. `EXEC_GATE_EXEMPT` exists and is empty.
+  rule for this and the class survived aiflow-e0o and its review unnoticed. **Not** covered, and
+  settled as permanent (2026-08-16, aiflow-cuw): a gate and its call in *different* files. Every
+  gate this class has actually produced sat two lines from its call; matching across files means
+  resolving `$AIFLOW_DIR`-style paths through variables between scripts, which trades the guard's
+  zero false positives for guesswork — and a guard that cries wolf gets ignored, taking the real
+  findings with it. Do not reopen without a concrete cross-file instance to point at.
+  `EXEC_GATE_EXEMPT` exists and is empty.
   Repo-only like the twin/rendered guards: the shell a generated project runs is aiflow's own and
   is already checked here, so shipping it would buy a Python CI step per project and nothing else.
 - **One usage convention for `.aiflow/*`: the `aiflow` subcommand is the entry point**

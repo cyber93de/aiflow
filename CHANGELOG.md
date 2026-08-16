@@ -19,6 +19,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
   `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`
   (advisory, like shellcheck).
+- **Non-ASCII paths no longer slip past the hooks.** Every place that reads a git path list now
+  sets `core.quotePath=false` — the bead-id scan in `pre-commit` and the conflict check in
+  `release.sh`/`release.ps1`, matching what the formatter and roster guard already did. Without
+  it git renders `über.md` as `"Ã¼ber.md"`, and the leading quote makes every pattern
+  match miss. Verified with an actual `über.md`: it is now formatted, checked, and rejected when
+  broken.
 - **`pre-commit` now judges the staged content, not your working tree.** A file you staged and
   then broke locally used to commit green, and a fix you staged could be blocked by the mess
   still in the worktree. Formatting now skips any file with unstaged changes (formatting plus

@@ -93,7 +93,8 @@ if git show-ref --verify --quiet refs/heads/develop; then
     ok=true
     git merge --no-ff --no-commit -q "$MERGE_REF" >/dev/null 2>&1 || ok=false
     if [ "$ok" = false ]; then
-      conflicted="$(git diff --name-only --diff-filter=U)"
+      # quotePath=false: a non-ASCII conflicted path would arrive escaped and quoted (aiflow-4cl)
+      conflicted="$(git -c core.quotePath=false diff --name-only --diff-filter=U)"
       if [ "$conflicted" = "VERSION" ]; then
         git checkout --ours VERSION >/dev/null 2>&1
         git add VERSION

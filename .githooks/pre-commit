@@ -57,7 +57,7 @@ lib="templates/.githooks/lib-bead-ids.sh"
 # shellcheck source=/dev/null
 if [ -f "$lib" ]; then
   . "$lib"
-  git diff --cached -U0 | grep '^+' | warn_unknown_bead_ids "staged changes"
+  git -c core.quotePath=false diff --cached -U0 | grep '^+' | warn_unknown_bead_ids "staged changes"
 fi
 
 # These three need no third-party module, so a failure here is a real finding. They run against

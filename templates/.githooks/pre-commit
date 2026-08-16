@@ -91,7 +91,9 @@ lib="$(dirname "$0")/lib-bead-ids.sh"
 # shellcheck source=/dev/null
 if [ -f "$lib" ]; then
   . "$lib"
-  git diff --cached -U0 | grep '^+' | warn_unknown_bead_ids "staged changes"
+  # quotePath=false like every other path-reading call here: a non-ASCII path would otherwise
+  # arrive as "Ã¼ber" and drag its escaping into the scanned text (aiflow-4cl).
+  git -c core.quotePath=false diff --cached -U0 | grep '^+' | warn_unknown_bead_ids "staged changes"
 fi
 
 # 4) Lint + tests by detected stack (best-effort; fails the commit on error).

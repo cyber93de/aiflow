@@ -94,6 +94,16 @@ Why things are the way they are. Change these only deliberately.
   trade the guard's zero false positives for guesswork. `EXEC_GATE_EXEMPT` exists and is empty.
   Repo-only like the twin/rendered guards: the shell a generated project runs is aiflow's own and
   is already checked here, so shipping it would buy a Python CI step per project and nothing else.
+- **`model: haiku` on five agent files here is RENDERED, not a hand edit** (2026-08-16, aiflow-jxe).
+  `.claude/agents/{docs-sync,test-gap-advisor,dependency-auditor,performance-advisor,onboarder}.md`
+  carry a `model: haiku` line that `templates/.claude/agents/*` deliberately do not: `apply.sh`
+  (and `apply.ps1`) stamp it into exactly those five when `modelRouting.enabled` is true — the
+  default — and strip it again when it is false. The templates must stay clean, or a project that
+  turns routing off would still ship the line until its first `apply`. Two consequences worth
+  remembering: a mirror guard over `.claude/agents` vs `templates/.claude/agents` (aiflow-5o3)
+  cannot compare bytes — it has to know the stamped line or exempt these five; and
+  `project-update` compares *before* it re-applies, so in this repo it would move all five to
+  `.bak` and then re-stamp the replacements — one more reason not to run it here.
 - **This repo runs its own git hooks, from `.githooks/`** (2026-08-16, aiflow-n3p). `core.hooksPath`
   pointed at `.beads/hooks`, which carries only the beads integration — so aiflow's own
   Conventional-Commits check and branching guard never ran here. `.githooks/` now holds three hooks

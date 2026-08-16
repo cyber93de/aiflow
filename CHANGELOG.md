@@ -40,8 +40,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   **blocks the commit** on invalid frontmatter — the same failure that used to cost a push, a red
   build and a round trip. It needs `python3`/`python` with PyYAML: without them the hook prints a
   note and continues, so a missing toolchain never blocks a commit and CI stays the backstop.
-  Applies to newly generated projects; existing ones keep their current hook (`aiflow
-  project-update` deliberately does not overwrite `.githooks/`, which is yours to tune).
+  Reaches existing projects too, via the `.githooks/` refresh described under *Changed* — a hook
+  you customised is kept as `<file>.bak` rather than silently replaced.
 - **Nine new Skills**, so the delivery agents stop working generically on a stack they were never
   told about. Technology: **stack-embedded** (C/C++ firmware — HAL/driver separation, no allocation
   after init, ISR discipline, watchdog, host tests against a mocked HAL), **stack-mobile**
@@ -150,6 +150,33 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   on) and runs the frontmatter guard inside the generated project. A `render-windows` job does the
   same round-trip through `project-update.ps1`, so a feature added to a `.sh` twin only can no
   longer ship broken on Windows.
+
+## [0.6.0] — 2026-07-31
+
+### Added
+- **Model routing for audit-only subagents** — `modelRouting.enabled` (on by default, toggle via
+  `aiflow change-settings`) stamps `model: haiku` into the frontmatter of the five subagents that
+  only do mechanical background checks (**docs-sync**, **test-gap-advisor**, **dependency-auditor**,
+  **performance-advisor**, **onboarder**), so they run on Haiku 4.5 instead of the session's main
+  model. Every other subagent keeps the session default — they need real reasoning. Turning the
+  toggle off strips the line again.
+- **ponytail** — a YAGNI decision-ladder skill (off by default, `ponytail.enabled`/`.mode`): before
+  new code, dependencies or abstractions, it checks whether the thing needs to exist at all, is
+  already in the codebase, is stdlib, a native platform feature, an installed dependency, or a
+  one-liner — and only then writes the minimum viable new code. `/ponytail-review` audits a diff
+  for over-engineering regardless of the toggle. Inspired by
+  [dietrichgebert/ponytail](https://github.com/dietrichgebert/ponytail), reimplemented rather than
+  vendored, the same way as caveman.
+- **memory-setup skill** — `AGENTS.md`'s Memory section shrank to a short toggle plus essentials;
+  the full context-routing stack, team preferences and Ollama routing detail moved into an
+  auto-offered skill. The REST/database rules and the Ralph-loop decision stay inline in
+  `AGENTS.md`: skills are Claude-Code-only and pattern-matched, so a rule that must fire on every
+  task cannot live in one.
+
+### Fixed
+- `Set-ModelRoutingLine` passed a raw relative path to `[System.IO.File]`, which resolves against
+  the process working directory rather than PowerShell's — so the model-routing stamp was written
+  to (or read from) the wrong file on Windows.
 
 ## [0.5.1] — 2026-07-29
 

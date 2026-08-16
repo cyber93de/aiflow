@@ -8,6 +8,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- **The frontmatter guard now enforces the documented length limits** — `name` ≤ 64 characters,
+  `description` ≤ 1024 — on agents, commands and skills alike, with the limits covered by its
+  self-test (at the limit passes, one over fails). The `seo-optimization` skill's description was
+  1323 characters; it has been tightened to fit while keeping every trigger word.
 - **`aiflow project-update` now refreshes `.githooks/*` too**, under the same `*.bak` rule as the
   agent definitions. They were excluded before, which meant a shipped hook improvement (the
   frontmatter guard in `pre-commit`, for one) only ever reached projects generated *after* it —

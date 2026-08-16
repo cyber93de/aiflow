@@ -34,6 +34,12 @@ REQUIRED = {
 # so a skill's reference docs (which carry no frontmatter) are not false-flagged.
 PATTERNS = {"agents": "*.md", "commands": "*.md", "skills": "SKILL.md"}
 
+# Anthropic documents these limits for skill frontmatter. They are enforced for agents and
+# commands too: the fields serve the same purpose everywhere, and an over-long description is
+# the same silent degradation this guard exists for — it loads today and may be truncated
+# tomorrow, taking the trigger words at the end with it.
+MAX_LEN = {"name": 64, "description": 1024}
+
 # A frontmatter block is fenced by a line that is exactly "---". Splitting on the
 # bare string would also cut a valid description that happens to contain "---".
 FENCE = re.compile(r"\A---[ \t]*\r?\n(.*?)(?:\r?\n)?---[ \t]*(?:\r?\n|\Z)", re.S)
@@ -76,6 +82,12 @@ def check(path: pathlib.Path) -> list[str]:
         value = data.get(key)
         if not isinstance(value, str) or not value.strip():
             problems.append(f"missing or empty '{key}'")
+    # Length is checked on whatever is present, not only on required keys: a command carrying
+    # an over-long `name` is just as truncatable as an agent's.
+    for key, limit in MAX_LEN.items():
+        value = data.get(key)
+        if isinstance(value, str) and len(value) > limit:
+            problems.append(f"'{key}' is {len(value)} characters, limit is {limit}")
     return problems
 
 
@@ -106,6 +118,13 @@ SELFTEST_FIXTURES = [
     ("agents/unterminated.md", "---\nname: u\ndescription: never closed\n", True),
     ("agents/scalar.md", "---\njust a string\n---\nbody\n", True),
     ("agents/empty.md", "---\n---\nbody\n", True),
+    # length limits: at the limit is fine, one over is not — for both fields
+    ("skills/atlimit/SKILL.md",
+     f"---\nname: {'n' * 64}\ndescription: {'d' * 1024}\n---\nbody\n", False),
+    ("skills/longname/SKILL.md",
+     f"---\nname: {'n' * 65}\ndescription: fine\n---\nbody\n", True),
+    ("agents/longdesc.md",
+     f"---\nname: longdesc\ndescription: {'d' * 1025}\n---\nbody\n", True),
 ]
 
 

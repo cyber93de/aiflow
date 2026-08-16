@@ -19,6 +19,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
   `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`
   (advisory, like shellcheck).
+- **The router example ships current model ids.** `router-config.example.json` still listed
+  `claude-opus-4-8`/`claude-sonnet-4-6` and `qwen2.5-coder:7b`; it now names Opus 5, Sonnet 5,
+  Haiku 4.5 and `qwen3-coder`, in both the provider lists and the `Router` routes. Since the
+  previous entry it reaches existing projects too.
 - **Generated projects now check their own `.aiflow/*.sh` exec bits in CI.** `aiflow init`
   renders them 100755 and `bd-close-sync.sh` documents a direct call, but `core.filemode=false`
   on Windows drops the bit from the index without a word — and a colleague on Linux then cannot

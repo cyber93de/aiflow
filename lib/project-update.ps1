@@ -2,17 +2,33 @@
 # templates, then re-apply config.
 #
 # Refreshed (mechanical, always safe to overwrite): .aiflow/*.sh+ps1, .claude/hooks/*.sh+ps1,
-# docker/run.sh+ps1.
-# Refreshed (agent definitions - see backup rule below): AGENTS.md, CLAUDE.md,
+# docker/run.sh+ps1, .github/scripts/* (aiflow's CI helpers - not meant to be edited).
+# Refreshed (agent definitions + git hooks - see backup rule below): AGENTS.md, CLAUDE.md,
 # .github/copilot-instructions.md, .claude/agents/*.md, .claude/commands/*.md,
-# .claude/skills/*/SKILL.md.
+# .claude/skills/*/SKILL.md, .githooks/*, .aiflow/router-config.example.json.
 # Backup rule: if a refreshed agent-definition file already differs from the incoming template
 # (i.e. you customised it, or it's genuinely changed upstream), the OLD file is renamed to
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
 # diff/reapply your customisations. Identical files are overwritten silently (nothing lost).
+# Never deleted: project-update only copies. A helper aiflow drops or renames stays in the
+# project; it is REPORTED at the end of the run (for .aiflow/ and .claude/hooks/, which are
+# aiflow-owned) and left in place, because the same file may be one you added yourself.
 # NEVER touched: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map, ...),
-# and .aiflow/config.json's own content (only meta.aiflowVersion is stamped at the end) - your
-# project aim, task history, and learned memory always survive a project-update.
+# .github/workflows/* (yours to extend - see below), and .aiflow/config.json's own content (only
+# meta.aiflowVersion is stamped at the end) - your project aim, task history, and learned memory
+# always survive a project-update.
+#
+# Why scripts but not workflows: the helpers aiflow ships into .github/scripts/ are mechanical and
+# not meant to be edited, so they are simply overwritten. .github/workflows/ci.yml ships as a
+# starting point that projects are expected to extend with their own jobs - overwriting it (or
+# even backing it up and replacing it) would throw that away on every update. So a workflow step
+# that needs a new helper is ADVISED at the very end of this run, never written. The one-way
+# coupling is deliberate: the script is always present, so a project that adopts the step never
+# hits a missing file; a project that ignores the advice just carries an unused script.
+# Caveat: unlike .aiflow/ or .claude/hooks/, .github/scripts/ is a conventional shared directory,
+# not an aiflow-owned namespace. A project file whose NAME collides with a shipped helper is
+# overwritten without a .bak - so keep your own CI scripts under a name aiflow does not ship
+# (today: check-frontmatter.py), or in a directory of your own.
 $ErrorActionPreference = 'Stop'
 
 $AIFLOW_HOME = if ($env:AIFLOW_HOME) { $env:AIFLOW_HOME } else { Split-Path -Parent $PSScriptRoot }
@@ -56,11 +72,17 @@ if (Test-Path $hooksSrc) {
     ForEach-Object { Copy-Item -Path $_.FullName -Destination (Join-Path '.claude/hooks' $_.Name) -Force }
 }
 Copy-Twins (Join-Path $TPL 'docker') 'docker' @('run.sh', 'run.ps1')
+$ciScriptsSrc = Join-Path $TPL '.github/scripts'
+if (Test-Path $ciScriptsSrc) {
+  New-Item -ItemType Directory -Force -Path '.github/scripts' | Out-Null
+  # copy the CONTENTS, so a subdirectory is merged rather than nested one level deeper per run
+  Copy-Item -Path (Join-Path $ciScriptsSrc '*') -Destination '.github/scripts' -Recurse -Force
+}
 # no chmod +x equivalent needed on Windows - the exec bit is a POSIX concept.
 Write-Output "   scripts refreshed"
 
 # ---- agent definitions: back up before overwrite if the existing file was customised ----
-Write-Output ">> refreshing agent definitions (customised files are kept as *.bak)..."
+Write-Output ">> refreshing agent definitions + git hooks (customised files are kept as *.bak)..."
 $script:added = @()
 $script:backedUp = @()
 
@@ -111,6 +133,20 @@ if (Test-Path $skillsSrc) {
     }
   }
 }
+# The router example is a reference file a project copies to ~/.claude-code-router/config.json,
+# so a stale one is worth refreshing - but it is also the obvious place to keep a tweaked sample,
+# hence the .bak rule rather than the mechanical block above (aiflow-ver).
+Update-WithBackup (Join-Path $TPL '.aiflow/router-config.example.json') '.aiflow/router-config.example.json'
+
+# Git hooks are enforcement policy a project tunes - but they are also how a shipped check
+# reaches an existing project at all (aiflow-1l4's frontmatter guard reached only NEW projects
+# while these were excluded). So they follow the .bak rule like the agent definitions.
+$gitHooksSrc = Join-Path $TPL '.githooks'
+if (Test-Path $gitHooksSrc) {
+  Get-ChildItem -Path $gitHooksSrc -File -ErrorAction SilentlyContinue | ForEach-Object {
+    Update-WithBackup $_.FullName (Join-Path '.githooks' $_.Name)
+  }
+}
 
 if ($script:added.Count -gt 0) {
   Write-Output ("   new: " + ($script:added -join " "))
@@ -123,7 +159,7 @@ if ($script:backedUp.Count -gt 0) {
   foreach ($f in $script:backedUp) { Write-Output "        $f  (backup: $f.bak)" }
   Write-Output ""
 } else {
-  Write-Output "   agent definitions were already up to date - nothing backed up."
+  Write-Output "   agent definitions + git hooks were already up to date - nothing backed up."
 }
 
 & (Join-Path $AIFLOW_HOME 'lib/apply.ps1')
@@ -138,3 +174,43 @@ Set-JsonProperty $cfgObj.meta "aiflowVersion" $newVer
 Write-JsonFile $CFG $cfgObj
 Write-Output ">> project-update done. Stamped .aiflow/config.json meta.aiflowVersion=$newVer"
 Write-Output "   Untouched, as always: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map)."
+
+# ---- CI advice: helpers WE ship that no workflow of yours references (never rewrite a workflow) ----
+# Iterates the TEMPLATE's helpers, not the project's: only aiflow-shipped scripts have a matching
+# step to point at. -SimpleMatch so a filename is matched literally, not as a regex.
+if ((Test-Path '.github/workflows') -and (Test-Path $ciScriptsSrc)) {
+  $wfMissing = @()
+  foreach ($h in (Get-ChildItem -Path $ciScriptsSrc -ErrorAction SilentlyContinue)) {
+    $hit = Get-ChildItem -Path '.github/workflows' -File -Recurse -ErrorAction SilentlyContinue |
+      Select-String -SimpleMatch -Pattern $h.Name -List -ErrorAction SilentlyContinue
+    if (-not $hit) { $wfMissing += $h.Name }
+  }
+  if ($wfMissing.Count -gt 0) {
+    Write-Output ""
+    Write-Output "   note: .github/workflows/ is yours - project-update never rewrites it. These aiflow CI"
+    Write-Output "   helpers are now present, but no workflow under .github/workflows/ references them:"
+    foreach ($b in $wfMissing) { Write-Output "        .github/scripts/$b" }
+    Write-Output ("   Copy the matching step from " + (Join-Path $TPL '.github/workflows/ci.yml') + " to enforce it.")
+  }
+}
+
+# ---- orphan advice: scripts in YOUR aiflow-owned directories that the templates no longer ship ----
+# project-update copies, it never deletes - so a helper aiflow renamed or dropped would sit in the
+# project forever, unmentioned (aiflow-400). Reported, never touched: the file may equally well be
+# one you added. .github/scripts/ is deliberately NOT scanned - it is a conventional shared
+# directory, so a project's own CI script there is normal and flagging it would be pure noise.
+$orphans = @()
+foreach ($d in @('.aiflow', '.claude/hooks')) {
+  if (-not (Test-Path $d)) { continue }
+  Get-ChildItem -Path $d -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Extension -eq '.sh' -or $_.Extension -eq '.ps1' } |
+    ForEach-Object {
+      if (-not (Test-Path (Join-Path (Join-Path $TPL $d) $_.Name))) { $orphans += "$d/$($_.Name)" }
+    }
+}
+if ($orphans.Count -gt 0) {
+  Write-Output ""
+  Write-Output "   note: these are in your project but aiflow no longer ships them - a helper removed"
+  Write-Output "   upstream, or one of your own. Nothing was deleted; remove them yourself if unused:"
+  foreach ($f in $orphans) { Write-Output "        $f" }
+}

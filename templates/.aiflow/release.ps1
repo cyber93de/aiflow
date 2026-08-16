@@ -92,7 +92,8 @@ if ($LASTEXITCODE -eq 0) {
       git merge --no-ff --no-commit -q $mergeRef *> $null
       if ($LASTEXITCODE -ne 0) { $ok = $false }
       if (-not $ok) {
-        $conflicted = (git diff --name-only --diff-filter=U) -join "`n"
+        # quotePath=false: a non-ASCII conflicted path would arrive escaped and quoted (aiflow-4cl)
+        $conflicted = (git -c core.quotePath=false diff --name-only --diff-filter=U) -join "`n"
         if ($conflicted -eq "VERSION") {
           git checkout --ours VERSION
           git add VERSION

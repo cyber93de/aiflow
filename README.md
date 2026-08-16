@@ -356,7 +356,25 @@ Beads and the Ralph loop also ship plugin commands (`/beads:ready`, `/beads:deci
 
 **Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`, Claude Code matches the skill's
 `description` against what you're doing and offers to run it (confirm before it acts on anything
-non-trivial):
+non-trivial). An **agent** is a role (who acts, with what authority, in what order); a **skill** is
+knowledge several roles need — the implementer writing an endpoint and the reviewer checking it
+read the same list. Full catalogue: [Skills](https://cyber93de.github.io/aiflow/skills).
+- **Technology stacks** — **stack-embedded** (C/C++ firmware: HAL separation, no allocation after
+  init, ISR discipline, host tests against a mocked HAL), **stack-mobile** (Flutter/Dart, Kotlin/
+  Android, Swift/iOS: layering, state management, process death, offline/sync, Keystore/Keychain),
+  **stack-web-frontend** (Angular/React/Vue: feature slices, server vs client state, XSS and token
+  handling, Core Web Vitals, i18n, a11y), **stack-backend** (Spring/Quarkus/Jakarta, .NET, Rust,
+  Node, Go, Python: hexagonal layering with ports, transaction boundaries, resilience,
+  observability, FOSS-first).
+- **Integration & data** — **api-design** (REST versioning/idempotency/`problem+json`/OpenAPI/
+  `.http`, when SOAP is legitimate and how to migrate off it, GraphQL/gRPC trade-offs),
+  **messaging-events** (Kafka/RabbitMQ/NATS, idempotent consumers, transactional outbox, ordering,
+  DLQs, sagas), **data-storage** (SQL default, when NoSQL is justified, embedded DBs, Redis with
+  real cache invalidation, Elasticsearch as a derived read layer), **cloud-native** (container
+  images, K8s probes/limits/rollout/secrets, EC2, modular monolith vs microservices).
+- **security** — OWASP Top 10 as a review raster + ASVS levels, IAM least privilege (roles,
+  short-lived credentials, rotation), API authN/authZ, secrets, crypto, supply chain. The
+  security-advisor uses the same raster.
 - **seo-optimization** — SEO for any web-facing project (HTML, GitHub Pages, static sites, docs
   sites, landing pages, blogs, Next.js, Astro, Hugo, Jekyll, VuePress, VitePress, React, Vue,
   Svelte, Angular, …): meta tags, Open Graph/Twitter Cards, JSON-LD structured data, robots.txt/
@@ -373,7 +391,13 @@ non-trivial):
   routing. AGENTS.md §8 keeps the short toggle + essentials; this skill has the rest.
 
 Add your own by dropping a new `<name>/SKILL.md` into `.claude/skills/` — see the shipped ones for
-the expected frontmatter (`name`, `description`) and structure.
+the expected frontmatter (`name`, `description`) and structure. **Quote a `description` that
+contains a colon** — `description: two hats: architect …` is invalid YAML, and nothing warns you:
+a skill or command silently falls back to its body text (so it stops matching the trigger words
+you wrote), and an agent is dropped from the roster entirely. The generated project's `pre-commit`
+hook runs `.github/scripts/check-frontmatter.py` over every agent, command, and skill as soon as
+you stage one, and CI runs it again on every push. The hook needs `python3`/`python` + PyYAML;
+without them it says so and skips, so CI stays the backstop.
 
 ---
 
@@ -436,6 +460,11 @@ one issue graph for the whole team, no extra server.
   teammates' issue changes instead of clobbering them. On conflict: `bd dolt pull` (merge), resolve,
   push. Never force-push.
 - **Status is the coordination signal.** Keep it current; stale status = duplicate work.
+- **Queue mode: a closed task is not a finished session.** After every close the agent refreshes the
+  queue and starts the next task — `aiflow next` ranks it (priority → unblocks-most → continuation of
+  the bead just closed). It stops only for a real reason: nothing actionable, everything blocked, you
+  said stop, or a decision only you can make. A `Stop` hook hands the next task back once if the
+  agent forgets; disable with `.aiflow/config.json → beads.queueMode = false` or `AIFLOW_QUEUE_MODE=off`.
 - **Discovered work → a new bead** (`--deps discovered-from:<id>`); **decisions → `/beads:decision`**
   (recorded with rationale) so the whole team sees the *why*.
 - **Shared preferences** (code style, language) live in a committed `.aiflow/team-prefs.json` — the
@@ -600,6 +629,7 @@ aiflow change-settings [--no-token-saving]   re-adjust config, then re-render ev
 aiflow shell [--router]            load .env then launch Claude Code (--router = cheap/local models)
 aiflow sync [pull|push|both]       team sync: git + Beads(dolt) pull/push
 aiflow close-sync <id>             on issue close: prompt to push + Dolt-sync the remote
+aiflow next [--after <id>] [--claim] [--json]  next ready Beads task, ranked (queue mode)
 aiflow ollama [pull|add <m>|list]  manage local Ollama models
 aiflow index                       refresh code memory: graphify (graph) + cocoindex (RAG)
 aiflow ralph "<prompt|bead id>"    run the headless Ralph loop
@@ -613,7 +643,9 @@ aiflow cost [...]                  token/cost baseline via ccusage
 aiflow doctor                      check prerequisites + project summary
 aiflow upgrade                     update the bundled toolchain
 aiflow update                      self-update aiflow (git pull, or GitHub-release download if not a git checkout)
-aiflow project-update               refresh THIS project (scripts + agent defs; customised files -> *.bak)
+aiflow project-update               refresh THIS project (scripts incl. .github/scripts + agent defs
+                                    + .githooks;
+                                    customised files -> *.bak; .github/workflows never rewritten)
 aiflow version
 ```
 
@@ -669,11 +701,12 @@ your-project/
 │  ├─ team-prefs.json        # shared team preferences (committed)
 │  ├─ router-config.json     # generated: Ollama/cost providers (gitignored)
 │  ├─ bd-close-sync.sh       # close → prompt push + Dolt-sync
+│  ├─ next-task.sh           # next ready bead, ranked (queue mode)
 │  └─ *.sh                   # audit/release/ralph helpers
 ├─ .beads/                   # Beads issue database (Dolt)
 ├─ .claude/
 │  ├─ agents/  commands/     # subagents + slash commands
-│  ├─ hooks/                 # caveman, formatter, beads-sync (SessionStart)
+│  ├─ hooks/                 # caveman, formatter, beads-sync (SessionStart), queue-continue (Stop)
 │  ├─ memory/                # project-aim, dev-environment, memory-policy
 │  └─ settings.json          # permissions + hooks + MCP allow-list
 ├─ .githooks/                # commit-msg, pre-commit, pre-push (enforcement)

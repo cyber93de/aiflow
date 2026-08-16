@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# aiflow's OWN pre-commit hook (this repo, not a template copy — see .githooks/README.md).
+#
+# Deliberately NOT a delegation to templates/.githooks/pre-commit like the other two: that hook
+# formats staged files in place (prettier/shfmt/black), which is right for a project aiflow
+# generates and wrong for the repo that *ships* those files — a stray reformat of `templates/**`
+# would land in every future project. So this runs only checks, never rewrites.
+#
+# Bypass (discouraged): AIFLOW_SKIP_VERIFY=1 git commit ...
+set -uo pipefail
+[ "${AIFLOW_SKIP_VERIFY:-}" = "1" ] && exit 0
+have() { command -v "$1" >/dev/null 2>&1; }
+fail() { echo "✗ pre-commit: $1" >&2; exit 1; }
+
+[ -f .beads/hooks/pre-commit ] && { sh .beads/hooks/pre-commit "$@" || exit $?; }
+
+# quotePath=false: git otherwise renders a non-ASCII path as "\303\274ber", whose leading quote
+# defeats every match below.
+staged="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACM)"
+
+# 1) shell syntax on staged scripts — the cheapest half of what CI runs.
+# Reads the STAGED blob (`git show :path`), not the worktree file (aiflow-5n9): a fix you staged
+# must pass even while the worktree still holds the broken version, and vice versa.
+while IFS= read -r f; do
+  case "$f" in
+    # `.githooks/*.*` first: the directory also holds a README, and `bash -n` on markdown fails
+    # loudly and pointlessly (it did, on this hook's own first commit).
+    .githooks/*.*) : ;;
+    *.sh|bin/aiflow|.githooks/*)
+      git show ":$f" | bash -n - || fail "bash -n failed for $f (staged version)" ;;
+  esac
+done <<< "$staged"
+
+# 2) the guards, on the trees they own. --selftest first: it proves interpreter, PyYAML and the
+# guard's own logic in one run, so a missing toolchain degrades to a note instead of a false block.
+py=""
+for c in python3 python; do have "$c" && { py="$c"; break; }; done
+if [ -z "$py" ]; then
+  echo "  note: skipping the python guards - no python3/python on PATH" >&2
+  exit 0
+fi
+
+if grep -q '^\(templates/\)\?\.claude/\(agents\|commands\|skills\)/' <<< "$staged"; then
+  if "$py" .github/scripts/check-frontmatter.py --selftest >/dev/null 2>&1; then
+    "$py" .github/scripts/check-frontmatter.py \
+      .claude/agents .claude/commands .claude/skills \
+      templates/.claude/agents templates/.claude/commands templates/.claude/skills \
+      || fail "invalid frontmatter in the agent/command/skill roster (errors above)"
+  else
+    echo "  note: skipping the frontmatter guard - needs PyYAML (pip install pyyaml)" >&2
+  fi
+fi
+
+# Bead ids in the ADDED lines — the shipped helper, so it is exercised here too (this repo has
+# put invented ids into a memory file and a pushed commit message before, aiflow-672). Warns only.
+lib="templates/.githooks/lib-bead-ids.sh"
+# shellcheck source=/dev/null
+if [ -f "$lib" ]; then
+  . "$lib"
+  git -c core.quotePath=false diff --cached -U0 | grep '^+' | warn_unknown_bead_ids "staged changes"
+fi
+
+# These three need no third-party module, so a failure here is a real finding. They run against
+# the WORKTREE on purpose: unlike the per-file checks above they judge the repo's structure
+# (pairing, mirrors, banners) across trees, and materialising the whole index to check that would
+# cost more than it catches.
+"$py" .github/scripts/check-exec-gates.py . || fail "an [ -x ] gate guards an interpreted call"
+"$py" .github/scripts/check-twins.py . || fail "Bash/PowerShell twin drift"
+"$py" .github/scripts/check-rendered.py . || fail "a rendered copy drifted from templates/"
+
+echo "• pre-commit OK"
+exit 0

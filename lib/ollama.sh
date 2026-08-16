@@ -47,8 +47,11 @@ case "$cmd" in
     bash "$(dirname "${BASH_SOURCE[0]}")/apply.sh" >/dev/null 2>&1 || true
     ;;
   pull)
-    mapfile -t MODELS < <(models_from_cfg)
-    [ "${#MODELS[@]}" -eq 0 ] && { echo "  no ollama models in $CFG (add with: aiflow ollama add <model>)"; exit 0; }
+    # `mapfile` is bash 4+; macOS ships bash 3.2, and an empty array under `set -u` aborts
+    # there too - read into the array by hand and guard with the portable `+` form.
+    MODELS=()
+    while IFS= read -r line; do MODELS+=("$line"); done < <(models_from_cfg)
+    [ -n "${MODELS[*]+x}" ] || { echo "  no ollama models in $CFG (add with: aiflow ollama add <model>)"; exit 0; }
     ensure_ollama || exit 0
     for m in "${MODELS[@]}"; do
       [ -z "$m" ] && continue

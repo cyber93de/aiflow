@@ -18,11 +18,14 @@ your-project/
 │  ├─ team-prefs.json        # shared team preferences (committed)
 │  ├─ router-config.json     # generated: Ollama/cost providers (gitignored)
 │  ├─ bd-close-sync.sh       # close → prompt push + Dolt-sync
+│  ├─ next-task.sh           # next ready bead, ranked (aiflow next — queue mode)
 │  └─ *.sh                   # audit/release/ralph helpers
 ├─ .beads/                   # Beads issue database (Dolt)
 ├─ .claude/
 │  ├─ agents/  commands/     # subagents + slash commands
-│  ├─ hooks/                 # caveman, formatter, beads-sync (SessionStart auto-pull)
+│  ├─ skills/                # technology, integration, security + ponytail/memory-setup skills
+│  ├─ hooks/                 # caveman, formatter, beads-sync (SessionStart auto-pull),
+│  │                         # queue-continue (Stop: hands back the next ready task)
 │  ├─ memory/                # project-aim, dev-environment, memory-policy
 │  └─ settings.json          # permissions + hooks + MCP allow-list
 ├─ .githooks/                # commit-msg, pre-commit, pre-push (enforcement)

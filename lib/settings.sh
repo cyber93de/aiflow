@@ -107,6 +107,10 @@ SYNC_ONCLOSE="$(j .sync.askOnClose)"; [ -z "$SYNC_ONCLOSE" ] && SYNC_ONCLOSE=tru
 PSTART="$(j .sync.pullOnStart)"; [ -z "$PSTART" ] && PSTART=true
 [ "$REMOTE_TYPE" != none ] && PSTART="$(ask_yn 'auto-pull shared Beads issues at session start?' "$(dyn "$PSTART")")"
 
+# queue mode: keep working the Beads queue after a close instead of ending the session (AGENTS.md 4b)
+QMODE="$(j .beads.queueMode)"; [ -z "$QMODE" ] && QMODE=true
+QMODE="$(ask_yn 'after closing an issue, continue with the next ready Beads task automatically?' "$(dyn "$QMODE")")"
+
 # Ollama
 OLLAMA_ON="$(ask_yn 'set up Ollama (local models)?' "$(dyn "$(j .ollama.enabled)")")"
 OLLAMA_URL="$(j .ollama.url)"; [ -z "$OLLAMA_URL" ] && OLLAMA_URL="http://localhost:11434"
@@ -160,7 +164,7 @@ jq -n \
   --arg cauth "$CLAUDE_AUTH" --arg vsys "$VCS_SYS" \
   --arg rtype "$REMOTE_TYPE" --arg rurl "$REMOTE_URL" --arg rapi "$REMOTE_API" --arg rtok "$REMOTE_TOKENENV" --arg rmcp "$REMOTE_MCP" \
   --argjson gk "$GITKRAKEN_ON" \
-  --argjson sync "$SYNC_ONCLOSE" --arg pstart "$PSTART" \
+  --argjson sync "$SYNC_ONCLOSE" --arg pstart "$PSTART" --argjson qmode "$QMODE" \
   --argjson oll "$OLLAMA_ON" --arg ollurl "$OLLAMA_URL" --argjson ollm "$OLLAMA_JSON" \
   --argjson team "$TEAM_ON" --arg tstyle "$TEAM_STYLE" \
   --arg aim "$AIM" --arg arch "$ARCH" --arg os "$OS" --arg ide "$IDE" \
@@ -177,6 +181,7 @@ jq -n \
     remote:{type:$rtype,baseUrl:$rurl,api:$rapi,tokenEnv:$rtok,mcp:$rmcp},
     gitkraken:{enabled:$gk},
     sync:{askOnClose:$sync,pullOnStart:($pstart=="true")},
+    beads:{queueMode:$qmode},
     ollama:{enabled:$oll,url:$ollurl,models:$ollm},
     teamPrefs:{enabled:$team,codeStyle:$tstyle},
     project:{aim:$aim,architecture:$arch},

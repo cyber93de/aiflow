@@ -7,7 +7,140 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-08-16
+
+### Changed
+- **The frontmatter guard now enforces the documented length limits** — `name` ≤ 64 characters,
+  `description` ≤ 1024 — on agents, commands and skills alike, with the limits covered by its
+  self-test (at the limit passes, one over fails). The `seo-optimization` skill's description was
+  1323 characters; it has been tightened to fit while keeping every trigger word.
+- **`aiflow doctor` now reports `core.hooksPath`.** It lives in `.git/config`, which is never
+  cloned — so a fresh clone of any aiflow project silently runs no commit/push rules at all until
+  someone sets it. `doctor` now says so and prints the one-line fix, in both twins.
+- **The Python CI helpers are now statically checked.** Shell had `bash -n` + shellcheck and JSON
+  had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
+  `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`
+  (advisory, like shellcheck).
+- **`commit-msg` no longer blocks merge and revert commits.** It checked git's own generated
+  subjects (`Merge branch …`, `Revert "…"`) against the Conventional-Commits pattern, so every
+  local merge in a project with aiflow's hooks failed. It now skips when git says the message
+  source is a merge, when a `MERGE_HEAD` exists, and for those two subject forms; a plain
+  non-conventional message is still rejected.
+- **`commit-msg` accepts path-shaped scopes.** The Conventional-Commits pattern allowed only
+  `[a-z0-9_-]` in a scope, so a natural `docs(.aiflow):` or `feat(api/v2):` was rejected — the
+  spec puts no restriction on scope characters. `.` and `/` are now allowed; an upper-case scope,
+  a missing type and an empty subject are still rejected.
+- **The router example ships current model ids.** `router-config.example.json` still listed
+  `claude-opus-4-8`/`claude-sonnet-4-6` and `qwen2.5-coder:7b`; it now names Opus 5, Sonnet 5,
+  Haiku 4.5 and `qwen3-coder`, in both the provider lists and the `Router` routes. Since the
+  previous entry it reaches existing projects too.
+- **Generated projects now check their own `.aiflow/*.sh` exec bits in CI.** `aiflow init`
+  renders them 100755 and `bd-close-sync.sh` documents a direct call, but `core.filemode=false`
+  on Windows drops the bit from the index without a word — and a colleague on Linux then cannot
+  run the script. The assertion aiflow runs on itself now ships in the project `ci.yml` too, and
+  the render test asserts both that the step is there and that `init` really wrote the files
+  executable.
+- **Non-ASCII paths no longer slip past the hooks.** Every place that reads a git path list now
+  sets `core.quotePath=false` — the bead-id scan in `pre-commit` and the conflict check in
+  `release.sh`/`release.ps1`, matching what the formatter and roster guard already did. Without
+  it git renders `über.md` as `"Ã¼ber.md"`, and the leading quote makes every pattern
+  match miss. Verified with an actual `über.md`: it is now formatted, checked, and rejected when
+  broken.
+- **`pre-commit` now judges the staged content, not your working tree.** A file you staged and
+  then broke locally used to commit green, and a fix you staged could be blocked by the mess
+  still in the worktree. Formatting now skips any file with unstaged changes (formatting plus
+  `git add` would otherwise sweep those edits into the commit, and it says so), and the roster
+  guard runs against a temp checkout of the index — cleaned up on every exit path, failures
+  included, so an interrupted hook leaves nothing behind. No `git stash --keep-index`: making
+  that safe around the formatter needs a `git reset --hard`, which can lose work if the hook
+  dies. The stack lint/tests still run against the worktree by design — they need the installed
+  toolchain a temp checkout does not have.
+- **The git hooks now warn about bead ids that do not exist.** An invented id reads exactly like
+  a real one, and CI cannot catch it — there is no `bd` in the runner and the issue DB is not a
+  tracked file. `commit-msg` checks the message, `pre-commit` checks the lines being added, both
+  through the shipped `.githooks/lib-bead-ids.sh`. It **warns and never blocks** (the id may just
+  be a teammate's bead you have not pulled), skips silently without `bd`/`jq`, and reads the
+  project's issue prefix from the database instead of hardcoding one.
+- **The rendered-copy guard now covers the agent roster.** `.claude/agents`, `.claude/commands`
+  and `.claude/skills` are compared against `templates/.claude/` too, so this repo's copies can no
+  longer silently fall behind a template change. Skills are matched per directory (`<name>/
+  SKILL.md`, not bare filename), and the `model: haiku` line that `apply` stamps into the five
+  audit-only subagents is tolerated on exactly those five — the templates never carry it. Syncing
+  the guard in also pulled three files this repo was missing: `ponytail-review.md` and the
+  `ponytail` and `memory-setup` skills.
+- **The twin guard now looks *inside* a pair.** It compared only the surface (both halves present,
+  same subcommands, same help text), so a step added to `lib/apply.sh` and forgotten in
+  `lib/apply.ps1` — the exact class that made a feature ship broken on Windows — stayed invisible.
+  `check-twins.py` now also compares the `# ---- step ----` banners of the two halves and reports
+  one that only one side has. The twins must therefore name a step identically (case, dashes and
+  punctuation are normalised away); platform-specific detail goes on a plain comment line under the
+  banner. `init.ps1`'s two differently-worded banners were aligned rather than exempted, so the
+  exemption list ships empty.
+- **`aiflow project-update` now reports scripts aiflow no longer ships.** It only ever copied, so a
+  helper that was renamed or dropped upstream stayed in the project forever and went unmentioned.
+  The end of the run now lists any `*.sh`/`*.ps1` in `.aiflow/` or `.claude/hooks/` that the
+  templates no longer contain — and still deletes nothing, because that file may equally well be
+  one you added. `.github/scripts/` is not scanned: it is a shared directory where your own CI
+  scripts belong.
+- **`aiflow project-update` also brings `.aiflow/router-config.example.json` forward.** The
+  mechanical block copies only `*.sh`/`*.ps1`, so the router example — a reference file you copy
+  to `~/.claude-code-router/config.json` — only ever reached freshly generated projects. It now
+  follows the `*.bak` rule, so a sample you tweaked is preserved rather than overwritten.
+- **`aiflow project-update` now refreshes `.githooks/*` too**, under the same `*.bak` rule as the
+  agent definitions. They were excluded before, which meant a shipped hook improvement (the
+  frontmatter guard in `pre-commit`, for one) only ever reached projects generated *after* it —
+  never an existing one. A hook you customised is kept as `<file>.bak` and reported; hooks you
+  added yourself are untouched; a deleted one is restored; the exec bit is re-applied, since git
+  silently skips a hook that lost it. `.github/workflows/*` stays untouched, for its own reason.
+
 ### Added
+- **Queue mode — a closed task no longer ends the session.** Beads is treated as an authoritative
+  work queue: after closing a bead the agent refreshes the queue and starts the next task instead
+  of asking what to do next. Three parts, so it does not depend on the model remembering:
+  `AGENTS.md` §4b states the loop, the ranking (priority → unblocks-most → epic/workstream →
+  continuation of the bead just closed) and the only four legitimate reasons to stop (nothing
+  actionable, everything blocked, the user says stop, a decision/credential only they have);
+  **`aiflow next`** (`.aiflow/next-task.sh|ps1`) applies that ranking mechanically and exits `3`
+  on an empty queue, with `--after <closed-id>`, `--unassigned`, `--claim` and `--json`; and a
+  Claude Code **`Stop` hook** (`.claude/hooks/queue-continue.sh|ps1`, wired by `apply`) hands the
+  next ready task back when the agent tries to end its turn. The hook blocks **at most once** per
+  stop (`stop_hook_active`), so naming a legitimate stop reason always ends the session. Opt out
+  per project with `.aiflow/config.json → beads.queueMode = false` (asked by `aiflow
+  change-settings`) or per session with `AIFLOW_QUEUE_MODE=off`. Queue mode changes nothing about
+  the §4 gates or the §7 rule that merging to `main` and releasing always need explicit
+  confirmation.
+- **The agent-roster check now runs in `pre-commit`, not just in CI.** Staging any file under
+  `.claude/agents|commands|skills` runs `.github/scripts/check-frontmatter.py` over the roster and
+  **blocks the commit** on invalid frontmatter — the same failure that used to cost a push, a red
+  build and a round trip. It needs `python3`/`python` with PyYAML: without them the hook prints a
+  note and continues, so a missing toolchain never blocks a commit and CI stays the backstop.
+  Reaches existing projects too, via the `.githooks/` refresh described under *Changed* — a hook
+  you customised is kept as `<file>.bak` rather than silently replaced.
+- **Nine new Skills**, so the delivery agents stop working generically on a stack they were never
+  told about. Technology: **stack-embedded** (C/C++ firmware — HAL/driver separation, no allocation
+  after init, ISR discipline, watchdog, host tests against a mocked HAL), **stack-mobile**
+  (Flutter/Dart, Kotlin/Android, Swift/iOS — layering, one state-management choice, process death,
+  offline/sync, Keystore/Keychain, store constraints), **stack-web-frontend** (Angular/React/Vue —
+  feature slices, server vs client state, XSS and token handling, Core Web Vitals budgets, i18n,
+  a11y), **stack-backend** (Spring/Quarkus/Jakarta, .NET, Rust, Node, Go, Python — hexagonal
+  layering with ports, transaction boundaries, 12-factor config, timeouts/retries/breakers,
+  observability, FOSS-first). Integration and data: **api-design** (REST versioning, status codes,
+  pagination, idempotency, `problem+json`, OpenAPI, `.http` files; when SOAP is legitimate and how
+  to migrate off it; GraphQL/gRPC trade-offs), **messaging-events** (broker choice, at-least-once
+  with idempotent consumers, transactional outbox, ordering, schema evolution, DLQs, sagas),
+  **data-storage** (relational default, when NoSQL is actually justified, embedded DBs, Redis with
+  designed cache invalidation, Elasticsearch as a *derived* read layer), **cloud-native**
+  (container images, K8s probes/limits/rollout/secrets, EC2, modular monolith before microservices).
+  Cross-cutting: **security** — OWASP Top 10 as the review raster plus ASVS levels, IAM least
+  privilege (roles over per-user grants, short-lived credentials, rotation), API authN/authZ,
+  secrets, crypto, and supply-chain safety; the `security-advisor` now reads that same raster
+  instead of restating its own.
+- **`docs/skills.md`** — the skill catalogue plus the rule the split follows: an **agent** is a
+  role (who acts, with what authority, in what order, what it hands to whom), a **skill** is
+  knowledge several roles need. Both may exist for one topic. Rules that must fire on *every* task
+  (§2 architecture, §3a/§3b/§3c gates) deliberately stay inline in `AGENTS.md` — a skill is offered
+  by pattern match, and Copilot/Codex get no auto-offer at all, so those two get an explicit
+  "open the matching SKILL.md yourself" instruction in `copilot-instructions.md`.
 - **ponytail** — a YAGNI decision-ladder skill (`.claude/skills/ponytail/`, Claude Code) applied
   before writing new code/dependencies/abstractions, plus `/ponytail-review` to audit a diff for
   over-engineering. Off by default; toggle with `ponytail.enabled`/`.mode`
@@ -20,6 +153,111 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   extracting rules that must apply reliably on every task into a Claude-Code-only, pattern-matched
   skill would risk them silently not firing, especially for Codex/Copilot which have no skill
   auto-offer mechanism at all.
+- **CI now rejects `[ -x ]` gates in front of interpreted calls.**
+  `.github/scripts/check-exec-gates.py` flags any `-x` test whose operand the same file also runs
+  as `bash <path>` (or `sh`/`pwsh`/`python3`/`node`/…): the exec bit is invisible to an interpreter,
+  and `core.filemode=false` on Windows drops it — which is exactly how `aiflow ralph` and
+  `aiflow close-sync` came to fail on Linux for a reason their error message never named. `[ -x ]`
+  before a *direct* call stays valid and is not reported. shellcheck has no rule for this class.
+
+### Fixed
+- **aiflow died on macOS's system bash.** `/bin/bash` there is 3.2, where an empty array under
+  `set -u` aborts the script instead of expanding to nothing, and `mapfile` does not exist at all —
+  so `aiflow project-update` on a project with nothing to report, and `aiflow ollama pull` with no
+  models configured, both failed. Every reporting array now uses the portable `${ARR[*]+x}` guard,
+  `ollama.sh` builds its list without `mapfile`, and a new `macos-latest` CI job runs the whole
+  round-trip through `/bin/bash` — after asserting that it really is 3.2, so the job cannot quietly
+  start proving nothing on a future runner image.
+- **`aiflow ralph` and `aiflow close-sync` claimed the script was missing when it wasn't.** Both
+  gated on `[ -x .aiflow/… ]` while the other three `.aiflow` commands gated on `[ -f ]` — and all
+  five invoke the script via `bash <path>`, which never needed the executable bit. A project
+  developed on Windows commits `.aiflow/*.sh` without it, so a colleague on Linux was told to
+  "Run `aiflow init` first" for a file sitting right there. All five branches now use `[ -f ]`,
+  matching what `bin/aiflow.ps1` has always done.
+- **The `reviewer` subagent never appeared in Claude Code's agent roster**, so `/review-ac` had no
+  agent to dispatch and the §4.6 review gate only worked through the inline fallback in the
+  command. Cause: its frontmatter `description` was an unquoted YAML scalar containing `": "`
+  (*"one agent, two hats: software architect …"*), which YAML reads as a nested mapping key — the
+  block failed to parse and the agent was **silently dropped**. Nothing is logged for this. The
+  same bug hit the `/review-ac` command and the `seo-optimization` skill, which degrade more
+  quietly still: they fall back to their body text as the description, so the trigger wording an
+  author wrote is simply not the wording that gets matched. All descriptions are now quoted.
+- **New CI job guarding that whole failure class** — `.github/scripts/check-frontmatter.py`
+  parses the frontmatter of every agent, command, and skill file (this repo *and* `templates/`,
+  recursing into namespaced command subdirectories) and fails the build on an unparseable block
+  or a missing `description` (plus `name` for agents and skills — commands derive theirs from the
+  filename). It carries its own fixtures (`--selftest`, run in CI before
+  the real check). Generated projects get the same script and a matching `ci.yml` step, so a
+  broken agent definition surfaces as a red build instead of an agent that quietly stops
+  existing. Needs `python3` + PyYAML in CI — pinned via `actions/setup-python` in both workflows.
+- **`aiflow project-update` now also refreshes `.github/scripts/*`**, so an existing project picks
+  up aiflow's CI helpers (like the frontmatter guard above) instead of only ever getting them at
+  `init` time. `.github/workflows/*` is still never rewritten — `ci.yml` ships as a starting point
+  you extend, and replacing it on every update would throw your jobs away. A helper that no
+  workflow calls yet is listed at the end of the run with a pointer to the matching template step.
+  The coupling is one-way on purpose: the script is always there, so adopting the step can never
+  fail on a missing file. Implemented in both twins (`lib/project-update.sh` and the native
+  `lib/project-update.ps1`).
+- **`aiflow a11y-check` and `aiflow modernize-check` did nothing on Windows.** Both were missing
+  from `bin/aiflow.ps1`'s dispatch *and* from its help text, so they fell through to the default
+  branch and printed usage instead of running the audit. Fixed, and guarded from here on by a new
+  `twins` CI job (`.github/scripts/check-twins.py`): it checks that every twinned script has both
+  a `.sh` and a `.ps1` half (`lib/`, `.aiflow/`, `.claude/hooks/`, `templates/.aiflow/`,
+  `templates/.claude/hooks/`, `templates/docker/`, `install.*`), that `bin/aiflow` and
+  `bin/aiflow.ps1` dispatch the same subcommands, and that each entry point's **usage block**
+  mentions every subcommand it dispatches. It found this bug on its first run. It does not compare
+  the *contents* of an existing pair — that is the remaining gap, tracked separately. A second
+  guard in the same job (`.github/scripts/check-rendered.py`) compares this repo's rendered
+  `.aiflow/`, `.claude/hooks/` and `.github/scripts/` against their `templates/` originals byte for
+  byte, so content drift in aiflow's own self-hosted copies — a missing file, a hand-added one, or
+  an edited one — fails the build too. A third step asserts that `.aiflow/*.sh` are `100755` in the
+  git index: `aiflow init` renders them executable and `bd-close-sync.sh` documents a direct call,
+  so the mode is part of the rendered copy — but byte comparison cannot see it and
+  `core.filemode=false` on Windows drops it silently.
+- **Docs and `.gitignore` still described the pre-open-ralph-wiggum loop.** `aiflow ralph` has run
+  on [open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum) for a while, which keeps its
+  iteration history in `.ralph/ralph-history.json` — but generated projects still ignored the
+  long-gone `result.json` and `.aiflow/ralph.log` while **not** ignoring `.ralph/`, so a project
+  could commit its Ralph history by accident. The troubleshooting entries in `README.md`/
+  `README.de.md` and the feature blurb in `docs/features.md` pointed at those same dead files.
+- **The caveman hook printed a garbled banner on Windows.** `.claude/hooks/caveman.ps1` carried an
+  em-dash in a UTF-8 file with no BOM, which Windows PowerShell 5.1 reads as ANSI — the session
+  banner came out as `CAVEMAN MODE ACTIVE ?" communicate…`. The template was already correct
+  (plain ASCII); only aiflow's own rendered copy had drifted, which is exactly the class of bug the
+  new rendered-copy guard now catches.
+- **CI now runs the render test** it always claimed to: a `render` job inits a project, then puts it
+  through a `project-update` round-trip (helper deleted + workflow step stripped → helper restored,
+  `ci.yml` byte-identical, advisory printed, a project-owned CI script neither deleted nor advised
+  on) and runs the frontmatter guard inside the generated project. A `render-windows` job does the
+  same round-trip through `project-update.ps1`, so a feature added to a `.sh` twin only can no
+  longer ship broken on Windows.
+
+## [0.6.0] — 2026-07-31
+
+### Added
+- **Model routing for audit-only subagents** — `modelRouting.enabled` (on by default, toggle via
+  `aiflow change-settings`) stamps `model: haiku` into the frontmatter of the five subagents that
+  only do mechanical background checks (**docs-sync**, **test-gap-advisor**, **dependency-auditor**,
+  **performance-advisor**, **onboarder**), so they run on Haiku 4.5 instead of the session's main
+  model. Every other subagent keeps the session default — they need real reasoning. Turning the
+  toggle off strips the line again.
+- **ponytail** — a YAGNI decision-ladder skill (off by default, `ponytail.enabled`/`.mode`): before
+  new code, dependencies or abstractions, it checks whether the thing needs to exist at all, is
+  already in the codebase, is stdlib, a native platform feature, an installed dependency, or a
+  one-liner — and only then writes the minimum viable new code. `/ponytail-review` audits a diff
+  for over-engineering regardless of the toggle. Inspired by
+  [dietrichgebert/ponytail](https://github.com/dietrichgebert/ponytail), reimplemented rather than
+  vendored, the same way as caveman.
+- **memory-setup skill** — `AGENTS.md`'s Memory section shrank to a short toggle plus essentials;
+  the full context-routing stack, team preferences and Ollama routing detail moved into an
+  auto-offered skill. The REST/database rules and the Ralph-loop decision stay inline in
+  `AGENTS.md`: skills are Claude-Code-only and pattern-matched, so a rule that must fire on every
+  task cannot live in one.
+
+### Fixed
+- `Set-ModelRoutingLine` passed a raw relative path to `[System.IO.File]`, which resolves against
+  the process working directory rather than PowerShell's — so the model-routing stamp was written
+  to (or read from) the wrong file on Windows.
 
 ## [0.5.1] — 2026-07-29
 

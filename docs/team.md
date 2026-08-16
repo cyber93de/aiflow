@@ -28,6 +28,11 @@ one issue graph for the whole team, no extra server.
   teammates' issue changes instead of clobbering them. On conflict: `bd dolt pull` (merge), resolve,
   push. Never force-push.
 - **Status is the coordination signal.** Keep it current; stale status = duplicate work.
+- **Queue mode: a closed task is not a finished session.** After each close the agent refreshes
+  the queue and starts the next task — `aiflow next` ranks it (priority → unblocks-most →
+  continuation of the bead just closed; `--unassigned` for free work only). It stops for a real
+  reason and names it: nothing actionable, everything blocked, you said stop, or a decision only
+  you can make. Opt out with `beads.queueMode = false` or `AIFLOW_QUEUE_MODE=off`.
 - **Discovered work → a new bead** (`--deps discovered-from:<id>`); **decisions → `/beads:decision`**
   (recorded with rationale) so the whole team sees the *why*.
 - **Shared preferences** (code style, language) live in a committed `.aiflow/team-prefs.json` — the

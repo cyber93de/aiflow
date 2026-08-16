@@ -11,6 +11,36 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Agent roster guard: malformed frontmatter silently drops an agent from
+      # Claude Code's roster (and a skill/command back to its body text).
+      - name: Python (frontmatter guard)
+        if: hashFiles('.claude/agents/**/*.md', '.claude/commands/**/*.md', '.claude/skills/**/SKILL.md') != ''
+        uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      - name: Agent / command / skill frontmatter
+        if: hashFiles('.claude/agents/**/*.md', '.claude/commands/**/*.md', '.claude/skills/**/SKILL.md') != ''
+        run: |
+          python -m pip install --quiet pyyaml
+          python .github/scripts/check-frontmatter.py --selftest
+          python .github/scripts/check-frontmatter.py \
+            .claude/agents .claude/commands .claude/skills
+
+      # `aiflow init` renders .aiflow/*.sh as 100755 and .aiflow/bd-close-sync.sh documents a
+      # direct `.aiflow/bd-close-sync.sh <id>` call, so the bit is part of what was shipped.
+      # core.filemode=false on Windows drops it from the index without a word, and a colleague
+      # on Linux then cannot run the script at all.
+      - name: .aiflow/*.sh are executable in the index
+        if: hashFiles('.aiflow/*.sh') != ''
+        run: |
+          set -euo pipefail
+          bad="$(git ls-files -s '.aiflow/*.sh' | awk '$1 != "100755"')"
+          if [ -n "$bad" ]; then
+            printf '%s\n' "$bad" | while read -r mode _ _ path; do
+              echo "::error file=$path::$path is $mode in the index, expected 100755 - run 'git update-index --chmod=+x $path'"
+            done
+            exit 1
+          fi
+
       # Auto-detect stack and run style + tests. Extend per project.
       - name: Node
         if: hashFiles('package.json') != ''

@@ -23,7 +23,147 @@ Why things are the way they are. Change these only deliberately.
 - **Token-saving on by default.** caveman (terse output) + rtk (CLI-output filtering) default ON;
   intensive graph-memory learning default ON (`memory.intensity = aggressive`).
 - **Windows + POSIX parity is mandatory.** Add a subcommand to both `bin/aiflow` and `bin/aiflow.ps1`
-  and keep help text + README EN/DE + docs consistent.
+  and keep help text + README EN/DE + docs consistent. Several `lib/*.ps1` are **full native
+  implementations, not shims** (`project-update.ps1` among them) — changing the `.sh` alone ships a
+  feature that silently does not exist on Windows. Enforced since 2026-08-15 by
+  `.github/scripts/check-twins.py` (CI job "twins"): pairing, `aiflow` subcommand dispatch parity
+  between `bin/aiflow` and `bin/aiflow.ps1`, and help-text coverage of every dispatched command.
+  It found `a11y-check` and `modernize-check` missing from the PowerShell entry point on its first
+  run — they had been printing the help text on Windows instead of running. Since 2026-08-16
+  (aiflow-0fc) it also compares the `# ---- step ----` banners of the two halves of each pair, so a
+  step added to `lib/apply.sh` with no counterpart in `lib/apply.ps1` is caught — the twins must
+  therefore name a step identically (case/dash/punctuation are normalised away), and one-platform
+  detail belongs on a plain comment line under the banner, not in it. Aligning `init.ps1`'s two
+  differently-worded banners was cheaper than exempting them, so `SECTION_EXEMPT` is empty too.
+  **Still not covered:** a step carrying no banner, and whether two same-named steps actually do
+  the same thing. No allowlist for deliberate single-platform scripts was needed either;
+  `TWIN_EXEMPT` exists but is deliberately empty.
+- **This repo's `.aiflow/` is refreshed from `templates/.aiflow/`, never hand-edited** (2026-08-15).
+  It had drifted far behind: six missing `.ps1` halves, both `protect` twins absent, and a
+  `ralph-headless.sh` still on the pre-open-ralph-wiggum design — so `aiflow protect` was broken on
+  both platforms here and every audit command was broken on Windows. Refresh it by copying
+  `templates/.aiflow/*.sh` + `*.ps1`, then `git update-index --chmod=+x .aiflow/*.sh` (`core.filemode`
+  is false here, so a local `chmod` never reaches the index and the exec-bit CI step below goes red
+  on the pushed tree) and re-stamp `.meta.aiflowVersion` in `.aiflow/config.json` from `VERSION` —
+  that is `project-update`'s full mechanical block, and skipping the stamp makes interactive `aiflow`
+  commands offer the `project-update` that the next sentence forbids. Do **not** run
+  `aiflow project-update` in this repo — it would also overwrite this repo's own `AGENTS.md`,
+  `CLAUDE.md` and agent definitions with the template versions. Enforced since 2026-08-15 by
+  `.github/scripts/check-rendered.py` (same CI job as the twin guard): it compares every
+  `.aiflow/*.sh|ps1` byte for byte against `templates/.aiflow/`, so a missing file, a hand-added
+  one, or **content** drift all go red. Line-ending-only differences are ignored;
+  `config.json`/`branching.json` are project state and never compared. It covers `.claude/hooks/`
+  and `.github/scripts/` on the same rule (the two guards themselves are exempted — they are about
+  aiflow's own structure and never ship to a project). The executable bit — the other half of the
+  refresh recipe — is a separate CI step in the same job, because content comparison cannot see it:
+  `.aiflow/*.sh` must be **100755 in the index**. Originally this was load-bearing: `bin/aiflow`
+  *gated* `close-sync` and `ralph` on `[ -x ".aiflow/…" ]`, so a 100644 bit made those two commands
+  claim the script was absent ("Run 'aiflow init' first") on a fresh Linux clone. **Since
+  aiflow-wrn those gates are `[ -f ]`, like the other three** — every branch invokes via
+  `bash <path>`, which works at 100644, so do **not** re-derive the `[ -x ]`-gate justification.
+  One reason remains (the "documented direct call" one died with aiflow-ozo — every usage header
+  now names `aiflow <command>` or `bash .aiflow/<file>`): `lib/init.sh:37` + `lib/apply.sh:414`
+  `chmod +x` on copy, so
+  every rendered project gets 100755 — the assertion is what keeps this repo's self-hosted
+  `.aiflow/` matching that **in mode**, which `check-rendered.py` cannot see because it compares
+  bytes. `bin/aiflow`, `lib/*.sh`, `install.sh` and everything under `templates/` stay 100644 on
+  purpose — the installer and `init`/`project-update` chmod them on copy.
+  **Not** covered, and deliberately so: `.beads/hooks/*` (2026-08-16, aiflow-vly). They are
+  100755 in the index now — a one-off `git update-index --chmod=+x`, blobs untouched, because
+  git *does* skip a non-executable hook and the bit costs nothing. But there is **no CI
+  assertion** on them, for two reasons. They are not ours: the files carry
+  `--- BEGIN BEADS INTEGRATION v1.0.5 ---` and are rewritten by `bd hooks install` / `bd init`,
+  so asserting a mode on a third-party artefact buys a red build the day beads changes it. And
+  the bit was never what made them work: `core.hooksPath` lives in `.git/config`, which is
+  **not cloned** — verified on a local clone of this repo, where it comes back unset — so on a
+  fresh clone git looks in `.git/hooks` and these files are inert at *any* mode until someone
+  runs beads' own setup, which writes them again. Failure mode if it ever does bite is loud,
+  not silent: git prints "the hook was ignored because it's not set as executable" (verified
+  under WSL; Git-Bash cannot show this — `[ -x ]` is true there at 644). Verified by `chmod -x`-ing a
+  file in a scratch clone; re-run that check if the CI step changes.
+- **No `[ -x ]` gate in front of an interpreted call** (2026-08-16). `[ -x "$f" ] || die; bash "$f"`
+  gates on a bit `bash` never reads, and `core.filemode=false` on Windows drops it — so a project
+  developed there checks the script in as 100644 and the command dies on Linux with an error that
+  names the wrong cause (aiflow-wrn: `close-sync` and `ralph`). Use `[ -f ]`; keep `[ -x ]` only
+  before a **direct** call (`"$f" --flag`), where the bit is exactly what is needed. Enforced by
+  `.github/scripts/check-exec-gates.py` (CI job "shell"): within one file, an `-x` predicate whose
+  operand is also passed to `bash`/`sh`/`pwsh`/`python3`/`node`/… is an error. shellcheck has no
+  rule for this and the class survived aiflow-e0o and its review unnoticed. **Not** covered, and
+  settled as permanent (2026-08-16, aiflow-cuw): a gate and its call in *different* files. Every
+  gate this class has actually produced sat two lines from its call; matching across files means
+  resolving `$AIFLOW_DIR`-style paths through variables between scripts, which trades the guard's
+  zero false positives for guesswork — and a guard that cries wolf gets ignored, taking the real
+  findings with it. Do not reopen without a concrete cross-file instance to point at.
+  `EXEC_GATE_EXEMPT` exists and is empty.
+  Repo-only like the twin/rendered guards: the shell a generated project runs is aiflow's own and
+  is already checked here, so shipping it would buy a Python CI step per project and nothing else.
+- **One usage convention for `.aiflow/*`: the `aiflow` subcommand is the entry point**
+  (2026-08-16, aiflow-ozo). Every helper's header now reads `Usage: aiflow <command> …`, with the
+  direct `bash .aiflow/<file>` form in parentheses; the three helpers the CLI does not expose
+  (`version`, `run-agent`, and `next-task`'s raw form) name the direct call as the primary, saying
+  why. Both twins carry the same wording. Consequence to remember: `bd-close-sync.sh` used to be
+  the one script documenting a *direct* invocation, which was the last functional justification
+  for asserting 100755 on `.aiflow/*.sh` — that justification is gone. The assertion stays anyway,
+  now on a single ground: `init`/`apply` render those files 100755, so the index must match what
+  was shipped, and since aiflow-3tp every generated project checks the same thing. Nothing depends
+  on the bit at runtime any more (every caller goes through `bash <path>`).
+- **The agent roster is a checked mirror too** (2026-08-16, aiflow-5o3). `check-rendered.py` now
+  covers `.claude/agents|commands|skills` against `templates/.claude/`, so "keep them in sync" is
+  enforced rather than remembered. Two mechanics this needed: files are compared by their path
+  *below* the directory (every skill is a `SKILL.md`, so bare filenames would collide), and the
+  `model: haiku` line is stripped from the rendered side for exactly the five stamped agents —
+  the same line on any other agent is still reported. Adopting the mirror surfaced three files
+  this repo had been missing: `ponytail-review.md`, and the `ponytail` and `memory-setup` skills.
+- **`model: haiku` on five agent files here is RENDERED, not a hand edit** (2026-08-16, aiflow-jxe).
+  `.claude/agents/{docs-sync,test-gap-advisor,dependency-auditor,performance-advisor,onboarder}.md`
+  carry a `model: haiku` line that `templates/.claude/agents/*` deliberately do not: `apply.sh`
+  (and `apply.ps1`) stamp it into exactly those five when `modelRouting.enabled` is true — the
+  default — and strip it again when it is false. The templates must stay clean, or a project that
+  turns routing off would still ship the line until its first `apply`. Two consequences worth
+  remembering: a mirror guard over `.claude/agents` vs `templates/.claude/agents` (aiflow-5o3)
+  cannot compare bytes — it has to know the stamped line or exempt these five; and
+  `project-update` compares *before* it re-applies, so in this repo it would move all five to
+  `.bak` and then re-stamp the replacements — one more reason not to run it here.
+- **This repo runs its own git hooks, from `.githooks/`** (2026-08-16, aiflow-n3p). `core.hooksPath`
+  pointed at `.beads/hooks`, which carries only the beads integration — so aiflow's own
+  Conventional-Commits check and branching guard never ran here. `.githooks/` now holds three hooks
+  that each run the beads shim first (beads needs its own), then aiflow's check. `commit-msg` and
+  `pre-push` **delegate to `templates/.githooks/*`** on purpose: the file a generated project gets
+  is the file that runs here, so a break in it surfaces on the next commit rather than in someone
+  else's project. `pre-commit` deliberately does *not* delegate — the template version formats
+  staged files in place (prettier/shfmt/black), and a stray reformat of `templates/**` would
+  propagate into every future project; it runs `bash -n` on staged shell plus the four
+  `.github/scripts/` guards instead (~1.3 s). Enabling is per clone (`git config core.hooksPath
+  .githooks`) because `.git/config` is never cloned — `aiflow doctor` now reports that in both
+  twins, for generated projects too. Note the pre-push guard is currently inert here: this repo's
+  `branching.json` has `pullRequests.required = false` and unenforced naming, so it permits what it
+  checks. Also note `project-update` would replace these with the template versions (keeping
+  `.bak`) — another reason not to run it in this repo.
+- **`project-update` never deletes — it reports** (2026-08-16, aiflow-400). It only ever copied, so
+  a helper aiflow renamed or dropped sat in the project forever, and since aiflow-coy it was not
+  even mentioned (that advisory iterates the *template's* helpers). Rejected: silent deletion
+  (a file aiflow does not ship may simply be the project's own) and move-to-`.bak` (same problem,
+  plus it breaks a working setup at update time). So the end of the run lists `*.sh`/`*.ps1` in
+  `.aiflow/` and `.claude/hooks/` that the templates no longer contain, and touches nothing.
+  `.github/scripts/` is deliberately excluded: it is a conventional shared directory, so a
+  project's own CI script there is normal and flagging it would be noise — the render CI job
+  asserts exactly that (a planted `deploy.sh` is not advised on, a planted stale `.aiflow` helper
+  is, and still exists afterwards).
+- **`project-update` refreshes `.githooks/*` under the `.bak` rule** (2026-08-16, aiflow-y23).
+  They were excluded as "policy you tune", which meant a shipped hook improvement reached only
+  projects generated *afterwards* — aiflow-1l4's frontmatter guard could never arrive in an
+  existing project. The `.bak` rule already exists for exactly this class (`AGENTS.md`, agents,
+  commands, skills are customised too): a hook that differs from the template is renamed to
+  `<file>.bak`, never deleted, and reported at the end. Hooks the project added itself are
+  untouched, a deleted one is restored, and `chmod +x` runs afterwards because git silently skips
+  a non-executable hook. `.github/workflows/` stays excluded — different reason, see below.
+- **`.github/scripts/` is aiflow-owned, `.github/workflows/` is project-owned** (2026-08-15).
+  `project-update` overwrites the shipped CI helpers mechanically but never rewrites a workflow —
+  `ci.yml` ships as a starting point projects extend, so replacing it would eat their jobs. A helper
+  no workflow references is *advised* at the end of the run instead. One-way on purpose: the script
+  is always present, so adopting the step can never fail on a missing file. Caveat: `.github/scripts/`
+  is a conventional shared directory, not an aiflow namespace — a project file whose name collides
+  with a shipped helper is overwritten without a `.bak`.
 - **No funding.** No Sponsors/Ko-fi/BuyMeACoffee/PayPal anywhere. The ask is feedback, a ⭐, and bug
   reports. Ideas and criticism explicitly welcomed.
 - **Branding.** Owner account is **Cyber93de** (`github.com/Cyber93de/aiflow`); MIT © 2026 Cyber93de.

@@ -24,7 +24,7 @@ description: "aiflow CLI command reference: init, install-deps, change-settings,
 | `aiflow doctor` | Check prerequisites + print a per-project summary. |
 | `aiflow upgrade` | Update the bundled toolchain. |
 | `aiflow update` | Self-update aiflow to the latest release: `git pull` in `AIFLOW_HOME` if it's a git checkout; otherwise checks the GitHub Releases API and downloads + verifies (SHA256) + installs the matching per-OS archive. |
-| `aiflow project-update` | Refresh THIS project from the installed templates: mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) always; agent definitions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/agents/*`, `.claude/commands/*`, `.claude/skills/*`) too — any of those you customised is kept as `*.bak` before being replaced, and reported so you can reapply your changes. Never touches `.beads/`, `.claude/memory/*`, or your `.aiflow/config.json` project settings (aim, architecture, ...) — only `meta.aiflowVersion` is stamped. You're prompted for this automatically when a project's stamped version falls behind the installed CLI. |
+| `aiflow project-update` | Refresh THIS project from the installed templates: mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`, `.github/scripts/*`) always; agent definitions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/agents/*`, `.claude/commands/*`, `.claude/skills/*`) the git hooks (`.githooks/*`) and the router example (`.aiflow/router-config.example.json`) too — any of those you customised is kept as `*.bak` before being replaced, and reported so you can reapply your changes. Nothing is ever deleted: a helper aiflow no longer ships stays put and is listed at the end of the run instead (for the aiflow-owned `.aiflow/` and `.claude/hooks/` — `.github/scripts/` is a shared directory, so your own scripts there are never flagged). Never touches `.beads/`, `.claude/memory/*`, `.github/workflows/*` (yours to extend — a CI helper that no workflow calls yet is *advised* at the end of the run, never written in), or your `.aiflow/config.json` project settings (aim, architecture, ...) — only `meta.aiflowVersion` is stamped. You're prompted for this automatically when a project's stamped version falls behind the installed CLI. |
 | `aiflow version` | Print the version. |
 
 ## Working
@@ -43,6 +43,7 @@ description: "aiflow CLI command reference: init, install-deps, change-settings,
 |---------|------|
 | `aiflow sync [pull\|push\|both]` | Team sync: git + Beads(dolt) pull/push (default pull at start). |
 | `aiflow close-sync <id>` | On issue close: prompt to push + Dolt-sync (pulls before pushing). |
+| `aiflow next [--after <id>] [--unassigned] [--claim] [--json]` | Next ready Beads task, ranked by the AGENTS.md §4b order (priority → unblocks-most → continuation of `--after`). Exits 3 when the queue holds nothing actionable. |
 
 ## Audits (file Beads issues)
 

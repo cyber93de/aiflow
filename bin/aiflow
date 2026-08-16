@@ -77,8 +77,11 @@ case "$cmd" in
   update)  bash "$AIFLOW_HOME/lib/update.sh" "$@" ;;    # self-update the aiflow install (git pull, or GitHub-release download if not a git checkout)
   project-update) bash "$AIFLOW_HOME/lib/project-update.sh" "$@" ;;  # refresh this project's aiflow scripts from the installed templates
   close-sync|bd-sync)                                  # on Beads issue close: prompt push + dolt-sync
-    if [ -x ".aiflow/bd-close-sync.sh" ]; then bash ".aiflow/bd-close-sync.sh" "$@";
+    if [ -f ".aiflow/bd-close-sync.sh" ]; then bash ".aiflow/bd-close-sync.sh" "$@";
     else echo "No .aiflow/bd-close-sync.sh (enable sync-on-close via 'aiflow change-settings')." >&2; exit 1; fi ;;
+  next)                                                # next Beads task by the AGENTS.md 4b order
+    if [ -f ".aiflow/next-task.sh" ]; then bash ".aiflow/next-task.sh" "$@";
+    else echo "No .aiflow/next-task.sh in this project. Run 'aiflow init' first." >&2; exit 1; fi ;;
   index)                                               # refresh ALL code memory: structural graph + semantic RAG
     did=0
     if command -v graphify >/dev/null 2>&1; then
@@ -91,7 +94,7 @@ case "$cmd" in
     ;;
   ralph)
     load_env
-    if [ -x ".aiflow/ralph-headless.sh" ]; then
+    if [ -f ".aiflow/ralph-headless.sh" ]; then
       bash ".aiflow/ralph-headless.sh" "$@"
     else
       echo "No .aiflow/ralph-headless.sh in this project. Run 'aiflow init' first." >&2
@@ -164,6 +167,7 @@ USAGE
   aiflow sync [pull|push|both]  team sync: git + Beads(dolt) pull/push (default pull at start)
   aiflow ollama [pull|add <m>|list]  manage local Ollama models (from config)
   aiflow close-sync <id>   on Beads issue close: prompt to push + dolt-sync the remote
+  aiflow next [--after <id>] [--claim] [--json]  next ready Beads task, ranked (AGENTS.md 4b)
   aiflow cost [...]        token/cost baseline via ccusage
   aiflow index             refresh code memory: graphify (structural graph) + cocoindex (RAG)
   aiflow upgrade           update the bundled toolchain (beads, rtk, graphify, ...) to latest

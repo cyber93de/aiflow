@@ -287,10 +287,24 @@ The shipped agents are **deliberately generic** — a strong, universal base, no
 (Beads and the Ralph loop are also available as their own plugin commands, e.g. `/beads:ready`.)
 
 **Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`: Claude Code matches the skill's
-`description` against what you're doing and offers to run it. Ships with **seo-optimization** (SEO
-for any web-facing project/framework — meta tags, Open Graph, JSON-LD structured data,
-robots.txt/sitemap.xml, GitHub Pages specifics; ends with an SEO report). Add your own by dropping
-a new `<name>/SKILL.md` into `.claude/skills/`.
+`description` against what you're doing and offers to run it. An **agent** is a role (who acts,
+with what authority, in what order); a **skill** is knowledge several roles need — the implementer
+writing an endpoint and the reviewer checking it read the same list. Ships with:
+
+- **Technology stacks:** `stack-embedded` (C/C++ firmware — HAL separation, no allocation after
+  init, ISR discipline, host tests against a mocked HAL), `stack-mobile` (Flutter/Dart, Kotlin/
+  Android, Swift/iOS), `stack-web-frontend` (Angular/React/Vue), `stack-backend` (Spring/Quarkus/
+  Jakarta, .NET, Rust, Node, Go, Python — hexagonal layering, resilience, observability, FOSS-first).
+- **Integration & data:** `api-design` (REST versioning/idempotency/OpenAPI/`.http`, SOAP when
+  legitimate, GraphQL/gRPC), `messaging-events` (Kafka/RabbitMQ/NATS, idempotent consumers,
+  outbox, DLQ, sagas), `data-storage` (SQL default, NoSQL when justified, embedded DBs, Redis,
+  Elasticsearch as a derived layer), `cloud-native` (images, K8s, EC2, monolith vs microservices).
+- **Cross-cutting:** `security` (OWASP Top 10 + ASVS, IAM least privilege, API authN/authZ,
+  secrets, supply chain), `seo-optimization`, `ponytail` (YAGNI ladder, off by default),
+  `memory-setup`.
+
+Add your own by dropping a `<name>/SKILL.md` into `.claude/skills/` — the **description is the
+trigger**, so write it as "invoke when …" plus the words that should match.
 
 ---
 
@@ -596,6 +610,7 @@ LICENSE                    MIT
   branching.json           derived git governance model
   ralph-headless.sh        autonomous loop runner
   run-agent.sh             generic headless agent runner (audits, onboard)
+  next-task.sh             next ready Beads task, ranked (aiflow next)
   version.sh, release.sh, protect.sh   release/versioning/branch-protection
   router-config.example.json           claude-code-router template
 .env / .env.example        tokens (gitignored)
@@ -609,7 +624,8 @@ LICENSE                    MIT
   commands/                intake-issue, decompose, plan-epic, implement, review-ac, arch,
                            security-check, quality-check, requirements-check, dependency-check,
                            test-gap, perf-check, docs-check, onboard, explain, standup
-  hooks/                   format.sh (auto-format), caveman.sh (terse output)
+  hooks/                   format.sh (auto-format), caveman.sh (terse output),
+                           beads-sync.sh (SessionStart pull), queue-continue.sh (Stop: next task)
   memory/                  project-aim.md, dev-environment.md, … (when memory enabled)
 .githooks/                 commit-msg (Conventional Commits), pre-commit (format+lint+test), pre-push (branching)
 .github/workflows/         agent.yml (agent in CI) + ci.yml (lint/test)
@@ -636,8 +652,9 @@ aiflow itself needs no upgrade tool — `upgrade` is about the **dependencies** 
 
 - **MCP won't connect:** Docker running? `GITHUB_TOKEN` set in `.env` and started via `aiflow shell`?
   Token scopes (repo, issues)?
-- **Ralph ends BLOCKED immediately:** read `result.json` / `.aiflow/ralph.log` — usually unclear
-  acceptance criteria or missing access.
+- **Ralph ends BLOCKED immediately:** read `.ralph/ralph-history.json` (or watch a running loop
+  with `ralph --status` from another terminal) — usually unclear acceptance criteria or missing
+  access.
 - **`bd` errors / no database:** Beads needs **dolt** — `aiflow install-deps` installs it.
 - **Auto-format/lint does nothing:** install the relevant formatter (AGENTS.md §3).
 - **pre-push blocks a push:** that's the branching model; use a proper branch/PR, or

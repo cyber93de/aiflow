@@ -1,5 +1,6 @@
 # Version helper for the configured strategy (semver|calver). Reads/uses the VERSION file.
-# Usage: version.ps1 current | release | next-dev [release-version] | start-hotfix
+# Usage: powershell -File .aiflow/version.ps1 current | release | next-dev [release-version] | start-hotfix
+#        (no aiflow subcommand: release.ps1 and hotfix.ps1 call this internally)
 # semver "release" strips whatever suffix is present (-SNAPSHOT on develop, -HOTFIX on
 # hotfix/*) - the number in front of it is already the exact release version. "start-hotfix"
 # bumps a bare main VERSION (no suffix) to the next patch + -HOTFIX.

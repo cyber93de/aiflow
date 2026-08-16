@@ -2,7 +2,18 @@
 # Enforce Conventional Commits. Bypass (discouraged): AIFLOW_SKIP_COMMIT_LINT=1
 [ "${AIFLOW_SKIP_COMMIT_LINT:-}" = "1" ] && exit 0
 msg="$(head -n1 "$1")"
-pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9_-]+\))?!?: .{1,}'
+
+# Merge and revert commits carry git's own generated subject, which is not a Conventional Commit -
+# rejecting them makes every local merge fail. $2 is git's message source ("merge" when it built
+# the message itself); MERGE_HEAD covers the `git commit` that completes a paused merge, and the
+# subject check covers a message handed in by other tooling.
+case "${2:-}" in merge|squash) exit 0 ;; esac
+[ -f "$(git rev-parse --git-dir 2>/dev/null)/MERGE_HEAD" ] && exit 0
+case "$msg" in "Merge "*|"Revert "*) exit 0 ;; esac
+# The scope allows . and / on top of the usual set: repo areas are often named after paths
+# such as docs(.aiflow) or feat(api/v2), and Conventional Commits itself puts no
+# restriction on the scope characters (aiflow-l40).
+pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9._/-]+\))?!?: .{1,}'
 if ! printf '%s' "$msg" | grep -Eq "$pattern"; then
   cat >&2 <<EOF
 ✗ Commit message is not a Conventional Commit.
@@ -12,4 +23,10 @@ if ! printf '%s' "$msg" | grep -Eq "$pattern"; then
 EOF
   exit 1
 fi
+
+# Warn (never block) about bead ids that do not exist — an invented id reads exactly like a real
+# one, and CI cannot check it: no `bd` in the runner, and the issue DB is not a tracked file.
+lib="$(dirname "$0")/lib-bead-ids.sh"
+# shellcheck source=/dev/null
+[ -f "$lib" ] && { . "$lib"; printf '%s' "$(cat "$1")" | warn_unknown_bead_ids "commit message"; }
 exit 0

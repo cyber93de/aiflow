@@ -213,6 +213,7 @@ cat > .aiflow/config.json <<EOF
   },
   "gitkraken": { "enabled": $GITKRAKEN_ON },
   "sync":    { "askOnClose": $SYNC_ONCLOSE, "pullOnStart": true },
+  "beads":   { "queueMode": true },
   "ollama":  { "enabled": $OLLAMA_ON, "url": "$(esc "$OLLAMA_URL")", "models": $OLLAMA_JSON },
   "teamPrefs": { "enabled": $TEAM_ON, "codeStyle": "$TEAM_STYLE" },
   "project": { "aim": "$(esc "$AIM")", "architecture": "$(esc "$ARCH")" },

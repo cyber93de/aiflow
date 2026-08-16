@@ -24,6 +24,16 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/queue-continue.ps1"
+          }
+        ]
+      }
     ]
   }
 }

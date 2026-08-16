@@ -167,6 +167,11 @@ $PSTART = J '.sync.pullOnStart'
 if (-not $PSTART) { $PSTART = 'true' }
 if ($REMOTE_TYPE -ne 'none') { $PSTART = AskYn 'auto-pull shared Beads issues at session start?' (Dyn $PSTART) }
 
+# queue mode: keep working the Beads queue after a close instead of ending the session (AGENTS.md 4b)
+$QMODE = J '.beads.queueMode'
+if (-not $QMODE) { $QMODE = 'true' }
+$QMODE = AskYn 'after closing an issue, continue with the next ready Beads task automatically?' (Dyn $QMODE)
+
 # Ollama
 $OLLAMA_ON = AskYn 'set up Ollama (local models)?' (Dyn (J '.ollama.enabled'))
 $OLLAMA_URL = J '.ollama.url'
@@ -231,6 +236,7 @@ $cfgOut = [ordered]@{
   remote = [ordered]@{ type = $REMOTE_TYPE; baseUrl = $REMOTE_URL; api = $REMOTE_API; tokenEnv = $REMOTE_TOKENENV; mcp = $REMOTE_MCP }
   gitkraken = [ordered]@{ enabled = ($GITKRAKEN_ON -eq 'true') }
   sync = [ordered]@{ askOnClose = ($SYNC_ONCLOSE -eq 'true'); pullOnStart = ($PSTART -eq 'true') }
+  beads = [ordered]@{ queueMode = ($QMODE -eq 'true') }
   ollama = [ordered]@{ enabled = ($OLLAMA_ON -eq 'true'); url = $OLLAMA_URL; models = $ollamaJson }
   teamPrefs = [ordered]@{ enabled = ($TEAM_ON -eq 'true'); codeStyle = $TEAM_STYLE }
   project = [ordered]@{ aim = $AIM; architecture = $ARCH }

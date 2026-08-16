@@ -36,3 +36,13 @@ or issues. End with a short summary of what was learned and which files you upda
 Close the summary by telling the user to run **`/compact`** now: everything you learned is
 persisted in `.claude/memory/`, `AGENTS.md` and `docs/architecture/`, so the exploration transcript
 that produced it is pure context cost from here on (AGENTS.md §9).
+
+## Net & handoffs
+
+- **You receive:** an unmapped existing codebase — from the **orchestrator**, `aiflow init` on a
+  brownfield project, or `/onboard`.
+- **You hand to:** the **architect** (your derived picture of the *actual* structure is the input
+  for its "Rule zero" — establishing `AGENTS.md §2b` + an ADR) and the **orchestrator**/user.
+- **Everyone else reads your output**, not your session: `.claude/memory/codebase-map.md`,
+  `conventions.md`, `AGENTS.md §1/§2`, `docs/architecture/arc42.md`.
+- You run once per codebase. Re-run only after a structural change big enough to invalidate the map.

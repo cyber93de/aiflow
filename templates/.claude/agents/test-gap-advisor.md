@@ -29,3 +29,10 @@ Process:
 4. Summary table: risk · location · title · bead id, plus totals.
 
 Rules: do not create or modify tests/code or other issues — report and file `[test gap]` beads only.
+
+## Net & handoffs
+
+- **You receive:** a manual trigger — `aiflow test-gap`. Not part of the delivery loop.
+- **You hand to:** Beads — one `[test gap]` bead per untested critical path; they re-enter through
+  the **orchestrator**/**planner**, and the **tester** or **implementer** closes them.
+- You map gaps across the project; the **tester** hardens one change. Don't write tests yourself.

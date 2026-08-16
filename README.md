@@ -119,7 +119,7 @@ question, every default, first feature end-to-end).
 | **Models** | Claude (API key *or* OAuth) + optional **Ollama** local models, selectable & auto-installed |
 | **Model routing** | claude-code-router sends easy/background work to cheap/local models; per-activity **model tiers** put architecture/planning/review/security on Opus (or Fable), implementation + tests on Sonnet, mechanical scans on Haiku |
 | **Architecture rules** | Binding, every language: layered with inward dependencies, interfaces at every seam, DAO + DTO separation, domain objects never on the wire, reuse/generics over duplication. A task that doesn't fit is **asked about before it's built** |
-| **Agents** | 5 delivery + 9 audit/checker + 1 brownfield specialist subagents |
+| **Agents** | 1 orchestrator + 5 delivery + 9 audit/checker + 1 brownfield specialist subagents, wired into one documented network |
 | **Autonomy** | Ralph loop (interactive / headless / containerised / CI) |
 | **Quality** | Google style, conventional commits, format/lint/test git hooks, architect+quality-gate review, static analysis on every change, objective metric targets (0 new smells/duplicates, 0 warnings), >80 % coverage + BDD E2E gates, leveled logging, `.http` files for REST endpoints, DB rules §3c (3NF+FKs for new schemas, brownfield schemas handled with care) |
 | **Branching** | simple / gitflow / none, PR-only, auto-release, SemVer/CalVer |
@@ -357,7 +357,8 @@ per-agent detail: [docs → Agents](https://cyber93de.github.io/aiflow/agents).
 Two different Claude Code mechanisms, both shipped:
 
 **Slash-commands** — explicitly triggered, `.claude/commands/`:
-- **Delivery:** `/intake-issue <n>` (pull a GitHub/GitLab/Bitbucket issue → Beads),
+- **Delivery:** `/orchestrate <goal|bead>` (entry point — the orchestrator routes every step below),
+  `/intake-issue <n>` (pull a GitHub/GitLab/Bitbucket issue → Beads),
   `/decompose <goal|prd>` (task-master → Beads), `/plan-epic`,
   `/implement [bead] [ralph|no-ralph]` (pre-analysis first; unspecified → the implementer decides
   **automatically** — or honours a "use the Ralph loop" note written into the issue itself),

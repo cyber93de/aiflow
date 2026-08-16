@@ -5,7 +5,9 @@ argument-hint: <bead-id> [ralph|no-ralph] — empty takes the top ready task; ra
 
 Implement bead **$ARGUMENTS** (if no id, run `/beads:ready` and take the top task).
 
-1. Read the bead and its acceptance criteria. Set it in-progress. If AC are unclear, stop → BLOCKED.
+1. Read the bead (`bd show <id>`) and its acceptance criteria, then **claim it atomically**:
+   `bd update <id> --claim` (no id given: `bd ready --claim --json` takes the first free one).
+   Never work a bead you have not claimed. If AC are unclear, stop → BLOCKED.
 2. **Pre-analysis (mandatory):** current architecture, how it changes under this requirement,
    effort, complexity, risks. Gather missing information (code search, context7) **before** coding.
 3. **Ralph decision:** if the arguments say `ralph` or `no-ralph`, or the bead's description
@@ -28,7 +30,10 @@ Implement bead **$ARGUMENTS** (if no id, run `/beads:ready` and take the top tas
    boundary/exception/invalid-input tests + test-quality audit).
 9. Run `/review-ac` (architect review + quality-gate checklist in one). Address every BLOCKER and
    SHOULD; out-of-scope improvement ideas become `[suggestion]` beads for the next loop.
-10. Commit referencing the bead id (Conventional Commits). Close the bead with a verification note.
+10. Commit referencing the bead id (Conventional Commits), then close the bead with how each AC was
+    verified: `bd close <id> --reason "…"`. Work you found but did not do becomes its own bead
+    (`bd create … --deps discovered-from:<id>`) — never silent scope growth, never a chat-only note.
+    Honour the sync gate (§4.9) if `sync.askOnClose` is set.
 11. **Continue the queue (AGENTS.md §4b):** run `aiflow next --after <closed-id>`. If it names a
     task, start it with this same command — do not ask what to work on next. Stop only when it
     exits 3 (nothing actionable), everything left is blocked, the user says stop, or you need a

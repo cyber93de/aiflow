@@ -121,7 +121,7 @@ jeder Default, erstes Feature end-to-end).
 | **Modelle** | Claude (API-Key *oder* OAuth) + optionale **Ollama**-Modelle, wählbar & auto-installiert |
 | **Model-Routing** | claude-code-router schickt leichte/Hintergrund-Arbeit an günstige/lokale Modelle; **Modell-Stufen je Tätigkeit** setzen Architektur/Planung/Review/Security auf Opus (oder Fable), Implementierung + Tests auf Sonnet, mechanische Scans auf Haiku |
 | **Architekturregeln** | Verbindlich, in jeder Sprache: Schichtenarchitektur mit Abhängigkeiten nach innen, Interfaces an jeder Schnittstelle, DAO- und DTO-Trennung, Domain-Objekte nie auf der Leitung, Wiederverwendung/Generics statt Duplikate. Passt eine Aufgabe nicht, wird **vor der Umsetzung nachgefragt** |
-| **Agenten** | 5 Delivery- + 9 Audit-/Checker- + 1 Brownfield-Spezialist-Subagenten |
+| **Agenten** | 1 Orchestrator + 5 Delivery- + 9 Audit-/Checker- + 1 Brownfield-Spezialist-Subagenten, zu einem dokumentierten Netz verdrahtet |
 | **Autonomie** | Ralph-Schleife (interaktiv / headless / containerisiert / CI) |
 | **Qualität** | Google-Stil, Conventional Commits, Format-/Lint-/Test-Git-Hooks, Architekt+Quality-Gate-Review, statische Analyse bei jeder Änderung, objektive Metrik-Ziele (0 neue Smells/Duplikate, 0 Warnings), >80 % Coverage + BDD-E2E-Gates, Logging mit Leveln, `.http`-Dateien für REST-Endpunkte, DB-Regeln §3c (3NF+FKs für neue Schemata, Brownfield-Schemata mit Vorsicht) |
 | **Branching** | simple / gitflow / none, PR-only, Auto-Release, SemVer/CalVer |
@@ -359,7 +359,8 @@ Volle Details pro Agent: [Docs → Agents](https://cyber93de.github.io/aiflow/ag
 Zwei verschiedene Claude-Code-Mechanismen, beide dabei:
 
 **Slash-Commands** — explizit ausgelöst, `.claude/commands/`:
-- **Delivery:** `/intake-issue <n>` (GitHub/GitLab/Bitbucket-Issue → Beads),
+- **Delivery:** `/orchestrate <ziel|bead>` (Einstiegspunkt — der Orchestrator routet alle Schritte darunter),
+  `/intake-issue <n>` (GitHub/GitLab/Bitbucket-Issue → Beads),
   `/decompose <ziel|prd>` (task-master → Beads), `/plan-epic`,
   `/implement [bead] [ralph|no-ralph]` (Voranalyse zuerst; ohne Angabe entscheidet der implementer
   **automatisch** — oder folgt einem „use the Ralph loop"-Vermerk direkt im Issue), `/review-ac`,

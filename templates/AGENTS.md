@@ -444,8 +444,61 @@ slash-commands — **this section only applies when Claude Code is driving.** Gi
 OpenAI Codex CLI have no equivalent subagent-dispatch mechanism today: follow the same roles and
 gates yourself, in the same order, reading the referenced section for each.
 
-- **architect** — system design, arc42 docs, ADRs, trade-offs. Read-only-ish.
-- **planner** — break an epic/issue into beads with dependencies + AC.
+### The network
+
+`/orchestrate` is the entry point for anything that isn't a single obvious edit. The
+**orchestrator** owns the route; every step is executed by exactly one specialist, and every
+handover goes **through the bead** (`bd update <id> --notes "route: …"`), never through session
+context — a route that only exists in the conversation dies at the next `/compact`.
+
+```
+              user / VCS issue / goal
+                        │
+                  [orchestrator] ◄──────────────────────────┐
+                        │  (routes, never implements)       │
+        ┌───────────────┼───────────────┐                   │
+        ▼               ▼               ▼                   │
+   [onboarder]     [planner]      [architect]                │
+   codebase map   beads + AC +    ADR + arc42                │
+        │         agent per bead   (Rule zero: §2b)          │
+        └──────────────►│◄──────────────┘                   │
+                        ▼                                    │
+                 [implementer] ──► [tester] (risky changes)   │
+                        │               │                     │
+                        ▼◄──────────────┘                     │
+                   [reviewer] ── PASS ──► close bead ─────────┘
+                        └── CHANGES REQUIRED ──► implementer
+
+  manual, outside the loop — file beads that re-enter at the top:
+  security-advisor · quality-check · dependency-auditor · test-gap-advisor
+  performance-advisor · docs-sync · accessibility-checker · requirements-check
+  modernization-advisor (report only → architect)
+```
+
+| Agent | Receives from | Hands to |
+|-------|---------------|----------|
+| **orchestrator** | user, `/orchestrate` | planner · architect · onboarder · implementer · tester · reviewer |
+| **planner** | orchestrator, `/plan-epic`, `/decompose`, `/intake-issue` | orchestrator (handoff block: ready beads + agent per bead + order) |
+| **architect** | orchestrator, planner, implementer, reviewer, `/arch`, modernization report | orchestrator (ADR + arc42 + bead list) |
+| **onboarder** | orchestrator, `aiflow init` (brownfield), `/onboard` | architect (actual structure) + everyone via memory/arc42 |
+| **implementer** | orchestrator, `/implement` | reviewer (always); tester first when risky; back to architect/planner/user when blocked |
+| **tester** | orchestrator, implementer, reviewer | reviewer; bugs back to implementer |
+| **reviewer** | orchestrator, implementer, `/review-ac` | PASS → close · CHANGES REQUIRED → implementer · `[suggestion]` beads |
+| **audit agents** | manual trigger only | Beads (prefixed), which re-enter via orchestrator/planner |
+
+Each agent file repeats its own edges in a **"Net & handoffs"** section, so an agent started
+standalone still knows where its output goes.
+
+**Without Claude Code** (Copilot/Codex, or a human): there is no automatic dispatch, but the route
+is the same — plan, check architecture fit, implement, test if risky, review, close. Walk it
+manually in that order and read the section referenced for each step.
+
+- **orchestrator** — entry point and dispatcher: decides which specialist handles each step, one at
+  a time, and routes the result onward. Writes routing state into the bead. Never implements.
+- **architect** — system design, arc42 docs, ADRs, trade-offs. Read-only-ish. Establishes §2b +
+  an ADR when a project still has no architecture rules ("Rule zero").
+- **planner** — break an epic/issue into beads with dependencies + AC, and hand the ordered set
+  back to the orchestrator with a recommended agent per bead.
 - **implementer** — senior engineer for one ready bead: strategy-first pre-analysis, architecture
   fit, proven frameworks/patterns over self-built, quality gates §3a/§3b, with tests.
 - **reviewer** — architect **and** quality gate in one: architecture/design/risk review plus the

@@ -124,6 +124,20 @@ blocked, the user says stop, or a decision/credential only the user has is requi
 `beads.queueMode = false` or `AIFLOW_QUEUE_MODE=off`.
 
 ## Agents
+The network: /orchestrate is the entry point for anything that is not a single obvious edit. The
+orchestrator owns the route and never implements: planner (goal -> dependency-ordered beads with AC
+and a recommended agent per bead, returned as a HANDOFF block) -> architect when the change crosses
+module/layer boundaries or AGENTS.md section 2b still has no rules ("Rule zero") -> implementer ->
+tester when the pre-analysis flags risk -> reviewer (always; PASS closes the bead, CHANGES REQUIRED
+goes back to the implementer). Exactly ONE specialist per bead at a time, and every handover is
+written into the bead (`bd update <id> --notes "route: ..."`) so it survives /compact. The audit
+agents are outside this loop: manually triggered, they only file prefixed beads (or, for
+modernization-advisor, a report for the architect), and those beads re-enter the route at the top.
+Every agent file carries a "Net & handoffs" section naming who it receives from and hands to, so a
+standalone-started agent still knows where its output belongs. Without Claude Code the route is
+identical, just manual.
+Orchestrator: entry point/dispatcher, routes and evaluates, escalates PO decisions to the user,
+turns discovered work into beads (--deps discovered-from:), never writes code/tests/docs/ADRs.
 Delivery: architect, planner, implementer (senior engineer: mandatory pre-analysis of architecture
 fit/effort/complexity before code, targeted refactoring, SOLID/DRY/KISS/YAGNI, testable by design,
 proven frameworks + design patterns over self-built, PO-level questions with recorded decisions),
@@ -147,7 +161,7 @@ Shipped agents are deliberately generic (strong universal base config, ~70-80% l
 blank); customise them per project in .claude/agents/*.md (Claude Code only — Copilot/Codex follow
 the same roles manually from AGENTS.md §5). The project aim (.claude/memory/project-aim.md +
 AGENTS.md §1, set via init/change-settings) tunes the agent to the project — 2-4 sentences: what,
-for whom, target architecture, quality bar. Slash-commands (Claude Code only): /intake-issue,
+for whom, target architecture, quality bar. Slash-commands (Claude Code only): /orchestrate (entry point), /intake-issue,
 /decompose, /plan-epic, /implement [bead] [ralph|no-ralph], /review-ac, /arch, the audit commands,
 /onboard, /explain, /standup. Skills (Claude Code only, `.claude/skills/<name>/SKILL.md`) —
 distinct from slash-commands: Claude Code matches a skill's description against the current task

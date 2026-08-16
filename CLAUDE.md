@@ -189,9 +189,11 @@ git config core.hooksPath .githooks   # aiflow doctor reports this when it is mi
 
 ## Agents & quality gates (self-hosted aiflow)
 
-This repo runs on its own agent roster: `.claude/agents/` + `.claude/commands/` mirror
-`templates/.claude/` (keep them in sync when templates change — that is part of shipping a
-template change). Audit helpers live in `.aiflow/` (`aiflow security-check | quality-check |
+This repo runs on its own agent roster: `.claude/agents/`, `.claude/commands/` and
+`.claude/skills/` mirror `templates/.claude/` (keep them in sync when templates change — that is
+part of shipping a template change). Enforced by `bash .aiflow/roster-drift.sh` (CI job
+`roster-drift`); `--fix` copies the templates over. The generated `model:` frontmatter line is
+ignored by the check — `apply.sh` stamps it per `modelRouting` tier. Audit helpers live in `.aiflow/` (`aiflow security-check | quality-check |
 requirements-check | a11y-check | modernize-check | ralph` work here).
 
 The full quality-gate definitions (§3a metrics/tests/logging, §3b REST, §3c database) live in

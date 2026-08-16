@@ -1,14 +1,41 @@
 {
-  "caveman":   { "enabled": true, "mode": "full" },
-  "rtk":       { "enabled": true },
-  "router":    { "enabled": false },
-  "graphify":  { "enabled": true },
-  "taskmaster":{ "enabled": false },
-  "mcp":       { "filesystem": true, "context7": true, "cocoindex": true },
-  "memory":    { "enabled": true, "graph": true, "intensity": "aggressive" },
-  "agents":    { "claude": true, "copilot": true, "codex": true },
-  "claude":    { "auth": "oauth" },
-  "vcs":       { "system": "git" },
+  "caveman": {
+    "enabled": true,
+    "mode": "full"
+  },
+  "rtk": {
+    "enabled": true
+  },
+  "router": {
+    "enabled": false
+  },
+  "graphify": {
+    "enabled": true
+  },
+  "taskmaster": {
+    "enabled": false
+  },
+  "mcp": {
+    "filesystem": true,
+    "context7": true,
+    "cocoindex": true
+  },
+  "memory": {
+    "enabled": true,
+    "graph": true,
+    "intensity": "aggressive"
+  },
+  "agents": {
+    "claude": true,
+    "copilot": true,
+    "codex": true
+  },
+  "claude": {
+    "auth": "oauth"
+  },
+  "vcs": {
+    "system": "git"
+  },
   "remote": {
     "type": "github",
     "baseUrl": "https://github.com",
@@ -16,15 +43,33 @@
     "tokenEnv": "GITHUB_TOKEN",
     "mcp": "github"
   },
-  "gitkraken": { "enabled": false },
-  "sync":    { "askOnClose": true, "pullOnStart": true },
-  "ollama":  { "enabled": false, "url": "http://localhost:11434", "models": [] },
-  "teamPrefs": { "enabled": true, "codeStyle": "google" },
+  "gitkraken": {
+    "enabled": false
+  },
+  "sync": {
+    "askOnClose": true,
+    "pullOnStart": true
+  },
+  "beads": {
+    "queueMode": true
+  },
+  "ollama": {
+    "enabled": false,
+    "url": "http://localhost:11434",
+    "models": []
+  },
+  "teamPrefs": {
+    "enabled": true,
+    "codeStyle": "google"
+  },
   "project": {
     "aim": "aiflow: one command turns any repo into a governed, AI-driven delivery pipeline, agent-agnostic across Claude Code/Copilot/Codex CLI (Beads + graph/RAG memory + agents + gitflow release automation + team sync).",
     "architecture": "POSIX bash CLI (bin/aiflow, aiflow.ps1) + lib/*.sh. init/change-settings run interactive Q&A -> write .aiflow/config.json -> apply.sh renders per-agent MCP config (.mcp.json/.codex/.vscode), git hooks, memory, router-config, team-prefs, bd-close-sync, release-workflows. Everything project-scoped; secrets only in .env."
   },
-  "dev": { "os": "windows", "ide": "vscode" },
+  "dev": {
+    "os": "windows",
+    "ide": "vscode"
+  },
   "git": {
     "model": "gitflow",
     "strict": false,
@@ -34,5 +79,8 @@
     "releaseTags": true,
     "chore": true
   },
-  "templates_search": false
+  "templates_search": false,
+  "meta": {
+    "aiflowVersion": "0.7.0-SNAPSHOT"
+  }
 }

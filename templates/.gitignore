@@ -1,9 +1,8 @@
 # --- aiflow ---
 .env
 .env.local
-result.json
 .aiflow/runs/
-.aiflow/ralph.log
+.ralph/
 .aiflow/requirements-report.md
 .aiflow/modernization-report.md
 

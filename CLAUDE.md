@@ -21,6 +21,12 @@ bd close <id>         # Complete work
 - Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
 - Run `bd prime` for detailed command reference and session close protocol
 - Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
+- **Queue mode applies here too** (`templates/AGENTS.md` §4b — this repo is the first user of the
+  rule it ships): closing a bead ends a task, not the session. After every close, run
+  `aiflow next` / `bd ready --json` and continue with the next task. Stop only when the queue is
+  empty, the rest is blocked, the user says so, or a decision/credential only they have is
+  needed — and name which. The `Stop` hook `.claude/hooks/queue-continue.ps1` hands the next task
+  back once if you forget.
 
 **Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
 
@@ -66,6 +72,28 @@ No build step — aiflow is Bash + PowerShell + templates. Validate like CI does
 # syntax: every shell script + the CLI entry point
 find . -name '*.sh' -not -path './.git/*' -not -path './.beads/*' -exec bash -n {} +
 bash -n bin/aiflow
+# agent/command/skill frontmatter (a bad block silently drops an agent from the roster)
+# needs PyYAML: python3 -m pip install pyyaml
+python3 .github/scripts/check-frontmatter.py --selftest   # the guard's own fixtures
+python3 .github/scripts/check-frontmatter.py \
+  .claude/agents .claude/commands .claude/skills \
+  templates/.claude/agents templates/.claude/commands templates/.claude/skills
+# Bash/PowerShell twin parity (pairing + dispatch + usage block + per-pair step banners)
+python3 .github/scripts/check-twins.py --selftest
+python3 .github/scripts/check-twins.py .
+# rendered copies (.aiflow/, .claude/hooks/, .github/scripts/, .claude/agents|commands|skills)
+# vs templates/ — content drift too
+python3 .github/scripts/check-rendered.py --selftest
+python3 .github/scripts/check-rendered.py .
+# `[ -x ]` gates in front of `bash <path>` (aiflow-wrn: gates on a bit the interpreter ignores)
+python3 .github/scripts/check-exec-gates.py --selftest
+python3 .github/scripts/check-exec-gates.py .
+# the CI helpers themselves: syntax (blocking) + ruff (advisory, like shellcheck)
+python3 -m compileall -q .github/scripts templates/.github/scripts
+python3 -m ruff check .github/scripts templates/.github/scripts   # pip install ruff
+# `init` renders these 100755 and bd-close-sync.sh documents a direct call, so the mode is part of
+# the rendered copy — and core.filemode=false on Windows drops it without telling you
+git ls-files -s '.aiflow/*.sh' | awk '$1 != "100755"'   # must print nothing
 # all JSON templates/configs
 find . -name '*.json' -not -path './.git/*' -not -path './.beads/*' -exec jq empty {} +
 # advisory lint
@@ -81,6 +109,24 @@ powershell -NoProfile -Command '
   if ($err) { exit 1 }'
 # render test: init into a temp dir and inspect the generated project
 AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no-install-deps
+# POSIX-only behaviour (file modes, `[ -x ]`, symlinks): Git-Bash forces `-x` true for a *.sh
+# file whatever its mode, so a mode-dependent bug is INVISIBLE here — verify on ext4 rather than
+# concluding it cannot be tested. Prints "TRUE" under Git-Bash, "FALSE" under WSL:
+d=$(mktemp -d); printf '#!/bin/sh\n' > "$d/x.sh"; chmod 644 "$d/x.sh"
+[ -x "$d/x.sh" ] && echo "-x TRUE at 644" || echo "-x FALSE at 644"
+wsl -e bash -lc 'd=$(mktemp -d); printf "#!/bin/sh\n" > "$d/x.sh"; chmod 644 "$d/x.sh"
+  [ -x "$d/x.sh" ] && echo "-x TRUE at 644" || echo "-x FALSE at 644"'
+```
+
+## This repo's git hooks
+
+`.githooks/` holds aiflow's hooks for aiflow itself (`commit-msg` and `pre-push` delegate to the
+shipped `templates/.githooks/*`; `pre-commit` runs `bash -n` on staged shell + the four
+`.github/scripts/` guards, and never reformats). `core.hooksPath` is not cloned, so a fresh clone
+needs it once:
+
+```bash
+git config core.hooksPath .githooks   # aiflow doctor reports this when it is missing
 ```
 
 ## Architecture Overview
@@ -93,10 +139,26 @@ AIFLOW_HOME="$PWD" bash lib/init.sh /tmp/aiflow-rendertest --yes --no-beads --no
   `.aiflow/config.json`'s `meta.aiflowVersion` stamp. `init.sh` copies `templates/` into a target
   project, asks the Q&A, writes `.aiflow/config.json`; `apply.sh` renders everything
   (`.mcp.json`, hooks, memory, branching) from that config — **idempotent**.
+  **Decision (2026-08-15):** `project-update` refreshes `.github/scripts/*` mechanically but never
+  rewrites `.github/workflows/*` — `ci.yml` ships as a starting point projects extend, so replacing
+  it would eat their jobs. A shipped helper no workflow references is *advised* at the end of the
+  run instead. One-way on purpose: the script is always present, so adopting the step can never hit
+  a missing file. See also `.claude/memory/design-decisions.md`.
+  **Several `lib/*.ps1` are full native implementations, not shims** (`project-update.ps1`,
+  `apply.ps1`, …) — editing only the `.sh` ships a feature that silently does not exist on Windows.
 - **`templates/`** — everything a generated project receives: `AGENTS.md` (agent-agnostic operating
   rules incl. quality gates §3a/§3b/§3c; `CLAUDE.md` there is a one-line `@AGENTS.md` import),
   `.github/copilot-instructions.md`, `.claude/agents|commands|hooks`, `.aiflow/*.sh` helpers, git
   hooks, CI workflows, docker. **Template changes are the product** — most features land here.
+- **`.github/scripts/check-frontmatter.py`** — the agent-roster guard, twinned into
+  `templates/.github/scripts/` so generated projects get it too. **Decision (2026-08-15):** it uses
+  Python + PyYAML rather than a grep heuristic or `jq`/`yq`, because the failure it catches *is* a
+  YAML parse failure — only a real parser reproduces exactly what Claude Code accepts, and a
+  heuristic would both miss cases and red-build valid files. Cost: `python3` + `pip install pyyaml`
+  in this repo's CI **and** in every generated project's CI, regardless of that project's stack
+  (both workflows pin it via `actions/setup-python`). The script is self-contained and self-testing
+  (`--selftest` runs inline fixtures: nested command, `---` inside a quoted description, missing
+  description, unquoted colon).
 - **`release-workflows/`** — per-host release-publish CI (github/gitlab/gitea/forgejo/bitbucket),
   deliberately kept **outside** `templates/` (which is blindly copied into every project) so
   `apply.sh` can copy only the one matching the chosen `remote.type`.

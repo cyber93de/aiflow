@@ -128,6 +128,25 @@ if ($cfgObj) {
 }
 
 Write-Output ""
+Write-Output "git hooks:"
+# core.hooksPath lives in .git/config, which is never cloned - so a fresh clone silently runs
+# no hooks at all until someone sets it. `aiflow apply` does it; a clone needs it again.
+& git rev-parse --is-inside-work-tree *> $null
+if ($LASTEXITCODE -eq 0) {
+  $hp = (& git config --get core.hooksPath) 2>$null
+  if ($hp -and (Test-Path $hp)) {
+    Write-Output "  [ok]   core.hooksPath=$hp"
+  } else {
+    $hint = ".githooks"
+    if ((Test-Path ".beads/hooks") -and -not (Test-Path ".githooks")) { $hint = ".beads/hooks" }
+    Write-Output "  [----] core.hooksPath is not set - commit/push rules do NOT run in this clone"
+    Write-Output "         fix: git config core.hooksPath $hint   (or: aiflow apply)"
+  }
+} else {
+  Write-Output "  [----] not a git work tree"
+}
+
+Write-Output ""
 Write-Output "env:"
 $envVars = @("GITHUB_TOKEN", "GITLAB_TOKEN", "GIT_REMOTE_TOKEN", "ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN", "CONTEXT7_API_KEY")
 if ($cfgObj) {

@@ -376,16 +376,21 @@ if [ -f .claude/settings.json ]; then
       HOOK_FMT='powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/format.ps1'
       HOOK_CAVE='powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/caveman.ps1'
       HOOK_BEADS='powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/beads-sync.ps1'
+      HOOK_QUEUE='powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/queue-continue.ps1'
       ;;
     *)
       HOOK_FMT='bash .claude/hooks/format.sh'
       HOOK_CAVE='bash .claude/hooks/caveman.sh'
       HOOK_BEADS='bash .claude/hooks/beads-sync.sh'
+      HOOK_QUEUE='bash .claude/hooks/queue-continue.sh'
       ;;
   esac
-  jq --arg fmt "$HOOK_FMT" --arg cave "$HOOK_CAVE" --arg beads "$HOOK_BEADS" '
+  # Stop hook: a closed bead is not a closed session (AGENTS.md 4b). It blocks at most once
+  # per stop (stop_hook_active), and no-ops without beads or with beads.queueMode = false.
+  jq --arg fmt "$HOOK_FMT" --arg cave "$HOOK_CAVE" --arg beads "$HOOK_BEADS" --arg queue "$HOOK_QUEUE" '
     .hooks.SessionStart = [ { hooks: [ {type:"command", command:$cave}, {type:"command", command:$beads} ] } ] |
-    .hooks.PostToolUse  = [ { matcher:"Edit|Write", hooks: [ {type:"command", command:$fmt} ] } ]
+    .hooks.PostToolUse  = [ { matcher:"Edit|Write", hooks: [ {type:"command", command:$fmt} ] } ] |
+    .hooks.Stop         = [ { hooks: [ {type:"command", command:$queue} ] } ]
   ' .claude/settings.json > .claude/settings.json.tmp && mv .claude/settings.json.tmp .claude/settings.json
   echo "  settings.json hooks wired for OS=${OS:-unknown} ($([ "$OS" = windows ] && echo powershell || echo bash))"
 fi

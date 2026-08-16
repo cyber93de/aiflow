@@ -66,10 +66,12 @@ Copy-TemplateTree $TPL $Target $Force
 # no chmod +x equivalent needed on Windows - the exec bit is a POSIX concept.
 Set-Location $Target
 
-# ---- OS default: this .ps1 twin only ships in the windows archive - always windows ----
+# ---- detect OS default ----
+# this .ps1 twin only ships in the windows archive, so the answer is always windows
 $OS_DEF = 'windows'
 
-# ---- interactive helpers (ask_yn always emits true/false, also in --yes mode) ----
+# ---- interactive helpers (read from tty so piping still works) ----
+# ask_yn always emits true/false, also in --yes mode
 function Ask($prompt, $d) {
   if ($Yes) { return $d }
   $a = Read-Host "  $prompt [$d]"
@@ -264,6 +266,7 @@ $cfgOut = [ordered]@{
   remote = [ordered]@{ type = $REMOTE_TYPE; baseUrl = $REMOTE_URL; api = $REMOTE_API; tokenEnv = $REMOTE_TOKENENV; mcp = $REMOTE_MCP }
   gitkraken = [ordered]@{ enabled = ($GITKRAKEN_ON -eq 'true') }
   sync = [ordered]@{ askOnClose = ($SYNC_ONCLOSE -eq 'true'); pullOnStart = $true }
+  beads = [ordered]@{ queueMode = $true }
   ollama = [ordered]@{ enabled = ($OLLAMA_ON -eq 'true'); url = $OLLAMA_URL; models = $ollamaJson }
   teamPrefs = [ordered]@{ enabled = ($TEAM_ON -eq 'true'); codeStyle = $TEAM_STYLE }
   project = [ordered]@{ aim = $AIM; architecture = $ARCH }

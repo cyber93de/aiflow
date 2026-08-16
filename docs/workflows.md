@@ -25,6 +25,7 @@ Issue (GitHub / GitLab / Bitbucket / …)
                       └─ /review-ac ─▶ gate vs acceptance criteria (reviewer)
                            └─ commit (Conventional Commits + bead id) ─▶ PR ─▶ release
                                 └─ aiflow close-sync ─▶ push + Dolt-sync issues
+                                     └─ aiflow next ─▶ next ready task (loop)
 ```
 
 One feature end to end — task, pre-analysis, PO question with recorded decision, versioned +
@@ -33,7 +34,34 @@ secured API, tests + `.http` file, review gate, close:
 ![aiflow delivery workflow: bd create, /implement with pre-analysis and PO question, /review-ac PASS, bd close](assets/terminal/workflow.gif)
 
 A task is **DONE** only when: acceptance criteria met • tests pass • style/lint clean • review gate
-passed • bead closed • sync gate honoured.
+passed • bead closed • sync gate honoured • the queue refreshed.
+
+### Queue mode — a closed task is not a finished session
+
+Beads is an authoritative work queue, not a notepad. Closing a bead ends a *task*; the agent then
+refreshes the queue and starts the next one instead of asking you what to do. `aiflow next` picks
+it, ranked: higher priority first, then the task that unblocks the most others, then the
+epic/workstream in progress, then a natural continuation of the bead just closed
+(`aiflow next --after <closed-id>`). It exits `3` when nothing is actionable.
+
+There are exactly four reasons to stop, and the agent must name the one that applies:
+
+- the queue holds nothing actionable,
+- everything left is blocked by unresolved dependencies (`bd blocked`),
+- continuing needs a decision, clarification, credential or permission only you have,
+- you said stop.
+
+This does not rely on the model remembering. With Claude Code, the `Stop` hook
+`.claude/hooks/queue-continue.*` checks the queue when the agent tries to end its turn and hands
+the next ready task back. It fires **at most once** per stop, so naming a legitimate reason always
+ends the session. Turn it off per project with `.aiflow/config.json → beads.queueMode = false`, or
+for one session with `AIFLOW_QUEUE_MODE=off`. Copilot and Codex have no `Stop`-hook equivalent —
+run `aiflow next` yourself after each close.
+
+Queue mode changes nothing about the gates: every task still needs its acceptance criteria, its
+review pass and its recorded decisions, work outside a bead's scope becomes a new bead, and
+merging to `main` or cutting a release still requires your explicit confirmation.
+
 
 ## Branching models
 

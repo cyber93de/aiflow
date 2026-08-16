@@ -20,15 +20,27 @@ jobs:
           fail=0
           while IFS= read -r f; do
             bash -n "$f" || { echo "::error file=$f::bash syntax error"; fail=1; }
-          done < <(find bin lib templates install.sh -type f \( -name '*.sh' -o -name 'aiflow' \) 2>/dev/null)
+          done < <(find bin lib templates install.sh -type f \
+                     \( -name '*.sh' -o -name 'aiflow' -o -path '*/.githooks/*' \) 2>/dev/null)
           exit $fail
 
       - name: shellcheck (advisory)
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q shellcheck
           # advisory: don't fail the build on style, only on real errors (-S error)
-          find bin lib templates install.sh -type f \( -name '*.sh' -o -name 'aiflow' \) -print0 \
+          find bin lib templates install.sh -type f \
+            \( -name '*.sh' -o -name 'aiflow' -o -path '*/.githooks/*' \) -print0 \
             | xargs -0 shellcheck -S error || true
+
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      # aiflow-wrn: `[ -x ]` in front of `bash <path>` gates on a bit the interpreter never
+      # reads, and Windows' core.filemode=false drops it — the command then dies on Linux for
+      # a reason the error message does not name. shellcheck has no rule for this.
+      - name: Self-test the exec-gate guard
+        run: python .github/scripts/check-exec-gates.py --selftest
+      - name: Check for `[ -x ]` gates before interpreter calls
+        run: python .github/scripts/check-exec-gates.py .
 
   json:
     name: JSON / template validation
@@ -44,6 +56,247 @@ jobs:
             jq empty "$f" || { echo "::error file=$f::invalid JSON"; fail=1; }
           done < <(find . -path ./.git -prune -o -name '*.json' -print)
           exit $fail
+
+  frontmatter:
+    name: Agent / command / skill frontmatter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      - name: Install PyYAML
+        run: python -m pip install --quiet pyyaml
+      - name: Self-test the guard
+        run: python .github/scripts/check-frontmatter.py --selftest
+      - name: Validate YAML frontmatter
+        run: |
+          set -euo pipefail
+          python .github/scripts/check-frontmatter.py \
+            .claude/agents .claude/commands .claude/skills \
+            templates/.claude/agents templates/.claude/commands templates/.claude/skills
+
+  python-helpers:
+    name: CI helpers (compile + ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      # Shell gets `bash -n` + shellcheck and JSON gets `jq empty`, but the Python guards that
+      # decide whether this whole workflow goes green had nothing at all (aiflow-3zu).
+      - name: compileall (syntax — blocking)
+        run: |
+          set -euo pipefail
+          python -m compileall -q .github/scripts templates/.github/scripts
+      # Advisory like shellcheck: findings are printed, they do not fail the build. Unpinned on
+      # purpose — a new ruff release can only add warnings here, never break the build.
+      - name: ruff (advisory)
+        run: |
+          python -m pip install --quiet ruff
+          python -m ruff check .github/scripts templates/.github/scripts || true
+
+  twins:
+    name: Self-hosting drift (twins + rendered copies)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      # Several lib/*.ps1 are full native implementations, not shims: a feature added to one
+      # twin only ships broken on the other platform, silently. Nothing detected that before.
+      - name: Self-test the twin guard
+        run: python .github/scripts/check-twins.py --selftest
+      - name: Self-test the rendered-copy guard
+        run: python .github/scripts/check-rendered.py --selftest
+      - name: Check twin pairing, dispatch and help parity
+        run: python .github/scripts/check-twins.py .
+      # aiflow develops on itself: .aiflow/ here is a rendered copy of templates/.aiflow/.
+      # Pairing cannot see content drift — which is how a two-designs-old ralph-headless.sh
+      # survived in this repo (aiflow-30k).
+      - name: Check rendered copies against the templates
+        run: python .github/scripts/check-rendered.py .
+      # Since aiflow-wrn no bin/aiflow branch gates on `[ -x ]` any more, so this is not what makes
+      # the commands work. It still earns its place: .aiflow/bd-close-sync.sh documents a direct
+      # `.aiflow/bd-close-sync.sh <issue-id>` invocation, and lib/init.sh:37 + lib/apply.sh:414
+      # chmod +x on copy — so every rendered project has 100755 and this keeps aiflow's own
+      # self-hosted copy matching that in MODE, which check-rendered.py cannot see (it compares
+      # bytes). core.filemode=false on Windows drops the bit silently (half of aiflow-30k).
+      # Everything else (bin/aiflow, lib/*.sh, install.sh, templates/**) is deliberately 100644 —
+      # the installer and init/project-update chmod on copy. `.beads/hooks/*` are 100755 too but
+      # are NOT asserted (aiflow-vly): beads owns and rewrites those files, and core.hooksPath is
+      # never cloned, so they are inert at any mode until beads' own setup runs.
+      - name: Check .aiflow/*.sh are executable in the index
+        run: |
+          set -euo pipefail
+          all="$(git ls-files -s '.aiflow/*.sh')"
+          if [ -z "$all" ]; then
+            echo "::error::no .aiflow/*.sh tracked - this check is looking at the wrong path"
+            exit 1
+          fi
+          bad="$(printf '%s\n' "$all" | awk '$1 != "100755"')"
+          if [ -n "$bad" ]; then
+            printf '%s\n' "$bad" | while read -r mode _ _ path; do
+              echo "::error file=$path::$path is $mode in the index, expected 100755 - run 'git update-index --chmod=+x $path'"
+            done
+            exit 1
+          fi
+          echo "all $(printf '%s\n' "$all" | wc -l | tr -d ' ') .aiflow/*.sh are 100755"
+
+  render:
+    name: Render + project-update round-trip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: init a project, then bring it forward with project-update
+        run: |
+          set -euo pipefail
+          proj="$RUNNER_TEMP/rendertest"
+          AIFLOW_HOME="$PWD" bash lib/init.sh "$proj" --yes --no-beads --no-install-deps
+          test -f "$proj/AGENTS.md" || { echo "::error::init produced no AGENTS.md"; exit 1; }
+          test -f "$proj/.github/scripts/check-frontmatter.py" \
+            || { echo "::error::init did not ship the CI helpers"; exit 1; }
+          # the generated project must police its own .aiflow exec bits (aiflow-3tp), and the
+          # files init just wrote must actually carry them
+          grep -q 'executable in the index' "$proj/.github/workflows/ci.yml" \
+            || { echo "::error::generated ci.yml lacks the exec-bit assertion"; exit 1; }
+          notx="$(find "$proj/.aiflow" -name '*.sh' ! -perm -u+x)"
+          if [ -n "$notx" ]; then
+            echo "::error::init rendered .aiflow scripts without the exec bit: $notx"; exit 1
+          fi
+
+          # Simulate a project generated before the helper existed: no .github/scripts, and the
+          # workflow step that calls it stripped out. project-update must restore the script,
+          # leave the workflow byte-identical, and say so.
+          rm -rf "$proj/.github/scripts"
+          sed -i '/# Agent roster guard/,/^[[:space:]]*$/d' "$proj/.github/workflows/ci.yml"
+          # NOT `! grep -q …`: bash exempts !-inverted commands from set -e, so that asserts nothing.
+          if grep -q check-frontmatter "$proj/.github/workflows/ci.yml"; then
+            echo "::error::simulation did not strip the guard step"; exit 1
+          fi
+          cp "$proj/.github/workflows/ci.yml" "$RUNNER_TEMP/ci-before.yml"
+          # a project's OWN script must survive and must NOT be advised on
+          mkdir -p "$proj/.github/scripts" && echo 'echo mine' > "$proj/.github/scripts/deploy.sh"
+          # a helper aiflow no longer ships must be REPORTED and left alone, never deleted
+          echo 'echo stale' > "$proj/.aiflow/removed-helper.sh"
+
+          out="$(cd "$proj" && AIFLOW_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/lib/project-update.sh" 2>&1)"
+          echo "$out"
+
+          test -f "$proj/.github/scripts/check-frontmatter.py" \
+            || { echo "::error::project-update did not restore the CI helper"; exit 1; }
+          test -f "$proj/.github/scripts/deploy.sh" \
+            || { echo "::error::project-update deleted a project-owned CI script"; exit 1; }
+          cmp -s "$RUNNER_TEMP/ci-before.yml" "$proj/.github/workflows/ci.yml" \
+            || { echo "::error::project-update rewrote .github/workflows/ci.yml"; exit 1; }
+          grep -q 'no workflow under' <<<"$out" \
+            || { echo "::error::no advisory for the uncalled helper"; exit 1; }
+          grep -q 'check-frontmatter.py' <<<"$out" \
+            || { echo "::error::advisory did not name the helper"; exit 1; }
+          if grep -q 'deploy.sh' <<<"$out"; then
+            echo "::error::advised on a project-owned script"; exit 1
+          fi
+          test -f "$proj/.aiflow/removed-helper.sh" \
+            || { echo "::error::project-update DELETED a file it no longer ships"; exit 1; }
+          grep -q 'removed-helper.sh' <<<"$out" \
+            || { echo "::error::no advisory for the no-longer-shipped helper"; exit 1; }
+          echo "render + project-update round-trip OK"
+
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      - name: guard runs inside the generated project
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pyyaml
+          cd "$RUNNER_TEMP/rendertest"
+          python .github/scripts/check-frontmatter.py --selftest
+          python .github/scripts/check-frontmatter.py \
+            .claude/agents .claude/commands .claude/skills
+
+  render-macos-bash32:
+    name: macOS system bash 3.2 (empty arrays under set -u)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      # macOS still ships bash 3.2, where an EMPTY array is treated as unset under `set -u` —
+      # "${ARR[@]}" aborts the script instead of expanding to nothing, and `mapfile` does not
+      # exist at all. Neither shows up on the ubuntu runner (bash 5), so nothing caught it
+      # (aiflow-13x). The runner also has a newer bash on PATH, so call /bin/bash explicitly.
+      - name: prove this really is bash 3.2
+        run: |
+          set -euo pipefail
+          ver="$(/bin/bash -c 'echo "$BASH_VERSION"')"
+          echo "/bin/bash is $ver"
+          case "$ver" in
+            3.2*) ;;
+            *) echo "::error::/bin/bash is $ver, not 3.2 — this job would prove nothing"; exit 1 ;;
+          esac
+      - name: init + project-update + ollama under /bin/bash
+        run: |
+          set -euo pipefail
+          proj="$RUNNER_TEMP/rendertest-mac"
+          AIFLOW_HOME="$PWD" /bin/bash lib/init.sh "$proj" --yes --no-beads --no-install-deps
+          # a fresh project changes nothing, so every reporting array is EMPTY here — exactly the
+          # case that aborts on 3.2.
+          (cd "$proj" && AIFLOW_HOME="$GITHUB_WORKSPACE" /bin/bash "$GITHUB_WORKSPACE/lib/project-update.sh")
+          # `ollama pull` with no models configured hits the other empty-array guard (and used
+          # to reach `mapfile`, which 3.2 does not have).
+          (cd "$proj" && AIFLOW_HOME="$GITHUB_WORKSPACE" /bin/bash "$GITHUB_WORKSPACE/lib/ollama.sh" pull)
+          echo "bash 3.2 round-trip OK"
+
+  render-windows:
+    name: project-update parity (PowerShell twin)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      # lib/*.ps1 are full native implementations, not shims — a feature added to the .sh alone
+      # silently does not exist on Windows. This runs the twin over the same round-trip.
+      - name: init (bash) then project-update (PowerShell)
+        shell: bash
+        run: |
+          set -euo pipefail
+          proj="$RUNNER_TEMP/rendertest-ps"
+          AIFLOW_HOME="$PWD" bash lib/init.sh "$proj" --yes --no-beads --no-install-deps
+          rm -rf "$proj/.github/scripts"
+          # [[:space:]] not ^$ — the checkout may be CRLF here, and a range that never ends would
+          # truncate the workflow to its first lines while every later assertion still passed.
+          sed -i '/# Agent roster guard/,/^[[:space:]]*$/d' "$proj/.github/workflows/ci.yml"
+          if grep -q check-frontmatter "$proj/.github/workflows/ci.yml"; then
+            echo "::error::simulation did not strip the guard step"; exit 1
+          fi
+          if [ "$(wc -l < "$proj/.github/workflows/ci.yml")" -lt 20 ]; then
+            echo "::error::sed truncated the workflow instead of removing one step"; exit 1
+          fi
+          cp "$proj/.github/workflows/ci.yml" "$RUNNER_TEMP/ci-before-ps.yml"
+          # a project's OWN script must survive the twin and must NOT be advised on
+          mkdir -p "$proj/.github/scripts" && echo 'echo mine' > "$proj/.github/scripts/deploy.sh"
+      - name: assert the twin restores the helper and leaves the workflow alone
+        shell: pwsh
+        run: |
+          $proj = Join-Path $env:RUNNER_TEMP 'rendertest-ps'
+          Set-Location $proj
+          $env:AIFLOW_HOME = $env:GITHUB_WORKSPACE
+          $out = & (Join-Path $env:GITHUB_WORKSPACE 'lib/project-update.ps1') 2>&1 | Out-String
+          Write-Output $out
+          if (-not (Test-Path '.github/scripts/check-frontmatter.py')) {
+            Write-Output "::error::PowerShell twin did not restore the CI helper"; exit 1
+          }
+          $before = (Get-FileHash (Join-Path $env:RUNNER_TEMP 'ci-before-ps.yml')).Hash
+          if ((Get-FileHash '.github/workflows/ci.yml').Hash -ne $before) {
+            Write-Output "::error::PowerShell twin rewrote .github/workflows/ci.yml"; exit 1
+          }
+          if (-not (Test-Path '.github/scripts/deploy.sh')) {
+            Write-Output "::error::PowerShell twin deleted a project-owned CI script"; exit 1
+          }
+          if ($out -notmatch 'no workflow under') {
+            Write-Output "::error::PowerShell twin printed no advisory"; exit 1
+          }
+          if ($out -notmatch 'check-frontmatter\.py') {
+            Write-Output "::error::advisory did not name the helper"; exit 1
+          }
+          if ($out -match 'deploy\.sh') {
+            Write-Output "::error::advised on a project-owned script"; exit 1
+          }
+          Write-Output "project-update parity OK"
 
   powershell:
     name: PowerShell parse

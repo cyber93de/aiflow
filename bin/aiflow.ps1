@@ -94,6 +94,8 @@ switch ($cmd) {
   'test-gap'   { Import-DotEnv; & '.aiflow/run-agent.ps1' test-gap-advisor @rest }
   'perf-check' { Import-DotEnv; & '.aiflow/run-agent.ps1' performance-advisor @rest }
   'docs-check' { Import-DotEnv; & '.aiflow/run-agent.ps1' docs-sync @rest }
+  { $_ -in 'a11y-check','accessibility-check' } { Import-DotEnv; & '.aiflow/run-agent.ps1' accessibility-checker @rest }
+  { $_ -in 'modernize-check','modernization-check' } { Import-DotEnv; & '.aiflow/run-agent.ps1' modernization-advisor @rest }
   'onboard'    { Import-DotEnv; & '.aiflow/run-agent.ps1' onboarder @rest }
   'sync'       {
     $dir = if ($rest.Count -ge 1) { $rest[0] } else { 'both' }
@@ -112,6 +114,10 @@ switch ($cmd) {
   { $_ -in 'close-sync','bd-sync' } {
     if (Test-Path '.aiflow/bd-close-sync.ps1') { & '.aiflow/bd-close-sync.ps1' @rest }
     else { Write-Error "No .aiflow/bd-close-sync.ps1 (enable sync-on-close via 'aiflow change-settings')." }
+  }
+  'next' {
+    if (Test-Path '.aiflow/next-task.ps1') { & '.aiflow/next-task.ps1' @rest }
+    else { Write-Error "No .aiflow/next-task.ps1 in this project. Run 'aiflow init' first." }
   }
   { $_ -in 'version','-v','--version' } {
     $vf = Join-Path $AIFLOW_HOME 'VERSION'
@@ -135,10 +141,13 @@ USAGE
   aiflow test-gap          untested critical paths -> [test gap] Beads
   aiflow perf-check        performance audit -> [performance] Beads
   aiflow docs-check        doc/code drift -> [docs] Beads
+  aiflow a11y-check        strict WCAG accessibility audit -> [accessibility] Beads
+  aiflow modernize-check   brownfield modernisation concepts -> report for the architect
   aiflow onboard           learn an existing codebase into memory + AGENTS.md + arc42
   aiflow sync [pull|push|both]  team sync: git + Beads(dolt) pull/push (default pull at start)
   aiflow ollama [pull|add <m>|list]  manage local Ollama models (from config)
   aiflow close-sync <id>   on Beads issue close: prompt to push + dolt-sync the remote
+  aiflow next [--after <id>] [--claim] [--json]  next ready Beads task, ranked (AGENTS.md 4b)
   aiflow hotfix <name>     branch hotfix/<name> from main, bump VERSION to X.Y.(Z+1)-HOTFIX
   aiflow release [--yes] [--push]  cut a release per the branching model (version bump + tag);
                            dry run without --yes

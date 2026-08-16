@@ -122,9 +122,12 @@ touches the install — existing projects keep running on whatever templates the
 generated with until you explicitly bring them forward. Each project stamps the aiflow
 version it was created with in `.aiflow/config.json` (`meta.aiflowVersion`); once that
 falls behind the installed CLI, any `aiflow` command run inside the project asks
-(interactively) whether to run `aiflow project-update` right then. It refreshes only the
-mechanical, never-hand-edited scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) and
-re-applies your config — `AGENTS.md`/`CLAUDE.md`, agents, docs, and your own settings are untouched.
+(interactively) whether to run `aiflow project-update` right then. It overwrites the mechanical,
+never-hand-edited scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`, `.github/scripts/*`),
+refreshes the agent definitions (`AGENTS.md`/`CLAUDE.md`, `.claude/agents|commands|skills`) and the
+git hooks (`.githooks/*`) keeping any file you customised as `<file>.bak`, and re-applies your config. Your `.beads/`,
+`.claude/memory/*`, `.github/workflows/*` and your own settings are untouched, and nothing is ever
+deleted — a script aiflow no longer ships is listed at the end of the run, not removed.
 
 ## Next
 

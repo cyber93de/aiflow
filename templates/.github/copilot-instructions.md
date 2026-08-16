@@ -17,10 +17,18 @@ Key points from `AGENTS.md` that apply directly to you:
   explicit go-ahead first.
 - Google Style Guides for code, mandatory tests (unit + BDD e2e, >80% coverage), no code smells,
   logging, `.http` files for REST changes — see `AGENTS.md` §3/§3a/§3b/§3c for the full detail.
+- Respect `AGENTS.md` §2 architecture rules — layering with inward dependencies, interfaces at
+  every seam, DAO for data access, DTO on the wire, domain objects never leaving the domain. A task
+  that doesn't fit is **not** built as-is: ask first, record the answer.
 - Before adding new code/dependencies/abstractions, check `.claude/skills/ponytail/SKILL.md`'s
   decision ladder (needed? already in the codebase? stdlib? platform feature? installed dep? a
   one-liner? only then write it) if `ponytail.enabled` is set in `.aiflow/config.json` — see
   `AGENTS.md` §5/§9.
+- Copilot has no skill auto-offer: **open the matching `.claude/skills/<name>/SKILL.md` yourself**
+  when the task fits it — `stack-embedded`, `stack-mobile`, `stack-web-frontend`, `stack-backend`,
+  `api-design`, `messaging-events`, `data-storage`, `cloud-native`, `security`, `seo-optimization`.
+  They are checklists, not reading material; the "typical findings" list at the end is the fastest
+  way to use one.
 
 **Token discipline** (this file and `AGENTS.md` are always-on context, billed every step —
 see the [Copilot token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization)):

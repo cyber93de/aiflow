@@ -473,10 +473,12 @@ if (Test-Path '.claude/settings.json') {
     $hookFmt = 'powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/format.ps1'
     $hookCave = 'powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/caveman.ps1'
     $hookBeads = 'powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/beads-sync.ps1'
+    $hookQueue = 'powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/queue-continue.ps1'
   } else {
     $hookFmt = 'bash .claude/hooks/format.sh'
     $hookCave = 'bash .claude/hooks/caveman.sh'
     $hookBeads = 'bash .claude/hooks/beads-sync.sh'
+    $hookQueue = 'bash .claude/hooks/queue-continue.sh'
   }
   $settingsObj = Get-Content '.claude/settings.json' -Raw | ConvertFrom-Json
   if ($settingsObj.PSObject.Properties.Match('hooks').Count -eq 0) {
@@ -487,6 +489,11 @@ if (Test-Path '.claude/settings.json') {
   )
   Set-JsonProperty $settingsObj.hooks 'PostToolUse' @(
     [ordered]@{ matcher = 'Edit|Write'; hooks = @([ordered]@{ type = 'command'; command = $hookFmt }) }
+  )
+  # Stop hook: a closed bead is not a closed session (AGENTS.md 4b). It blocks at most once
+  # per stop (stop_hook_active), and no-ops without beads or with beads.queueMode = false.
+  Set-JsonProperty $settingsObj.hooks 'Stop' @(
+    [ordered]@{ hooks = @([ordered]@{ type = 'command'; command = $hookQueue }) }
   )
   Write-JsonFile '.claude/settings.json' $settingsObj
   $osLabel = if ($OS) { $OS } else { 'unknown' }

@@ -45,12 +45,18 @@ hooks/checks. `aiflow update` self-updates the CLI install: `git pull --ff-only`
 is a git checkout; otherwise it checks the GitHub Releases API for a newer version, downloads the
 matching per-OS archive, verifies it against the published `SHA256SUMS.txt`, and installs it over
 `AIFLOW_HOME`. `aiflow project-update` refreshes one project from the installed templates:
-mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`) always, plus agent definitions
+mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`, `.github/scripts/*`) always,
+plus agent definitions
 (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/agents/*`,
-`.claude/commands/*`, `.claude/skills/*`) — any of those that was customised (differs from the
+`.claude/commands/*`, `.claude/skills/*`), the git hooks (`.githooks/*`) and
+`.aiflow/router-config.example.json` — any of those that was customised (differs from the
 incoming template) is renamed to `<file>.bak` first, never deleted, and reported so you can
-reapply your changes; identical files are overwritten silently. Never touches `.beads/`,
-`.claude/memory/*`, or your `.aiflow/config.json` project settings (aim, architecture) — only
+reapply your changes; identical files are overwritten silently. Nothing is ever deleted: a script
+the templates no longer ship is listed at the end of the run (for `.aiflow/` and `.claude/hooks/`;
+`.github/scripts/` is shared, so project-owned scripts there are not flagged). Never touches `.beads/`,
+`.claude/memory/*`, `.github/workflows/*` (yours to extend — a shipped CI helper that no workflow
+calls yet is advised at the end of the run, never written in), or your `.aiflow/config.json`
+project settings (aim, architecture) — only
 `meta.aiflowVersion` is stamped (each project stamps the aiflow version it was generated with, and
 is prompted to upgrade when it falls behind the installed CLI).
 
@@ -89,6 +95,12 @@ Beads issues live in a shared Dolt database synced over `refs/dolt/data` on the 
 graph, no extra server. Rules: session-start auto-pull (`bd dolt pull` hook), atomic claiming
 (`bd ready --claim` / `bd update --claim`, prevents double-grab), pull-before-push
 (`aiflow sync`, `aiflow close-sync`), never force-push, conflicts resolved via `bd dolt pull`.
+Queue mode (AGENTS.md §4b): Beads is an authoritative work queue — closing a bead ends a task, not the
+session. The agent refreshes the queue (`aiflow next`, ranked: priority → unblocks-most → continuation
+of the bead just closed) and continues; it stops only when nothing is actionable, everything left is
+blocked, the user says stop, or a decision/credential only the user has is required. A Claude Code
+`Stop` hook (`.claude/hooks/queue-continue.*`) hands the next task back once; opt out via
+`beads.queueMode = false` or `AIFLOW_QUEUE_MODE=off`.
 
 ## Agents
 Delivery: architect, planner, implementer (senior engineer: mandatory pre-analysis of architecture
@@ -118,7 +130,46 @@ for whom, target architecture, quality bar. Slash-commands (Claude Code only): /
 /decompose, /plan-epic, /implement [bead] [ralph|no-ralph], /review-ac, /arch, the audit commands,
 /onboard, /explain, /standup. Skills (Claude Code only, `.claude/skills/<name>/SKILL.md`) —
 distinct from slash-commands: Claude Code matches a skill's description against the current task
-and offers to run it automatically. Ships with seo-optimization: SEO for any web-facing
+and offers to run it automatically. Skill vs agent: an AGENT is a role (who acts, with what
+authority, in what order, what it hands to whom) and lives in .claude/agents/*.md; a SKILL is
+knowledge several roles need (a checklist, the trade-offs of a technology) and lives in
+.claude/skills/*/SKILL.md. Both may exist for one topic — the same-named agent then uses the skill
+instead of restating it. Rules that must fire on EVERY task (section 2 architecture rules, sections
+3a/3b/3c quality gates) stay inline in AGENTS.md, because a skill is offered by pattern match and
+Copilot/Codex get no auto-offer at all. Frontmatter must be valid YAML and nothing warns you if it
+isn't: an agent with an unparseable block is silently dropped from the roster, a command/skill
+falls back to its body text as the description and stops matching its trigger words. Usual cause is
+an unquoted `description:` containing a colon+space — quote it. The generated project's pre-commit
+hook enforces this on staging and CI on every push, both via .github/scripts/check-frontmatter.py
+(needs python3/python + PyYAML; the hook skips with a note when they are missing, CI does not).
+Technology-stack skills: stack-embedded (C/C++ firmware — HAL/driver separation, no allocation
+after init, ISR discipline, watchdog, deterministic timing, cross-toolchain in WSL on Windows, host
+unit tests against a mocked HAL); stack-mobile (Flutter/Dart, Kotlin/Android, Swift/iOS —
+UI->presentation->domain<-data layering, one state-management choice, process death, offline/sync,
+Keystore/Keychain, store constraints); stack-web-frontend (Angular/React/Vue — feature slices,
+server state vs client state, DTO->view-model mapping, XSS and token handling, Core Web Vitals
+budgets, i18n, a11y, Testing-Library + Playwright); stack-backend (Spring/Quarkus/Jakarta, .NET,
+Rust, Node, Go, Python — hexagonal layering with ports, transaction boundaries, 12-factor config,
+timeouts/retries/circuit breakers, observability, FOSS-first: PostgreSQL, Tomcat, Keycloak,
+Prometheus; Testcontainers over in-memory doubles).
+Integration/data skills: api-design (REST versioning, status codes, pagination, idempotency,
+problem+json, OpenAPI, .http files per section 3b; when SOAP is legitimate and how to migrate off
+it; GraphQL and gRPC trade-offs); messaging-events (when async beats synchronous; Kafka/RabbitMQ/
+NATS/SQS; at-least-once + idempotent consumers; transactional outbox; ordering/partitioning; schema
+registry compatibility; DLQs; sagas over distributed transactions); data-storage (relational
+default per section 3c, when NoSQL is actually justified, embedded DBs SQLite/Room/Drift/Realm,
+Redis as cache with designed invalidation and mandatory TTLs, Elasticsearch as a DERIVED read layer
+fed from the outbox — never the source of truth, indexing and expand-contract migrations);
+cloud-native (multi-stage non-root pinned images, 12-factor, K8s liveness vs readiness, resource
+limits, PodDisruptionBudget, secret stores, EC2 immutable images, modular monolith before
+microservices, observability and cost).
+Cross-cutting: security (OWASP Top 10 as the review raster + ASVS levels; IAM least privilege with
+roles not per-user grants, short-lived/workload credentials over static keys, rotation; API authN/
+authZ per section 3b incl. JWT alg/exp/aud/iss validation; secrets never in code/image/log/URL;
+supply chain — pinned lockfiles, CI scanning, vetted dependencies, never curl-pipe-sh unverified).
+The security-advisor agent uses this same raster so findings read identically wherever they came
+from.
+Also ships seo-optimization: SEO for any web-facing
 project/framework (HTML, GitHub Pages, static sites, Next.js, Astro, Hugo, Jekyll, VuePress,
 VitePress, React, Vue, Svelte, Angular) — meta tags, Open Graph/Twitter Cards, JSON-LD structured
 data, robots.txt/sitemap.xml, canonical URLs, Core Web Vitals, GitHub Pages specifics; ends with
@@ -180,6 +231,7 @@ archives on VERSION bump), `pages.yml` (deploy docs). No Dagger.
 
 ## Key commands
 init · install-deps · change-settings · shell [--router] · sync [pull|push|both] · close-sync <id> ·
+next [--after <id>] [--claim] [--json] (next ready bead, queue mode) ·
 ollama [pull|add|list] · index · ralph "<prompt|bead>" · onboard · security-check / quality-check /
 requirements-check / dependency-check / test-gap / perf-check / docs-check · hotfix <name> ·
 release [--yes] [--push] · protect · cost · doctor · upgrade · update · project-update · version.

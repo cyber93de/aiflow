@@ -358,7 +358,27 @@ Beads und die Ralph-Schleife gibt es auch als Plugin-Commands (`/beads:ready`, `
 
 **Skills** — automatisch angeboten, `.claude/skills/<name>/SKILL.md`, Claude Code gleicht die
 `description` des Skills gegen den aktuellen Kontext ab und bietet ihn an (vor größeren Änderungen
-wird nachgefragt):
+wird nachgefragt). Ein **Agent** ist eine Rolle (wer handelt, mit welcher Befugnis, in welcher
+Reihenfolge); ein **Skill** ist Wissen, das mehrere Rollen brauchen — der Implementierer, der einen
+Endpunkt baut, und der Reviewer, der ihn prüft, lesen dieselbe Liste. Vollständiger Katalog:
+[Skills](https://cyber93de.github.io/aiflow/skills).
+- **Technologie-Stacks** — **stack-embedded** (C/C++-Firmware: HAL-Trennung, keine Allokation nach
+  Init, ISR-Disziplin, Host-Tests gegen gemockte HAL), **stack-mobile** (Flutter/Dart, Kotlin/
+  Android, Swift/iOS: Schichtung, State-Management, Process Death, Offline/Sync, Keystore/
+  Keychain), **stack-web-frontend** (Angular/React/Vue: Feature-Slices, Server- vs. Client-State,
+  XSS und Token-Handling, Core Web Vitals, i18n, a11y), **stack-backend** (Spring/Quarkus/Jakarta,
+  .NET, Rust, Node, Go, Python: hexagonale Schichtung mit Ports, Transaktionsgrenzen, Resilienz,
+  Observability, FOSS-first).
+- **Integration & Daten** — **api-design** (REST-Versionierung/Idempotenz/`problem+json`/OpenAPI/
+  `.http`, wann SOAP legitim ist und wie man davon wegkommt, GraphQL-/gRPC-Abwägungen),
+  **messaging-events** (Kafka/RabbitMQ/NATS, idempotente Consumer, Transactional Outbox,
+  Reihenfolge, DLQs, Sagas), **data-storage** (SQL als Default, wann NoSQL berechtigt ist,
+  In-App-Datenbanken, Redis mit echter Cache-Invalidierung, Elasticsearch als abgeleitete
+  Leseschicht), **cloud-native** (Container-Images, K8s-Probes/Limits/Rollout/Secrets, EC2,
+  modularer Monolith vs. Microservices).
+- **security** — OWASP Top 10 als Prüfraster + ASVS-Level, IAM mit Least Privilege (Rollen,
+  kurzlebige Credentials, Rotation), API-AuthN/AuthZ, Secrets, Krypto, Supply Chain. Der
+  security-advisor nutzt dasselbe Raster.
 - **seo-optimization** — SEO für jedes webbasierte Projekt (HTML, GitHub Pages, statische Seiten,
   Doku-Seiten, Landing Pages, Blogs, Next.js, Astro, Hugo, Jekyll, VuePress, VitePress, React,
   Vue, Svelte, Angular, …): Meta-Tags, Open Graph/Twitter Cards, JSON-LD Structured Data,
@@ -377,7 +397,14 @@ wird nachgefragt):
   Ollama-Routing. AGENTS.md §8 behält nur Schalter + Essenzielles; der Rest steht hier.
 
 Eigene Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen — siehe die mitgelieferten für
-das erwartete Frontmatter (`name`, `description`) und die Struktur.
+das erwartete Frontmatter (`name`, `description`) und die Struktur. **Eine `description` mit
+Doppelpunkt muss in Anführungszeichen** — `description: zwei Hüte: Architekt …` ist ungültiges
+YAML, und nichts warnt davor: Skill oder Command fallen still auf ihren Fließtext als Beschreibung
+zurück (treffen also die selbst geschriebenen Trigger-Wörter nicht mehr), ein Agent verschwindet
+komplett aus dem Roster. Der `pre-commit`-Hook des generierten Projekts prüft das mit
+`.github/scripts/check-frontmatter.py` über alle Agents, Commands und Skills, sobald du eine
+solche Datei stagest; die CI prüft es bei jedem Push erneut. Der Hook braucht `python3`/`python`
++ PyYAML — fehlen sie, sagt er das und überspringt, die CI bleibt das Sicherheitsnetz.
 
 ---
 
@@ -441,6 +468,12 @@ synct — ein Issue-Graph fürs ganze Team, kein Extra-Server.
   Issue-Änderungen der Kollegen mergst statt sie zu überschreiben. Bei Konflikt: `bd dolt pull`
   (mergen), auflösen, pushen. Nie force-pushen.
 - **Status ist das Koordinationssignal.** Aktuell halten; veralteter Status = Doppelarbeit.
+- **Queue-Modus: ein geschlossener Task beendet keine Session.** Nach jedem Close frischt der Agent
+  die Queue auf und startet den nächsten Task — `aiflow next` rankt ihn (Priorität → entblockt am
+  meisten → Fortsetzung des gerade geschlossenen Beads). Schluss ist nur aus einem echten Grund:
+  nichts Handlungsfähiges übrig, alles blockiert, du sagst Stopp, oder eine Entscheidung, die nur du
+  treffen kannst. Ein `Stop`-Hook reicht den nächsten Task einmal nach, falls der Agent es vergisst;
+  abschaltbar über `.aiflow/config.json → beads.queueMode = false` oder `AIFLOW_QUEUE_MODE=off`.
 - **Entdeckte Arbeit → neuer Bead** (`--deps discovered-from:<id>`); **Entscheidungen →
   `/beads:decision`** (mit Begründung) — so sieht das ganze Team das *Warum*.
 - **Geteilte Preferences** (Code-Stil, Sprache) liegen in einer committeten
@@ -607,6 +640,7 @@ aiflow change-settings [--no-token-saving]   Config neu justieren, dann alles ne
 aiflow shell [--router]            .env laden, Claude Code starten (--router = günstige/lokale Modelle)
 aiflow sync [pull|push|both]       Team-Sync: git + Beads(dolt) pull/push
 aiflow close-sync <id>             bei Issue-Close: Push + Dolt-Sync anbieten
+aiflow next [--after <id>] [--claim] [--json]  naechster ready Beads-Task, gerankt (Queue-Modus)
 aiflow ollama [pull|add <m>|list]  lokale Ollama-Modelle verwalten
 aiflow index                       Code-Memory aktualisieren: graphify (Graph) + cocoindex (RAG)
 aiflow ralph "<prompt|bead id>"    die Headless-Ralph-Schleife laufen lassen
@@ -620,7 +654,9 @@ aiflow cost [...]                  Token-/Kosten-Baseline via ccusage
 aiflow doctor                      Voraussetzungen + Projekt-Zusammenfassung prüfen
 aiflow upgrade                     gebündelte Toolchain aktualisieren
 aiflow update                      aiflow selbst aktualisieren (git pull, oder GitHub-Release-Download bei Nicht-Git-Install)
-aiflow project-update               DIESES Projekt auffrischen (Skripte + Agent-Defs; angepasste Dateien -> *.bak)
+aiflow project-update               DIESES Projekt auffrischen (Skripte inkl. .github/scripts + Agent-Defs
+                                    + .githooks;
+                                    angepasste Dateien -> *.bak; .github/workflows bleibt unangetastet)
 aiflow version
 ```
 
@@ -676,11 +712,12 @@ dein-projekt/
 │  ├─ team-prefs.json        # geteilte Team-Preferences (committet)
 │  ├─ router-config.json     # generiert: Ollama/Cost-Provider (gitignored)
 │  ├─ bd-close-sync.sh       # Close → Push + Dolt-Sync anbieten
+│  ├─ next-task.sh           # naechster ready Bead, gerankt (Queue-Modus)
 │  └─ *.sh                   # Audit-/Release-/Ralph-Helfer
 ├─ .beads/                   # Beads-Issue-Datenbank (Dolt)
 ├─ .claude/
 │  ├─ agents/  commands/     # Subagenten + Slash-Commands
-│  ├─ hooks/                 # caveman, Formatter, beads-sync (SessionStart)
+│  ├─ hooks/                 # caveman, Formatter, beads-sync (SessionStart), queue-continue (Stop)
 │  ├─ memory/                # project-aim, dev-environment, memory-policy
 │  └─ settings.json          # Permissions + Hooks + MCP-Allow-List
 ├─ .githooks/                # commit-msg, pre-commit, pre-push (Durchsetzung)

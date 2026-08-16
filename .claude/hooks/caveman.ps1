@@ -15,7 +15,7 @@ if (Test-Path $cfgPath) {
 if ($env:AIFLOW_CAVEMAN -eq "off") { $on = $false }
 if (-not $on) { exit 0 }
 
-$base = 'CAVEMAN MODE ACTIVE — communicate terse. Code, commits, PRs, security warnings: NORMAL prose. Persists until "stop caveman".'
+$base = 'CAVEMAN MODE ACTIVE - communicate terse. Code, commits, PRs, security warnings: NORMAL prose. Persists until "stop caveman".'
 switch ($mode) {
   "lite"  { Write-Output "$base (lite) Trim filler/pleasantries, keep articles + full sentences." }
   "ultra" { Write-Output "$base (ultra) Maximal compression: telegraphic, symbols ok, minimal words." }

@@ -94,6 +94,21 @@ Why things are the way they are. Change these only deliberately.
   trade the guard's zero false positives for guesswork. `EXEC_GATE_EXEMPT` exists and is empty.
   Repo-only like the twin/rendered guards: the shell a generated project runs is aiflow's own and
   is already checked here, so shipping it would buy a Python CI step per project and nothing else.
+- **This repo runs its own git hooks, from `.githooks/`** (2026-08-16, aiflow-n3p). `core.hooksPath`
+  pointed at `.beads/hooks`, which carries only the beads integration — so aiflow's own
+  Conventional-Commits check and branching guard never ran here. `.githooks/` now holds three hooks
+  that each run the beads shim first (beads needs its own), then aiflow's check. `commit-msg` and
+  `pre-push` **delegate to `templates/.githooks/*`** on purpose: the file a generated project gets
+  is the file that runs here, so a break in it surfaces on the next commit rather than in someone
+  else's project. `pre-commit` deliberately does *not* delegate — the template version formats
+  staged files in place (prettier/shfmt/black), and a stray reformat of `templates/**` would
+  propagate into every future project; it runs `bash -n` on staged shell plus the four
+  `.github/scripts/` guards instead (~1.3 s). Enabling is per clone (`git config core.hooksPath
+  .githooks`) because `.git/config` is never cloned — `aiflow doctor` now reports that in both
+  twins, for generated projects too. Note the pre-push guard is currently inert here: this repo's
+  `branching.json` has `pullRequests.required = false` and unenforced naming, so it permits what it
+  checks. Also note `project-update` would replace these with the template versions (keeping
+  `.bak`) — another reason not to run it in this repo.
 - **`project-update` never deletes — it reports** (2026-08-16, aiflow-400). It only ever copied, so
   a helper aiflow renamed or dropped sat in the project forever, and since aiflow-coy it was not
   even mentioned (that advisory iterates the *template's* helpers). Rejected: silent deletion

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# aiflow's OWN commit-msg hook (this repo, not a template copy — see .githooks/README.md).
+# Runs beads' shim first, then the very hook aiflow ships, so a break in the shipped hook shows
+# up here on the next commit instead of in someone else's project.
+set -uo pipefail
+
+[ -f .beads/hooks/commit-msg ] && { sh .beads/hooks/commit-msg "$@" || exit $?; }
+exec bash templates/.githooks/commit-msg "$@"

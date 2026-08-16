@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# aiflow's OWN pre-push hook (this repo, not a template copy — see .githooks/README.md).
+# beads' shim first, then the branching guard aiflow ships, read against this repo's own
+# .aiflow/branching.json — the same governance every generated project gets.
+set -uo pipefail
+
+# stdin carries the ref lines and each hook consumes it, so hand both a copy of the same input.
+refs="$(cat)"
+
+[ -f .beads/hooks/pre-push ] && { printf '%s\n' "$refs" | sh .beads/hooks/pre-push "$@" || exit $?; }
+printf '%s\n' "$refs" | bash templates/.githooks/pre-push "$@"

@@ -117,6 +117,17 @@ wsl -e bash -lc 'd=$(mktemp -d); printf "#!/bin/sh\n" > "$d/x.sh"; chmod 644 "$d
   [ -x "$d/x.sh" ] && echo "-x TRUE at 644" || echo "-x FALSE at 644"'
 ```
 
+## This repo's git hooks
+
+`.githooks/` holds aiflow's hooks for aiflow itself (`commit-msg` and `pre-push` delegate to the
+shipped `templates/.githooks/*`; `pre-commit` runs `bash -n` on staged shell + the four
+`.github/scripts/` guards, and never reformats). `core.hooksPath` is not cloned, so a fresh clone
+needs it once:
+
+```bash
+git config core.hooksPath .githooks   # aiflow doctor reports this when it is missing
+```
+
 ## Architecture Overview
 
 - **`bin/aiflow`** — CLI dispatcher (Bash); `bin/aiflow.ps1` is a thin PowerShell shim.

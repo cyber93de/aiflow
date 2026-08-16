@@ -12,6 +12,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `description` ≤ 1024 — on agents, commands and skills alike, with the limits covered by its
   self-test (at the limit passes, one over fails). The `seo-optimization` skill's description was
   1323 characters; it has been tightened to fit while keeping every trigger word.
+- **`aiflow doctor` now reports `core.hooksPath`.** It lives in `.git/config`, which is never
+  cloned — so a fresh clone of any aiflow project silently runs no commit/push rules at all until
+  someone sets it. `doctor` now says so and prints the one-line fix, in both twins.
 - **The Python CI helpers are now statically checked.** Shell had `bash -n` + shellcheck and JSON
   had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
   `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`

@@ -73,6 +73,23 @@ if command -v jq >/dev/null 2>&1 && [ -f .aiflow/config.json ]; then
 fi
 
 echo
+echo "git hooks:"
+# core.hooksPath lives in .git/config, which is never cloned - so a fresh clone silently runs
+# no hooks at all until someone sets it. `aiflow apply` does it; a clone needs it again.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  HP="$(git config --get core.hooksPath || true)"
+  if [ -n "$HP" ] && [ -d "$HP" ]; then
+    echo "  [ok]   core.hooksPath=$HP"
+  else
+    HINT=".githooks"; [ -d .beads/hooks ] && [ ! -d .githooks ] && HINT=".beads/hooks"
+    echo "  [----] core.hooksPath is not set - commit/push rules do NOT run in this clone"
+    echo "         fix: git config core.hooksPath $HINT   (or: aiflow apply)"
+  fi
+else
+  echo "  [----] not a git work tree"
+fi
+
+echo
 echo "env:"
 ENV_VARS="GITHUB_TOKEN GITLAB_TOKEN GIT_REMOTE_TOKEN ANTHROPIC_API_KEY CLAUDE_CODE_OAUTH_TOKEN CONTEXT7_API_KEY"
 # also show the configured remote token env, if any

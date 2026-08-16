@@ -19,6 +19,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
   `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`
   (advisory, like shellcheck).
+- **`pre-commit` now judges the staged content, not your working tree.** A file you staged and
+  then broke locally used to commit green, and a fix you staged could be blocked by the mess
+  still in the worktree. Formatting now skips any file with unstaged changes (formatting plus
+  `git add` would otherwise sweep those edits into the commit, and it says so), and the roster
+  guard runs against a temp checkout of the index — cleaned up on every exit path, failures
+  included, so an interrupted hook leaves nothing behind. No `git stash --keep-index`: making
+  that safe around the formatter needs a `git reset --hard`, which can lose work if the hook
+  dies. The stack lint/tests still run against the worktree by design — they need the installed
+  toolchain a temp checkout does not have.
 - **The git hooks now warn about bead ids that do not exist.** An invented id reads exactly like
   a real one, and CI cannot catch it — there is no `bd` in the runner and the issue DB is not a
   tracked file. `commit-msg` checks the message, `pre-commit` checks the lines being added, both

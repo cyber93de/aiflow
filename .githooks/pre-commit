@@ -18,13 +18,16 @@ fail() { echo "✗ pre-commit: $1" >&2; exit 1; }
 # defeats every match below.
 staged="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACM)"
 
-# 1) shell syntax on staged scripts — the cheapest half of what CI runs
+# 1) shell syntax on staged scripts — the cheapest half of what CI runs.
+# Reads the STAGED blob (`git show :path`), not the worktree file (aiflow-5n9): a fix you staged
+# must pass even while the worktree still holds the broken version, and vice versa.
 while IFS= read -r f; do
   case "$f" in
     # `.githooks/*.*` first: the directory also holds a README, and `bash -n` on markdown fails
     # loudly and pointlessly (it did, on this hook's own first commit).
     .githooks/*.*) : ;;
-    *.sh|bin/aiflow|.githooks/*) [ -f "$f" ] && { bash -n "$f" || fail "bash -n failed for $f"; } ;;
+    *.sh|bin/aiflow|.githooks/*)
+      git show ":$f" | bash -n - || fail "bash -n failed for $f (staged version)" ;;
   esac
 done <<< "$staged"
 
@@ -57,7 +60,10 @@ if [ -f "$lib" ]; then
   git diff --cached -U0 | grep '^+' | warn_unknown_bead_ids "staged changes"
 fi
 
-# These two need no third-party module, so a failure here is a real finding.
+# These three need no third-party module, so a failure here is a real finding. They run against
+# the WORKTREE on purpose: unlike the per-file checks above they judge the repo's structure
+# (pairing, mirrors, banners) across trees, and materialising the whole index to check that would
+# cost more than it catches.
 "$py" .github/scripts/check-exec-gates.py . || fail "an [ -x ] gate guards an interpreted call"
 "$py" .github/scripts/check-twins.py . || fail "Bash/PowerShell twin drift"
 "$py" .github/scripts/check-rendered.py . || fail "a rendered copy drifted from templates/"

@@ -8,12 +8,28 @@ fail() { echo "✗ pre-commit: $1" >&2; exit 1; }
 
 echo "• pre-commit: format + lint + tests"
 
+# This hook judges the STAGED content, not the working tree (aiflow-5n9): a file you staged and
+# then broke locally must not commit green, and a fix you staged must not be blocked by the mess
+# still in your worktree. Two mechanics do that without `git stash --keep-index`, which needs a
+# `git reset --hard` to be safe around the formatter below and can lose work if the hook dies:
+# formatting skips any file with unstaged changes, and the roster guard runs against a temp
+# checkout of the index. Deliberate exception: the stack lint/tests in step 4 still run against
+# the worktree — they need the installed toolchain (node_modules, venv, build cache) that a
+# temp checkout does not have.
+
 # 1) Format staged files in place (Google style), then re-stage.
 # quotePath=false: git otherwise renders a non-ASCII path as "\303\274ber", whose leading quote
 # defeats every match below - the file would silently skip formatting and the roster check.
 staged="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACM)"
+unstaged="$(git -c core.quotePath=false diff --name-only)"
 while IFS= read -r f; do
   [ -f "$f" ] || continue
+  # A file with unstaged changes is left alone: formatting it and re-adding would sweep those
+  # unstaged edits into the commit. Only what you staged gets committed (aiflow-5n9).
+  if printf '%s\n' "$unstaged" | grep -qxF -- "$f"; then
+    echo "  note: $f has unstaged changes - not formatted; only its staged version is committed" >&2
+    continue
+  fi
   case "$f" in
     *.py)  have black && black -q "$f"; have isort && isort -q "$f" ;;
     *.js|*.jsx|*.ts|*.tsx|*.json|*.css|*.md|*.yml|*.yaml) have prettier && prettier --write --log-level error "$f" ;;
@@ -42,7 +58,26 @@ if [ -f "$guard" ] && grep -q '^\.claude/\(agents\|commands\|skills\)/' <<< "$st
     have "$c" && "$c" "$guard" --selftest >/dev/null 2>&1 && { py="$c"; break; }
   done
   if [ -n "$py" ]; then
-    "$py" "$guard" .claude/agents .claude/commands .claude/skills \
+    # Check the INDEX, not the worktree: `checkout-index` materialises exactly what is about to
+    # be committed into a temp tree, so a staged fix passes and a staged break fails, whatever
+    # the working copy currently looks like. Cleaned up on every exit path, failures included.
+    # Inside .git/ on purpose, and a RELATIVE path: the guard echoes back the paths it was
+    # given, and an absolute one comes out in the platform's own spelling (C:/... under
+    # Git-Bash), which the prefix-stripping sed below would then fail to match.
+    stage_dir=".git/aiflow-precommit-$$"
+    mkdir -p "$stage_dir"
+    trap 'rm -rf "$stage_dir"' EXIT
+    git -c core.quotePath=false diff --cached --name-only --diff-filter=ACM -z \
+      -- .claude/agents .claude/commands .claude/skills \
+      | xargs -0 -r git checkout-index --prefix="$stage_dir/" --
+    # The guard reports the paths it was given, which are inside the temp tree - strip the prefix
+    # so the message names the file you actually have to fix.
+    out="$("$py" "$guard" "$stage_dir/.claude/agents" "$stage_dir/.claude/commands" \
+      "$stage_dir/.claude/skills" 2>&1)"; rc=$?
+    printf '%s\n' "$out" | sed "s|$stage_dir/||g" >&2
+    rm -rf "$stage_dir"
+    trap - EXIT
+    [ "$rc" -eq 0 ] \
       || fail "invalid frontmatter somewhere in the agent/command/skill roster (errors above)"
   else
     echo "  note: skipping the frontmatter guard - needs python3/python + PyYAML (pip install pyyaml), or its self-test failed" >&2

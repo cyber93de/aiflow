@@ -19,6 +19,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
   `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`
   (advisory, like shellcheck).
+- **`commit-msg` accepts path-shaped scopes.** The Conventional-Commits pattern allowed only
+  `[a-z0-9_-]` in a scope, so a natural `docs(.aiflow):` or `feat(api/v2):` was rejected — the
+  spec puts no restriction on scope characters. `.` and `/` are now allowed; an upper-case scope,
+  a missing type and an empty subject are still rejected.
 - **The router example ships current model ids.** `router-config.example.json` still listed
   `claude-opus-4-8`/`claude-sonnet-4-6` and `qwen2.5-coder:7b`; it now names Opus 5, Sonnet 5,
   Haiku 4.5 and `qwen3-coder`, in both the provider lists and the `Router` routes. Since the

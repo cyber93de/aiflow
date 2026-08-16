@@ -152,37 +152,67 @@ if [ "$AGENT_COPILOT" = "true" ]; then
 fi
 rm -f "$tmp"
 
-# ---------- model routing: stamp/strip 'model: haiku' on the 5 audit-only subagents ----------
-# (Claude Code only - Copilot/Codex have no subagent concept). Only these 5 files ever get
-# touched; every other .claude/agents/*.md stays byte-identical regardless of the toggle.
+# ---------- model routing: stamp 'model: <id>' per activity tier (AGENTS.md section 9) ----------
+# (Claude Code only - Copilot/Codex have no subagent concept.) Three tiers by the KIND of work:
+# reasoning (architecture/planning/review/security) gets a top model, implementation/tests get the
+# mid one, mechanical scans get the cheap one. Tier models and per-agent assignment are both
+# overridable in .aiflow/config.json (modelRouting.tiers.* / modelRouting.agents.*). With the
+# toggle off, every agent file is stripped back to the session default (aiflow-tv9).
 if [ "$AGENT_CLAUDE" = "true" ]; then
-  stamp_model_line() { # file mode(add|strip)
-    local f="$1" mode="$2" firstline crlf=""
+  MR_REASONING="$(jq -r '.modelRouting.tiers.reasoning      // "opus"'   "$CFG" 2>/dev/null || echo opus)"
+  MR_IMPL="$(jq      -r '.modelRouting.tiers.implementation // "sonnet"' "$CFG" 2>/dev/null || echo sonnet)"
+  MR_MECH="$(jq      -r '.modelRouting.tiers.mechanical     // "haiku"'  "$CFG" 2>/dev/null || echo haiku)"
+  MR_DEFAULT_REASONING="architect planner reviewer security-advisor requirements-check modernization-advisor orchestrator"
+  MR_DEFAULT_IMPL="implementer tester quality-check accessibility-checker"
+  MR_DEFAULT_MECH="docs-sync test-gap-advisor dependency-auditor performance-advisor onboarder"
+
+  stamp_model_line() { # file mode(add|strip) model
+    local f="$1" mode="$2" model="${3:-}" crlf=""
     [ -f "$f" ] || return 0
-    # templates/.claude/agents/*.md check out CRLF on Windows (no .gitattributes override) -
-    # match the file's own line ending so we only ever touch the model: line, nothing else.
-    IFS= read -r firstline < "$f"
-    case "$firstline" in *$'\r') crlf=1 ;; esac
-    awk -v mode="$mode" -v crlf="$crlf" '
+    # templates/.claude/agents/*.md check out CRLF on Windows (no .gitattributes override).
+    # awk on MSYS reads in text mode and drops \r, so we cannot pass lines through untouched:
+    # decide the EOL once for the whole file and re-emit every line with it. Doing it per-line
+    # (from the first line's ending) produced a mixed file on the first run and a different one
+    # on the second - i.e. not idempotent, which apply.sh must be.
+    # -U (binary): MSYS grep otherwise strips \r in text mode and never reports CRLF.
+    LC_ALL=C grep -qU $'\r' "$f" && crlf=1
+    awk -v mode="$mode" -v crlf="$crlf" -v model="$model" '
       function bare(s) { sub(/\r$/, "", s); return s }
       BEGIN { infm=0; done=0; nl=(crlf=="1")?"\r":"" }
-      NR==1 && bare($0)=="---" { infm=1; print; next }
-      infm && bare($0)=="---" {
-        if (mode=="add" && !done) { print "model: haiku" nl; done=1 }
-        infm=0; print; next
+      { line=bare($0) }
+      NR==1 && line=="---" { infm=1; print line nl; next }
+      infm && line=="---" {
+        if (mode=="add" && !done) { print "model: " model nl; done=1 }
+        infm=0; print line nl; next
       }
-      infm && bare($0) ~ /^model:[ \t]/ {
-        if (mode=="add") { if (!done) { print "model: haiku" nl; done=1 }; next }
+      infm && line ~ /^model:[ \t]/ {
+        if (mode=="add" && !done) { print "model: " model nl; done=1 }
         next
       }
-      { print }
+      { print line nl }
     ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
   }
-  MR_MODE=strip; [ "$MODELROUTING_ON" = "true" ] && MR_MODE=add
-  for n in docs-sync test-gap-advisor dependency-auditor performance-advisor onboarder; do
-    stamp_model_line ".claude/agents/$n.md" "$MR_MODE"
-  done
-  echo "  model routing: 5 audit subagents -> $([ "$MODELROUTING_ON" = "true" ] && echo 'haiku' || echo 'session default')"
+  # per-agent override wins over the tier default: modelRouting.agents.<name> = reasoning|implementation|mechanical
+  tier_of() { jq -r --arg a "$1" '.modelRouting.agents[$a] // empty' "$CFG" 2>/dev/null; }
+  model_for_tier() {
+    case "$1" in reasoning) echo "$MR_REASONING";; implementation) echo "$MR_IMPL";; mechanical) echo "$MR_MECH";; *) echo "";; esac
+  }
+  if [ "$MODELROUTING_ON" = "true" ]; then
+    for spec in "reasoning:$MR_DEFAULT_REASONING" "implementation:$MR_DEFAULT_IMPL" "mechanical:$MR_DEFAULT_MECH"; do
+      deftier="${spec%%:*}"
+      for n in ${spec#*:}; do
+        t="$(tier_of "$n")"; [ -z "$t" ] && t="$deftier"
+        m="$(model_for_tier "$t")"; [ -z "$m" ] && m="$(model_for_tier "$deftier")"
+        stamp_model_line ".claude/agents/$n.md" add "$m"
+      done
+    done
+    echo "  model routing: reasoning=$MR_REASONING implementation=$MR_IMPL mechanical=$MR_MECH"
+  else
+    for n in $MR_DEFAULT_REASONING $MR_DEFAULT_IMPL $MR_DEFAULT_MECH; do
+      stamp_model_line ".claude/agents/$n.md" strip
+    done
+    echo "  model routing: off (all subagents on the session default)"
+  fi
 fi
 
 # ---------- ponytail (YAGNI skill): self-gates via .aiflow/config.json, nothing to render here ----------

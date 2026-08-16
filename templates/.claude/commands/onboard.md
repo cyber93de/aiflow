@@ -9,4 +9,5 @@ learn so future sessions start informed: write `.claude/memory/codebase-map.md` 
 the code. Verify facts (e.g. the real build/test commands) before writing; mark inferences as such.
 
 Edit only memory, AGENTS.md, and docs/ — never application code, tests, configs, or issues. Finish
-with a summary of what was learned and which files changed.
+with a summary of what was learned and which files changed, and tell the user to run **`/compact`**
+right after — the knowledge is persisted, the exploration transcript no longer needs to be.

@@ -18,6 +18,10 @@ description: "Quick start: install aiflow, run aiflow init (Claude Code, GitHub 
 
 [Node.js](https://nodejs.org) (LTS). Everything else aiflow can install for you.
 
+**On Windows there are four steps to do first** — BIOS virtualisation (VT-x/SVM), `wsl --install`,
+a distro (Ubuntu) on WSL2, and `build-essential` **inside WSL** rather than MinGW. See
+[Installation → Windows prerequisites](installation#windows-prerequisites-do-this-first).
+
 ## Install
 
 ```bash

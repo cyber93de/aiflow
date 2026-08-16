@@ -79,16 +79,42 @@ aiflow shell --router
 
 See [Models & context7](models).
 
-## Model routing for audit-only subagents (Claude Code only)
+## Model tiers per subagent (Claude Code only)
 
 A separate, always-available mechanism from the router above — no external tool, no Ollama
-needed. `modelRouting.enabled` (on by default) stamps `model: haiku` into the frontmatter of the
-5 subagents that only do mechanical/background checks — **docs-sync**, **test-gap-advisor**,
-**dependency-auditor**, **performance-advisor**, **onboarder** — so they run on Haiku 4.5 instead
-of the session's main model. Every other subagent (implementer, architect, security-advisor,
-reviewer, planner, quality-check, requirements-check, accessibility-checker,
-modernization-advisor, tester) always keeps the session default since it needs real reasoning.
-Toggle it with `aiflow change-settings`.
+needed. `modelRouting.enabled` (on by default) stamps a `model:` line into every subagent's
+frontmatter according to the **kind of work** it does:
+
+| Tier | Default | Subagents |
+|------|---------|-----------|
+| reasoning | `opus` (or `fable`) | architect · planner · reviewer · security-advisor · requirements-check · modernization-advisor · orchestrator |
+| implementation | `sonnet` | implementer · tester · quality-check · accessibility-checker |
+| mechanical | `haiku` | docs-sync · test-gap-advisor · dependency-auditor · performance-advisor · onboarder |
+
+Paying Opus rates for a dependency scan is waste; paying Haiku rates for an architecture review is
+worse. Override per tier or per agent in `modelRouting.tiers` / `modelRouting.agents` — see
+[Models & context7](models#model-tiers-per-activity-subagent-routing). Toggle the whole mechanism
+with `aiflow change-settings`.
+
+## `/compact` — the cheapest lever there is
+
+Every turn re-sends the whole context window. A session that has been running for an hour pays for
+its own history on every single message, and reasoning quality drops as the window fills. aiflow's
+durable knowledge lives in **Beads**, `.claude/memory/`, `docs/architecture/` and `AGENTS.md` — the
+transcript that produced it does not need to stay in context.
+
+Compact at these points:
+
+| When | Why |
+|------|-----|
+| Right after `aiflow init` (greenfield) | The Q&A already wrote the aim, stack and architecture into `.aiflow/config.json` + `.claude/memory/`. The interview itself is dead weight. |
+| Right after `aiflow onboard` (brownfield) | Everything the onboarder learned is now in `codebase-map.md`, `AGENTS.md` §1/§2 and arc42. |
+| After every closed bead | The next bead starts from the issue + the code, not from the last one's debugging. |
+| Before a long Ralph run or a big refactor | The loop needs headroom, not your history. |
+
+Persist first, compact second: bead notes/design, a memory file, or an ADR. Compaction is not
+storage. Copilot and Codex have no `/compact` — start a fresh thread at the same four points and
+re-read `AGENTS.md` plus the bead.
 
 ## ponytail — fewer tokens spent on code nobody needed
 

@@ -29,3 +29,12 @@ Process:
 
 Rules: do not modify code or other issues — report and file `[performance]` beads only. Avoid
 premature-optimisation noise; only file what plausibly matters at the project's scale.
+
+## Net & handoffs
+
+- **You receive:** a manual trigger — `aiflow perf-check`. Not part of the delivery loop.
+- **You hand to:** Beads — one `[performance]` bead per finding; they re-enter through the
+  **orchestrator**/**planner**.
+- **You escalate to:** the **architect** when the answer is a structural one (caching layer, read
+  model, Redis/Elasticsearch, service split) rather than a local optimisation — propose it, don't
+  design it.

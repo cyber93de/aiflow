@@ -29,7 +29,10 @@ live in `.env`.
   "mcp":      { "filesystem": true, "context7": true, "cocoindex": true },
   "memory":   { "enabled": true, "graph": true, "intensity": "aggressive" }, // off|light|normal|aggressive
   "agents":   { "claude": true, "copilot": false, "codex": false }, // which coding agent(s) to render for
-  "modelRouting": { "enabled": true },                   // haiku for the 5 audit-only subagents (Claude Code only)
+  "modelRouting": { "enabled": true,                     // per-activity model tiers (Claude Code only)
+    "tiers":  { "reasoning": "opus", "implementation": "sonnet", "mechanical": "haiku" },
+    "agents": { }                                        // optional: "<agent>": "<tier>" override
+  },
   "claude":   { "auth": "apikey" },                      // apikey | oauth (OAuth wins if both env set)
   "vcs":      { "system": "git" },                       // git | svn | none
   "remote": {
@@ -58,7 +61,9 @@ live in `.env`.
 | Field | Renders |
 |-------|---------|
 | `agents.*` | which per-agent files get rendered: `.mcp.json`/`.claude/*` (claude), `.vscode/mcp.json`+`.github/copilot-instructions.md` (copilot), `.codex/config.toml` (codex) |
-| `modelRouting.enabled` | stamps/strips `model: haiku` on the 5 audit-only subagents (Claude Code only) |
+| `modelRouting.enabled` | stamps/strips `model: <id>` on every subagent per activity tier — reasoning (architect/planner/reviewer/security/requirements/modernization/orchestrator), implementation (implementer/tester/quality-check/a11y), mechanical (docs-sync/test-gap/dependency/performance/onboarder). Claude Code only. See [Models](models#model-tiers-per-activity-subagent-routing) |
+| `modelRouting.tiers.*` | model id per tier (`reasoning`/`implementation`/`mechanical`); defaults `opus`/`sonnet`/`haiku`. Hand-edited — `aiflow change-settings` preserves it |
+| `modelRouting.agents.*` | `"<agent-name>": "<tier>"` — moves a single subagent to another tier |
 | `ponytail.enabled`/`.mode` | gates the ponytail skill's decision ladder (self-checked at invocation, not file-rendered) |
 | `mcp.*` + `remote.mcp` + `gitkraken.enabled` | the servers in `.mcp.json` (and the enabled agents' equivalents) |
 | `remote.*` | host MCP env (`GITHUB_HOST` / `GITLAB_API_URL` / `GITEA_URL`) + Beads owner/repo + the matching predefined release-publish workflow (`.github/workflows/release.yml`, `.gitlab-ci.yml`, `.gitea/workflows/release.yml`, `.forgejo/workflows/release.yml`, `bitbucket-pipelines.yml`) |

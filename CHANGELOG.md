@@ -7,6 +7,64 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-08-16
+
+### Added
+- **The agent roster is now a network, with an orchestrator.** There was no entry point: agents
+  knew the rules but not each other, so routing lived in the user's head. New **orchestrator**
+  agent + `/orchestrate <goal|bead>` decides which specialist handles each step, dispatches exactly
+  one at a time, evaluates the result and routes on — planner → architect (when boundaries are
+  crossed, or §2b has no rules) → implementer → tester (risky changes) → reviewer → close. It never
+  writes code, and every handover is written **into the bead** (`bd update <id> --notes "route: …"`)
+  so it survives a `/compact`. The **planner** now ends with a `HANDOFF -> orchestrator` block
+  (ready beads, recommended agent per bead, order, open decisions), and **every** agent file gained
+  a "Net & handoffs" section naming who it receives from and hands to. `AGENTS.md` §5 and
+  `docs/agents.md` carry the network diagram and the edge table. The audit agents stay explicitly
+  outside the delivery loop: they only file beads, which re-enter the route at the top.
+- **Binding architecture rules (`AGENTS.md` §2).** §2 was an `[EDIT ME]` placeholder; it is now a
+  MANDATORY section that applies in every language: layered architecture with an inward dependency
+  direction and no layer skips, interfaces at every seam (ports in the domain, adapters in
+  infrastructure, injected not `new`-ed), **DAO** as the only place that talks to a data store,
+  **DTO** for anything crossing a process boundary, domain objects never leaving the domain, reuse
+  and generics over duplication, and active complexity avoidance. §2b holds the project's own
+  concrete decisions; §2c makes the rules binding: a task that doesn't fit is **not implemented as
+  is** — the agent stops before writing code, asks in PO language with options and consequences,
+  and the answer is recorded. The **architect** gains a "Rule zero": a project without rules gets a
+  proposed set written into §2b *and* an ADR. The **implementer** treats architecture fit as an
+  abort criterion, and the **reviewer** checks each rule as a BLOCKER.
+- **Model tiers per activity** (`modelRouting`). Instead of "Haiku for 5 audit agents", `aiflow
+  apply` now stamps a model per *kind of work*: **reasoning** (`opus`, override with `fable`) for
+  architect · planner · reviewer · security-advisor · requirements-check · modernization-advisor ·
+  orchestrator; **implementation** (`sonnet`) for implementer · tester · quality-check ·
+  accessibility-checker; **mechanical** (`haiku`) for docs-sync · test-gap-advisor ·
+  dependency-auditor · performance-advisor · onboarder. Override per tier
+  (`modelRouting.tiers.*`) or move a single agent (`modelRouting.agents.<name>: <tier>`); both
+  survive `aiflow change-settings`. `modelRouting.enabled: false` strips every `model:` line again.
+- **`/compact` discipline** is now a rule (`AGENTS.md` §9 + `docs/token-optimization.md`): compact
+  right after `aiflow init` (greenfield) and right after the onboarder (brownfield) — the aim,
+  stack and architecture are already persisted at that point — plus after every closed bead and
+  before long Ralph runs. `aiflow init` and the onboarder say so at the end of their output.
+
+- **Windows prerequisites are documented and checked.** A Windows setup that pulls in MinGW/MSYS2
+  is a wrong turn: aiflow's own CLI runs in PowerShell + Git Bash, but everything that *compiles
+  native code* belongs in **WSL**. `docs/installation.md` gained a "Windows prerequisites" section
+  (BIOS virtualisation VT-x/SVM → `wsl --install` → a WSL2 distro → `build-essential` inside it,
+  plus why not MinGW and where to keep the project), mirrored in both READMEs, `getting-started`,
+  `troubleshooting`, and `llms-full.txt`. `aiflow doctor` reports WSL presence, WSL2, in-distro
+  `gcc`/`g++`, firmware virtualisation, and **warns** when a MinGW/MSYS gcc sits on the Windows
+  PATH. `install-deps` installs `build-essential` *inside WSL* when a native toolchain is needed
+  and never falls back to MinGW.
+
+### Fixed
+- **New projects landed on `master` instead of `main`.** `aiflow init` called `git init` without
+  `--initial-branch=main`, so on git < 2.28 (or without a user-set `init.defaultBranch`) the
+  mainline was `master` — while the entire branching governance (`branching.json`, the `pre-push`
+  hook, `aiflow release`, `aiflow hotfix`) references `main` by name and therefore never applied.
+  `init.sh`/`init.ps1` now force `main` (with a `symbolic-ref` fallback for old git), and
+  `aiflow apply` renames an existing `master` → `main`, printing the remote-migration commands.
+  If both branches exist it refuses to touch either. Opt out with `AIFLOW_NO_BRANCH_RENAME=1`.
+  The generated `ci.yml` triggers on `[main, develop]` instead of `[main, master]`.
+
 ## [0.7.0] — 2026-08-16
 
 ### Changed
@@ -258,6 +316,38 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Set-ModelRoutingLine` passed a raw relative path to `[System.IO.File]`, which resolves against
   the process working directory rather than PowerShell's — so the model-routing stamp was written
   to (or read from) the wrong file on Windows.
+
+### Fixed
+- **`gh`/`jq`/`dolt`/`ollama` installed via winget/scoop weren't visible to the running shell.**
+  Those installers write the new directory into the *registry* PATH only. `install-deps` now
+  rebuilds the process PATH from Machine+User after each such install (`cygpath -up` in Bash) and,
+  for anything still not resolvable, prints an explicit "open a new terminal for: …" list instead
+  of leaving the next step to report the tool as missing.
+- **rtk could fail to install silently.** The piped upstream installer's result is now verified;
+  on failure the message names the repo (`https://github.com/rtk-ai/rtk`) and the manual route.
+  The PowerShell twin actually attempts the install instead of only printing a hint.
+- **graphify/uv failures looked like successes.** `uv tool install graphifyy` and the follow-up
+  `graphify install` had their output discarded. Errors are visible now, `uv` is verified to be on
+  PATH after its own install, and a failed PyPI install retries from
+  `git+https://github.com/Graphify-Labs/graphify`.
+
+### Fixed
+- **The Ralph loop's guard prompt only mentioned Beads in passing**, so an unattended run could
+  iterate without ever claiming, updating, or closing a bead — and since each iteration starts
+  fresh, that meant repeating work. The guard now spells out the protocol: claim (or create +
+  claim) on the first iteration, `bd show` + `bd update --notes "iteration N: …"` on every
+  iteration, `--deps discovered-from:` for anything found on the way, and `bd close --reason` only
+  when the AC are demonstrably met. It also points at `AGENTS.md §2`: a task that doesn't fit the
+  architecture is recorded as a blocker instead of built.
+- **`aiflow ralph` picked a different agent in Bash than in PowerShell** when a project had no
+  `.aiflow/config.json` (or no `jq`): the PowerShell twin defaulted to `claude-code`, the Bash one
+  passed no `--agent` at all and let ralph choose. Both default to `claude-code` now.
+- **`/implement` said "set it in-progress"** instead of claiming atomically — two agents could grab
+  the same bead. It now uses `bd update <id> --claim` (or `bd ready --claim --json`) and closes
+  with `bd close <id> --reason`, with discovered work filed as its own bead.
+- `/arch` stated it produces a bead list without saying who creates the beads (the planner does,
+  not the architect); `/ponytail-review` and the `accessibility-checker` described filing findings
+  without the actual `bd create` call. All three are explicit now.
 
 ## [0.5.1] — 2026-07-29
 

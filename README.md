@@ -117,8 +117,9 @@ question, every default, first feature end-to-end).
 | **Remote host** | GitHub, GitHub Enterprise, GitLab, self-managed GitLab, Bitbucket, Forgejo, Gitea, or a custom URL — **token-based** |
 | **Host MCP** | The matching git-host MCP is wired automatically (per remote type) |
 | **Models** | Claude (API key *or* OAuth) + optional **Ollama** local models, selectable & auto-installed |
-| **Model routing** | claude-code-router sends easy/background work to cheap/local models |
-| **Agents** | 5 delivery + 9 audit/checker + 1 brownfield specialist subagents |
+| **Model routing** | claude-code-router sends easy/background work to cheap/local models; per-activity **model tiers** put architecture/planning/review/security on Opus (or Fable), implementation + tests on Sonnet, mechanical scans on Haiku |
+| **Architecture rules** | Binding, every language: layered with inward dependencies, interfaces at every seam, DAO + DTO separation, domain objects never on the wire, reuse/generics over duplication. A task that doesn't fit is **asked about before it's built** |
+| **Agents** | 1 orchestrator + 5 delivery + 9 audit/checker + 1 brownfield specialist subagents, wired into one documented network |
 | **Autonomy** | Ralph loop (interactive / headless / containerised / CI) |
 | **Quality** | Google style, conventional commits, format/lint/test git hooks, architect+quality-gate review, static analysis on every change, objective metric targets (0 new smells/duplicates, 0 warnings), >80 % coverage + BDD E2E gates, leveled logging, `.http` files for REST endpoints, DB rules §3c (3NF+FKs for new schemas, brownfield schemas handled with care) |
 | **Branching** | simple / gitflow / none, PR-only, auto-release, SemVer/CalVer |
@@ -130,6 +131,20 @@ question, every default, first feature end-to-end).
 ## 3. Install
 
 **Prerequisites:** [Node.js](https://nodejs.org) (LTS). Everything else aiflow can install for you.
+
+> **Windows: do this before you clone.** aiflow itself runs in PowerShell + Git Bash, but anything
+> that **compiles native code** (C/C++, `node-gyp`, Python C-extensions) belongs in **WSL** — never
+> MinGW/MSYS2. Skipping this is the #1 cause of a failed Windows setup.
+> 1. Enable **Intel VT-x** / **AMD SVM Mode** in the BIOS/UEFI (Task Manager → Performance → CPU →
+>    *Virtualization: Enabled*).
+> 2. Admin PowerShell: `wsl --install` → reboot (enables WSL + Virtual Machine Platform).
+> 3. `wsl --install -d Ubuntu`, start it once; `wsl -l -v` must show **VERSION 2**.
+> 4. Inside WSL: `sudo apt update && sudo apt install -y build-essential` → `gcc`/`g++`; add
+>    `cmake`, `python3-dev`, a cross-toolchain, … as your project needs.
+>
+> Full walkthrough incl. why not MinGW:
+> [docs — Windows prerequisites](https://cyber93de.github.io/aiflow/installation#windows-prerequisites-do-this-first).
+> `aiflow doctor` checks all four steps.
 
 ### Windows (PowerShell)
 ```powershell
@@ -342,7 +357,8 @@ per-agent detail: [docs → Agents](https://cyber93de.github.io/aiflow/agents).
 Two different Claude Code mechanisms, both shipped:
 
 **Slash-commands** — explicitly triggered, `.claude/commands/`:
-- **Delivery:** `/intake-issue <n>` (pull a GitHub/GitLab/Bitbucket issue → Beads),
+- **Delivery:** `/orchestrate <goal|bead>` (entry point — the orchestrator routes every step below),
+  `/intake-issue <n>` (pull a GitHub/GitLab/Bitbucket issue → Beads),
   `/decompose <goal|prd>` (task-master → Beads), `/plan-epic`,
   `/implement [bead] [ralph|no-ralph]` (pre-analysis first; unspecified → the implementer decides
   **automatically** — or honours a "use the Ralph loop" note written into the issue itself),

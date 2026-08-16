@@ -62,10 +62,56 @@ Invoke-Check "dolt"    "dolt"    "Beads backend (bd runs a dolt sql-server): htt
 if (Test-Have podman) { Invoke-Check "podman" "podman" "container engine for GitHub MCP + headless runs" }
 else { Invoke-Check "docker" "docker" "container engine (or Podman): GitHub MCP + headless runs" }
 
+# ---- Windows: WSL is where native builds belong, never MinGW (aiflow-53b) ----
+Write-Output ""
+Write-Output "windows native-build toolchain (WSL, not MinGW):"
+$v2 = 0
+if (-not (Test-Have wsl)) {
+  Write-Output ("  [MISS] {0,-10} -> WSL not available. Admin PowerShell: wsl --install   (then reboot)" -f "wsl")
+  Write-Output ("  [----] {0,-10}    then: wsl --install -d Ubuntu" -f "")
+} else {
+  # wsl.exe emits UTF-16LE; force the console decoder so the names are readable.
+  $prevEnc = [Console]::OutputEncoding
+  try { [Console]::OutputEncoding = [System.Text.Encoding]::Unicode } catch {}
+  $distros = @(& wsl.exe -l -q 2>$null | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+  $verbose = @(& wsl.exe -l -v 2>$null | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+  try { [Console]::OutputEncoding = $prevEnc } catch {}
+  if ($distros.Count -eq 0) {
+    Write-Output ("  [MISS] {0,-10} -> WSL present but no distribution installed: wsl --install -d Ubuntu" -f "wsl distro")
+  } else {
+    Write-Output ("  [ok]   {0,-10} distros: {1}" -f "wsl", ($distros -join " "))
+    $v2 = @($verbose | Select-Object -Skip 1 | Where-Object { $_ -match '\s2\s*$' }).Count
+    if ($v2 -gt 0) { Write-Output ("  [ok]   {0,-10} {1} distro(s) on WSL2" -f "wsl2", $v2) }
+    else { Write-Output ("  [MISS] {0,-10} -> distro is on WSL1: wsl --set-default-version 2 && wsl --set-version <distro> 2" -f "wsl2") }
+    # gcc/g++ must live INSIDE the distro, not on the Windows PATH
+    $gcc = (& wsl.exe -e sh -c "command -v gcc >/dev/null && command -v g++ >/dev/null && gcc --version | head -n1" 2>$null)
+    if ($LASTEXITCODE -eq 0 -and $gcc) { Write-Output ("  [ok]   {0,-10} {1}" -f "gcc/g++", ($gcc | Select-Object -First 1)) }
+    else { Write-Output ("  [MISS] {0,-10} -> in WSL: sudo apt update && sudo apt install -y build-essential" -f "gcc/g++") }
+  }
+}
+# Hardware virtualisation - WSL2 cannot run without it, and the BIOS switch is easy to miss.
+# A running WSL2 distro is proof enough; only pay for the WMI probe when it isn't.
+if ($v2 -gt 0) {
+  Write-Output ("  [ok]   {0,-10} enabled (a WSL2 distro is running)" -f "vt-x/svm")
+} else {
+  $vt = (Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1).VirtualizationFirmwareEnabled
+  if ($vt -eq $true)       { Write-Output ("  [ok]   {0,-10} enabled in BIOS/UEFI" -f "vt-x/svm") }
+  elseif ($vt -eq $false)  { Write-Output ("  [MISS] {0,-10} -> enable Intel VT-x / AMD SVM Mode in the BIOS/UEFI, then reboot" -f "vt-x/svm") }
+  else                     { Write-Output ("  [----] {0,-10} could not determine (Task Manager -> Performance -> CPU -> Virtualization)" -f "vt-x/svm") }
+}
+# A MinGW/MSYS2 gcc on the Windows PATH is exactly what we do not want people using.
+if (Test-Have gcc) {
+  $triple = (& gcc -dumpmachine 2>$null | Select-Object -First 1)
+  if ($triple -match 'mingw|msys') {
+    Write-Output ("  [warn] {0,-10} MinGW/MSYS gcc on PATH ({1}) - build native code in WSL instead" -f "mingw", $triple)
+  }
+}
+Write-Output "  docs: https://cyber93de.github.io/aiflow/installation#windows-prerequisites-do-this-first"
+
 Write-Output ""
 Write-Output "task / memory / vcs:"
 Invoke-Check "task-master" "task-master" "claude-task-master: npm i -g task-master-ai"
-Invoke-Check "graphify" "graphify" "structural code graph: uv tool install graphifyy && graphify install"
+Invoke-Check "graphify" "graphify" "structural code graph: uv tool install graphifyy && graphify install (repo: https://github.com/Graphify-Labs/graphify)"
 Invoke-Check "ccc"     "ccc"     "cocoindex-code (semantic RAG): uv tool install 'cocoindex-code[full]'"
 Invoke-Check "uv"      "uv"      "https://docs.astral.sh/uv/ (installs graphify + cocoindex-code)"
 Invoke-Check "gh"      "gh"      "GitHub CLI: https://cli.github.com (only if remote=github)"
@@ -76,7 +122,7 @@ Invoke-Check "ollama"  "ollama"  "local models: https://ollama.com/download (onl
 Write-Output ""
 Write-Output "cost / token-efficiency stack:"
 Invoke-Check "ccr"     "ccr"     "claude-code-router: npm i -g @musistudio/claude-code-router"
-Invoke-Check "rtk"     "rtk"     "rtk output filter: see rtk-ai.app (aiflow enables it per project)"
+Invoke-Check "rtk"     "rtk"     "rtk output filter: https://github.com/rtk-ai/rtk (aiflow enables it per project)"
 if (Test-Have npx) {
   Write-Output "  [ok]   ccusage    via 'aiflow cost'"
   Write-Output "  [ok]   templates  via 'npx claude-code-templates@latest'"

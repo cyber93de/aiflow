@@ -28,6 +28,10 @@ case " $* " in
       elif [ "$(jq -r '.agents.codex   // false' .aiflow/config.json)" = true ]; then AGENT_FLAG=(--agent codex)
       elif [ "$(jq -r '.agents.copilot // false' .aiflow/config.json)" = true ]; then AGENT_FLAG=(--agent copilot)
       fi
+    else
+      # No config (or no jq) to read: fall back to Claude Code, same as the .ps1 twin. Leaving
+      # --agent off entirely made ralph pick its own default, which differed per install.
+      AGENT_FLAG=(--agent claude-code)
     fi
     ;;
 esac
@@ -36,10 +40,26 @@ read -r -d '' GUARD <<'EOF' || true
 
 --- AIFLOW CONTEXT (ralph's own prompt template adds the completion-promise instruction -
 don't duplicate it here, that only confuses where the tag ends up) ---
-You run unattended in a loop; each iteration you see your own previous work in files and git
-history. Make concrete progress toward the task, respecting AGENTS.md (architecture, Google
-style, acceptance criteria, tests). Use Beads (bd) to track state; commit your work referencing
-bead ids. Never invent scope beyond the acceptance criteria.
+You run unattended in a loop. Each iteration starts fresh: you see your own previous work only in
+the files, in git history, and in Beads. Beads IS your memory across iterations - keep it current
+or the next iteration repeats your work.
+
+Beads protocol (mandatory, every run):
+1. FIRST iteration: if TASK is a bead id, claim it - `bd update <id> --claim`. If TASK is free
+   text, create the bead first with acceptance criteria and claim it:
+   `bd create --title="..." --description="..." --acceptance="..." --type=task` then `--claim`.
+2. EVERY iteration: re-read your state before doing anything - `bd show <id>` - and record what
+   you did at the end - `bd update <id> --notes "iteration N: <what changed, what is left>"`.
+3. Work you discover but must not do here: `bd create ... --deps discovered-from:<id>`. Never
+   silently widen scope.
+4. LAST iteration: only close when the acceptance criteria are demonstrably met -
+   `bd close <id> --reason "how each AC was verified"` - then emit the completion promise.
+   If you are blocked, write the blocker into the bead before emitting the abort promise.
+
+Make concrete progress toward the task, respecting AGENTS.md: section 2 architecture rules (a task
+that does not fit is NOT implemented as-is - record the blocker and stop), section 3 Google style,
+sections 3a/3b/3c quality gates (tests, logging, REST, database). Commit referencing the bead id.
+Never invent scope beyond the acceptance criteria.
 EOF
 
 echo ">> ralph (open-ralph-wiggum): ${AGENT_FLAG[1]:-default agent from config}, max $MAX iterations"

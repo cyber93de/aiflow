@@ -214,11 +214,25 @@ if ($AGENT_COPILOT) {
   Write-Output "  .vscode/mcp.json rendered for GitHub Copilot (VS Code)"
 }
 
-# ---------- model routing: stamp/strip 'model: haiku' on the 5 audit-only subagents ----------
-# (Claude Code only - Copilot/Codex have no subagent concept). Only these 5 files ever get
-# touched; every other .claude/agents/*.md stays byte-identical regardless of the toggle.
+# ---------- model routing: stamp 'model: <id>' per activity tier (AGENTS.md section 9) ----------
+# (Claude Code only - Copilot/Codex have no subagent concept.) Three tiers by the KIND of work:
+# reasoning (architecture/planning/review/security) gets a top model, implementation/tests get the
+# mid one, mechanical scans get the cheap one. Tier models and per-agent assignment are both
+# overridable in .aiflow/config.json (modelRouting.tiers.* / modelRouting.agents.*). With the
+# toggle off, every agent file is stripped back to the session default (aiflow-tv9).
 if ($AGENT_CLAUDE) {
-  function Set-ModelRoutingLine([string]$path, [string]$mode) {
+  $MR_REASONING = Get-JVal $cfgObj 'modelRouting.tiers.reasoning' 'opus'
+  $MR_IMPL      = Get-JVal $cfgObj 'modelRouting.tiers.implementation' 'sonnet'
+  $MR_MECH      = Get-JVal $cfgObj 'modelRouting.tiers.mechanical' 'haiku'
+  $MR_DEFAULTS  = [ordered]@{
+    reasoning      = @('architect', 'planner', 'reviewer', 'security-advisor', 'requirements-check', 'modernization-advisor', 'orchestrator')
+    implementation = @('implementer', 'tester', 'quality-check', 'accessibility-checker')
+    mechanical     = @('docs-sync', 'test-gap-advisor', 'dependency-auditor', 'performance-advisor', 'onboarder')
+  }
+  function Get-TierModel([string]$tier) {
+    switch ($tier) { 'reasoning' { $MR_REASONING } 'implementation' { $MR_IMPL } 'mechanical' { $MR_MECH } default { '' } }
+  }
+  function Set-ModelRoutingLine([string]$path, [string]$mode, [string]$model) {
     if (-not (Test-Path $path)) { return }
     # [System.IO.File] resolves relative paths against [Environment]::CurrentDirectory, which
     # PowerShell does NOT keep in sync with Set-Location/Get-Location - a raw relative path here
@@ -241,11 +255,11 @@ if ($AGENT_CLAUDE) {
       $line = $lines[$i]
       if ($i -eq 0 -and $line -ceq '---') { $infm = $true; $out.Add($line); continue }
       if ($infm -and $line -ceq '---') {
-        if ($mode -eq 'add' -and -not $done) { $out.Add('model: haiku'); $done = $true }
+        if ($mode -eq 'add' -and -not $done) { $out.Add("model: $model"); $done = $true }
         $infm = $false; $out.Add($line); continue
       }
       if ($infm -and $line -cmatch '^model:[ \t]') {
-        if ($mode -eq 'add' -and -not $done) { $out.Add('model: haiku'); $done = $true }
+        if ($mode -eq 'add' -and -not $done) { $out.Add("model: $model"); $done = $true }
         continue
       }
       $out.Add($line)
@@ -253,11 +267,27 @@ if ($AGENT_CLAUDE) {
     $newText = ($out -join $eol) + $(if ($hadTrailingNewline) { $eol } else { '' })
     [System.IO.File]::WriteAllText($full, $newText, (New-Object System.Text.UTF8Encoding($false)))
   }
-  $mrMode = if ($MODELROUTING_ON) { 'add' } else { 'strip' }
-  foreach ($n in @('docs-sync', 'test-gap-advisor', 'dependency-auditor', 'performance-advisor', 'onboarder')) {
-    Set-ModelRoutingLine (Join-Path '.claude/agents' "$n.md") $mrMode
+  if ($MODELROUTING_ON) {
+    foreach ($defTier in $MR_DEFAULTS.Keys) {
+      foreach ($n in $MR_DEFAULTS[$defTier]) {
+        # per-agent override wins over the tier default:
+        # modelRouting.agents.<name> = reasoning|implementation|mechanical
+        $t = Get-JVal $cfgObj "modelRouting.agents.$n" ''
+        if ([string]::IsNullOrEmpty($t)) { $t = $defTier }
+        $m = Get-TierModel $t
+        if ([string]::IsNullOrEmpty($m)) { $m = Get-TierModel $defTier }
+        Set-ModelRoutingLine (Join-Path '.claude/agents' "$n.md") 'add' $m
+      }
+    }
+    Write-Output "  model routing: reasoning=$MR_REASONING implementation=$MR_IMPL mechanical=$MR_MECH"
+  } else {
+    foreach ($defTier in $MR_DEFAULTS.Keys) {
+      foreach ($n in $MR_DEFAULTS[$defTier]) {
+        Set-ModelRoutingLine (Join-Path '.claude/agents' "$n.md") 'strip' ''
+      }
+    }
+    Write-Output "  model routing: off (all subagents on the session default)"
   }
-  Write-Output "  model routing: 5 audit subagents -> $(if ($MODELROUTING_ON) { 'haiku' } else { 'session default' })"
 }
 
 # ---------- ponytail (YAGNI skill): self-gates via .aiflow/config.json, nothing to render here ----------

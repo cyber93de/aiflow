@@ -238,7 +238,15 @@ echo "  wrote .aiflow/config.json"
 
 # ---- local version control ----
 case "$VCS_SYS" in
-  git)  [ "$NO_GIT" = 0 ] && [ ! -d .git ] && { git init -q && echo "  git initialised"; } ;;
+  # --initial-branch=main is mandatory: the whole branching governance (branching.sh,
+  # branching.json, pre-push hook, release.sh, hotfix.sh) hard-codes 'main'. Without it,
+  # git < 2.28 or an unset init.defaultBranch silently produces 'master' and nothing
+  # enforces anything (aiflow-33g). Old git has no such flag -> symbolic-ref fallback.
+  git)  if [ "$NO_GIT" = 0 ] && [ ! -d .git ]; then
+          if git init -q --initial-branch=main 2>/dev/null; then echo "  git initialised (branch main)"
+          elif git init -q; then git symbolic-ref HEAD refs/heads/main; echo "  git initialised (branch main)"
+          fi
+        fi ;;
   svn)  if command -v svn >/dev/null 2>&1; then
           [ -d .svn ] || echo "  svn selected — run 'svnadmin create' / 'svn checkout' for your repo (aiflow won't auto-create it)"
         else echo "  ! svn selected but 'svn' not installed"; fi ;;
@@ -303,12 +311,15 @@ Next steps:
   3) reconcile AGENTS.md / docs/architecture with reality, then: aiflow shell (Claude), or open Copilot/Codex CLI
   4) optional baseline audits: aiflow security-check | quality-check | dependency-check | test-gap | docs-check
 EOF
+  [ "$DID_ONBOARD" = 1 ] && echo "  -> run /compact now: what onboard learned is persisted in memory + AGENTS.md + arc42, the transcript isn't needed"
 else
   cat <<EOF
 This is a NEW project. Next steps:
   1) edit .env        -> GITHUB_TOKEN + (ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN)
   2) review AGENTS.md + .claude/memory/project-aim.md (fill the [EDIT ME] blocks)
   3) aiflow shell     -> start Claude Code (secrets loaded), or open Copilot/Codex CLI directly
+  4) in the session: run /compact right after this - the aim, stack and architecture from the Q&A
+     are already in .aiflow/config.json + .claude/memory/, so the setup transcript is dead weight
 EOF
 fi
 echo "  Change any choice later: aiflow change-settings   |   full manual: README.md / README.de.md"

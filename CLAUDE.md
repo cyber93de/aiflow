@@ -78,7 +78,7 @@ python3 .github/scripts/check-frontmatter.py --selftest   # the guard's own fixt
 python3 .github/scripts/check-frontmatter.py \
   .claude/agents .claude/commands .claude/skills \
   templates/.claude/agents templates/.claude/commands templates/.claude/skills
-# Bash/PowerShell twin parity (pairing + `aiflow` subcommand dispatch + usage block)
+# Bash/PowerShell twin parity (pairing + dispatch + usage block + per-pair step banners)
 python3 .github/scripts/check-twins.py --selftest
 python3 .github/scripts/check-twins.py .
 # rendered copies (.aiflow/, .claude/hooks/, .github/scripts/) vs templates/ — content drift too

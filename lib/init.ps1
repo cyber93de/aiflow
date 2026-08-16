@@ -66,10 +66,12 @@ Copy-TemplateTree $TPL $Target $Force
 # no chmod +x equivalent needed on Windows - the exec bit is a POSIX concept.
 Set-Location $Target
 
-# ---- OS default: this .ps1 twin only ships in the windows archive - always windows ----
+# ---- detect OS default ----
+# this .ps1 twin only ships in the windows archive, so the answer is always windows
 $OS_DEF = 'windows'
 
-# ---- interactive helpers (ask_yn always emits true/false, also in --yes mode) ----
+# ---- interactive helpers (read from tty so piping still works) ----
+# ask_yn always emits true/false, also in --yes mode
 function Ask($prompt, $d) {
   if ($Yes) { return $d }
   $a = Read-Host "  $prompt [$d]"

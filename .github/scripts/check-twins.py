@@ -6,14 +6,21 @@ and several `lib/*.ps1` are full native implementations rather than shims — so
 feature added to one twin only ships broken on the other platform, silently. That
 has happened (aiflow-coy) and nothing detected it.
 
-Three checks, all mechanical:
+Four checks, all mechanical:
   pairing   every twinned script has both halves
   dispatch  `bin/aiflow` and `bin/aiflow.ps1` expose the same subcommands
   help      every dispatched subcommand appears in its own entry point's USAGE block
+  sections  both halves of a pair carry the same `# ---- section ----` banners
 
-What this does NOT check: divergence *inside* an existing twin pair — a step added
-to `lib/apply.sh` with no counterpart in `lib/apply.ps1` is still invisible here.
-"enforced" means the surface, not proven parity.
+The section check is what sees *inside* a pair: a step added to `lib/apply.sh` with no
+counterpart in `lib/apply.ps1` shows up as a banner only one half has (aiflow-0fc). It
+relies on the convention both twins already follow — every step of these scripts opens
+with a banner comment — and matches the text after normalising case, punctuation and
+dash style, so the two halves must name a step the same way. Platform detail that
+belongs to only one twin goes on a plain comment line under the banner, not into it.
+
+Still NOT checked: a step that carries no banner, and whether two same-named steps
+actually *do* the same thing. "Enforced" means the structure, not proven parity.
 
 Usage: check-twins.py [<repo root>]
        check-twins.py --selftest
@@ -52,6 +59,15 @@ TWIN_EXEMPT: set[str] = set()
 # Handled by the Bash `*)` catch-all and the PowerShell `default` branch rather than an
 # explicit case, so they never appear as a label — comparing them would always fail.
 DISPATCH_EXEMPT = {"help", "-h", "--help"}
+
+# Section banners accepted in only one half, as "<sh path>: <normalised banner>". A genuinely
+# one-platform step goes here with a comment saying why. Empty is the goal: when the two twins
+# name the same step differently, align the wording instead of exempting it.
+SECTION_EXEMPT: set[str] = set()
+
+# `# ---- text ----` — a step banner. Both twin languages use `#` comments, so one pattern
+# serves both. Requires the trailing dashes, so an ordinary comment is never read as a banner.
+SECTION = re.compile(r"^#\s*-{2,}\s*(.+?)\s*-{2,}\s*$", re.M)
 
 # Both entry points carry ~28 dispatch groups. A parser that suddenly finds far fewer has
 # been broken by a layout change — fail loudly rather than pass an unchecked file.
@@ -141,6 +157,40 @@ def check_pairing(root: pathlib.Path) -> list[tuple[str, str]]:
     return problems
 
 
+def normalise_section(banner: str) -> str:
+    """Fold case, dash style and punctuation so wording, not typography, is compared."""
+    lowered = banner.lower().replace("—", "-").replace("–", "-").replace("’", "'")
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", lowered).split())
+
+
+def sections(path: pathlib.Path) -> set[str]:
+    """Normalised step banners of one file."""
+    return {normalise_section(m) for m in SECTION.findall(path.read_text(encoding="utf-8"))}
+
+
+def check_sections(root: pathlib.Path) -> list[tuple[str, str]]:
+    """Report step banners present in only one half of a twin pair."""
+    problems = []
+    for rel in TWIN_DIRS:
+        base = root / rel
+        if not base.is_dir():
+            continue
+        for sh in sorted(base.glob("*.sh")):
+            ps = sh.with_suffix(".ps1")
+            if not ps.is_file():
+                continue  # missing half is check_pairing's finding, not this one
+            where = f"{rel}/{sh.name}"
+            sh_only, ps_only = sections(sh) - sections(ps), sections(ps) - sections(sh)
+            for banner in sorted(sh_only):
+                if f"{where}: {banner}" not in SECTION_EXEMPT:
+                    problems.append((where, f"{sh.name} has step '{banner}' and {ps.name} does not"))
+            for banner in sorted(ps_only):
+                if f"{where}: {banner}" not in SECTION_EXEMPT:
+                    problems.append((f"{rel}/{ps.name}",
+                                     f"{ps.name} has step '{banner}' and {sh.name} does not"))
+    return problems
+
+
 def check_dispatch(sh_groups: list[set[str]], ps_groups: list[set[str]]) -> list[tuple[str, str]]:
     """Report subcommands one entry point dispatches and the other does not."""
     sh_all = {c for g in sh_groups for c in g} - DISPATCH_EXEMPT
@@ -166,8 +216,8 @@ def check_help(groups: list[set[str]], usage: str, name: str) -> list[tuple[str,
 
 
 def run(root: pathlib.Path) -> list[tuple[str, str]]:
-    """Run all three checks against a repo root."""
-    problems = check_pairing(root)
+    """Run all four checks against a repo root."""
+    problems = check_pairing(root) + check_sections(root)
     sh_path, ps_path = root / "bin/aiflow", root / "bin/aiflow.ps1"
     if not sh_path.is_file() or not ps_path.is_file():
         return problems + [("bin/aiflow", "bin/aiflow and bin/aiflow.ps1 must both exist")]
@@ -269,7 +319,40 @@ def selftest() -> int:
         expect(any(w == "install.sh" for w, _ in pairing), "TWIN_FILES pair not checked")
         expect(all("paired" not in p for _, p in pairing), "check_pairing flagged a matched pair")
 
-    print("selftest: dispatch, usage, help and pairing" + (" — FAILED" if failed else " — ok"))
+    # section parity: one step missing per direction, plus wording that differs only in
+    # case/dashes/punctuation (which must NOT be reported), plus a plain comment that only
+    # looks like a banner (no trailing dashes — must not be read as one).
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        (root / "lib").mkdir()
+        (root / "lib/twin.sh").write_text(
+            "# ---- shared step ----\n"
+            "# ---- Render the config (idempotent) ----\n"
+            "# ---- only in bash ----\n"
+            "# ---- not a banner\n", encoding="utf-8")
+        (root / "lib/twin.ps1").write_text(
+            "# ---- shared step ----\n"
+            "# ---- render the CONFIG — idempotent! ----\n"
+            "# ---- only in powershell ----\n", encoding="utf-8")
+        found = check_sections(root)
+        expect(len(found) == 2, f"check_sections returned {found}")
+        expect(any("only in bash" in p for _, p in found)
+               and any("only in powershell" in p for _, p in found),
+               f"one direction missing: {found}")
+        expect(all("render" not in p.lower() for _, p in found),
+               f"typography-only difference reported: {found}")
+        expect(all("not a banner" not in p for _, p in found), "dangling comment read as a banner")
+
+        SECTION_EXEMPT.add("lib/twin.sh: only in bash")
+        try:
+            left = check_sections(root)
+            expect(len(left) == 1 and "only in powershell" in left[0][1],
+                   f"exemption left {left}")
+        finally:
+            SECTION_EXEMPT.discard("lib/twin.sh: only in bash")
+
+    print("selftest: dispatch, usage, help, pairing and sections"
+          + (" — FAILED" if failed else " — ok"))
     return failed
 
 

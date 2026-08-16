@@ -29,10 +29,15 @@ Why things are the way they are. Change these only deliberately.
   `.github/scripts/check-twins.py` (CI job "twins"): pairing, `aiflow` subcommand dispatch parity
   between `bin/aiflow` and `bin/aiflow.ps1`, and help-text coverage of every dispatched command.
   It found `a11y-check` and `modernize-check` missing from the PowerShell entry point on its first
-  run — they had been printing the help text on Windows instead of running. **What it does not
-  cover:** divergence *inside* an existing pair (a step added to `lib/apply.sh` with no counterpart
-  in `lib/apply.ps1` stays invisible). No allowlist for deliberate single-platform scripts was
-  needed; `TWIN_EXEMPT` exists but is deliberately empty.
+  run — they had been printing the help text on Windows instead of running. Since 2026-08-16
+  (aiflow-0fc) it also compares the `# ---- step ----` banners of the two halves of each pair, so a
+  step added to `lib/apply.sh` with no counterpart in `lib/apply.ps1` is caught — the twins must
+  therefore name a step identically (case/dash/punctuation are normalised away), and one-platform
+  detail belongs on a plain comment line under the banner, not in it. Aligning `init.ps1`'s two
+  differently-worded banners was cheaper than exempting them, so `SECTION_EXEMPT` is empty too.
+  **Still not covered:** a step carrying no banner, and whether two same-named steps actually do
+  the same thing. No allowlist for deliberate single-platform scripts was needed either;
+  `TWIN_EXEMPT` exists but is deliberately empty.
 - **This repo's `.aiflow/` is refreshed from `templates/.aiflow/`, never hand-edited** (2026-08-15).
   It had drifted far behind: six missing `.ps1` halves, both `protect` twins absent, and a
   `ralph-headless.sh` still on the pre-open-ralph-wiggum design — so `aiflow protect` was broken on

@@ -12,6 +12,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `description` ≤ 1024 — on agents, commands and skills alike, with the limits covered by its
   self-test (at the limit passes, one over fails). The `seo-optimization` skill's description was
   1323 characters; it has been tightened to fit while keeping every trigger word.
+- **The twin guard now looks *inside* a pair.** It compared only the surface (both halves present,
+  same subcommands, same help text), so a step added to `lib/apply.sh` and forgotten in
+  `lib/apply.ps1` — the exact class that made a feature ship broken on Windows — stayed invisible.
+  `check-twins.py` now also compares the `# ---- step ----` banners of the two halves and reports
+  one that only one side has. The twins must therefore name a step identically (case, dashes and
+  punctuation are normalised away); platform-specific detail goes on a plain comment line under the
+  banner. `init.ps1`'s two differently-worded banners were aligned rather than exempted, so the
+  exemption list ships empty.
 - **`aiflow project-update` now reports scripts aiflow no longer ships.** It only ever copied, so a
   helper that was renamed or dropped upstream stayed in the project forever and went unmentioned.
   The end of the run now lists any `*.sh`/`*.ps1` in `.aiflow/` or `.claude/hooks/` that the

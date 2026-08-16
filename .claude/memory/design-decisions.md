@@ -64,8 +64,18 @@ Why things are the way they are. Change these only deliberately.
   `.aiflow/` matching that **in mode**, which `check-rendered.py` cannot see because it compares
   bytes. `bin/aiflow`, `lib/*.sh`, `install.sh` and everything under `templates/` stay 100644 on
   purpose — the installer and `init`/`project-update` chmod them on copy.
-  **Not** covered: `.beads/hooks/*` are executed in
-  place by git (`core.hooksPath`) and are 100644 — see aiflow-vly. Verified by `chmod -x`-ing a
+  **Not** covered, and deliberately so: `.beads/hooks/*` (2026-08-16, aiflow-vly). They are
+  100755 in the index now — a one-off `git update-index --chmod=+x`, blobs untouched, because
+  git *does* skip a non-executable hook and the bit costs nothing. But there is **no CI
+  assertion** on them, for two reasons. They are not ours: the files carry
+  `--- BEGIN BEADS INTEGRATION v1.0.5 ---` and are rewritten by `bd hooks install` / `bd init`,
+  so asserting a mode on a third-party artefact buys a red build the day beads changes it. And
+  the bit was never what made them work: `core.hooksPath` lives in `.git/config`, which is
+  **not cloned** — verified on a local clone of this repo, where it comes back unset — so on a
+  fresh clone git looks in `.git/hooks` and these files are inert at *any* mode until someone
+  runs beads' own setup, which writes them again. Failure mode if it ever does bite is loud,
+  not silent: git prints "the hook was ignored because it's not set as executable" (verified
+  under WSL; Git-Bash cannot show this — `[ -x ]` is true there at 644). Verified by `chmod -x`-ing a
   file in a scratch clone; re-run that check if the CI step changes.
 - **No `[ -x ]` gate in front of an interpreted call** (2026-08-16). `[ -x "$f" ] || die; bash "$f"`
   gates on a bit `bash` never reads, and `core.filemode=false` on Windows drops it — so a project

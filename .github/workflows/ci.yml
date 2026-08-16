@@ -102,7 +102,9 @@ jobs:
       # self-hosted copy matching that in MODE, which check-rendered.py cannot see (it compares
       # bytes). core.filemode=false on Windows drops the bit silently (half of aiflow-30k).
       # Everything else (bin/aiflow, lib/*.sh, install.sh, templates/**) is deliberately 100644 —
-      # the installer and init/project-update chmod on copy.
+      # the installer and init/project-update chmod on copy. `.beads/hooks/*` are 100755 too but
+      # are NOT asserted (aiflow-vly): beads owns and rewrites those files, and core.hooksPath is
+      # never cloned, so they are inert at any mode until beads' own setup runs.
       - name: Check .aiflow/*.sh are executable in the index
         run: |
           set -euo pipefail

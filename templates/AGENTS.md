@@ -36,16 +36,100 @@ GitHub Copilot reads `.github/copilot-instructions.md`, which also just points h
 
 ---
 
-## 2. Architecture hints  [EDIT ME]
+## 2. Architecture rules (MANDATORY)
 
-> High-level rules an agent must respect. Keep concrete. Examples:
+These rules apply to **every** task, in every language — Java/Kotlin, Swift/Objective-C, Dart,
+TypeScript, C#, Rust, Go, Python, C/C++ on embedded. The vocabulary differs per ecosystem
+(package/module/crate/framework/target); the structure does not. §2a is binding everywhere; §2b is
+where **this** project's concrete decisions go.
 
-- Layering: `api -> service -> repository -> db`. No layer skips.
-- Dependency direction: domain never imports infrastructure.
-- Public API lives in `<dir>`. Internal helpers in `<dir>`.
-- Persistence: <db / ORM>. Migrations in `<dir>`.
-- Errors: never swallow; wrap with context.
-- Full architecture document: `docs/architecture/` (arc42). Update it when structure changes.
+### 2a. Binding rules
+
+**Layered architecture.** Every project has explicit layers and a single dependency direction —
+inward, toward the domain:
+
+```
+presentation / API   (controllers, UI, CLI, ISR handlers)
+        ↓
+application / service (use cases, orchestration, transactions)
+        ↓
+domain               (entities, value objects, business rules — depends on nothing)
+        ↑
+infrastructure       (persistence, HTTP clients, brokers, drivers — implements domain ports)
+```
+
+- **No layer skips.** A controller never touches a repository or a driver directly.
+- **The domain imports nothing outward.** No ORM annotations bleeding business rules, no HTTP types
+  in entities, no vendor SDK in the domain. Infrastructure depends on the domain, never the reverse.
+- **No cyclic dependencies** between modules/packages. A cycle is a defect, not a style opinion.
+- Embedded equivalent: `application ↔ service ↔ HAL/driver`. Business logic never talks to a
+  register directly; the HAL is the port.
+
+**Interfaces at every seam.** Anything crossing a layer or module boundary is reached through an
+interface (protocol/trait/abstract type), never a concrete class:
+- The domain declares the **port** (`OrderRepository`, `PaymentGateway`); infrastructure provides
+  the **adapter**. Wire them by dependency injection, never by `new`-ing inside the caller.
+- A public API contract and its implementation live in separate types. Internal helpers stay
+  internal (package-private / `internal` / not exported).
+- This is what makes the code testable: every boundary is mockable by construction.
+
+**DAO and DTO are mandatory, and they are not the same object.**
+- **DAO / repository** — the *only* place that talks to a data store. No SQL, no query builder, no
+  ORM session, no file/registry access anywhere else. One DAO per aggregate, not per table-join.
+- **DTO** — what crosses a process boundary (REST/SOAP/queue payloads, UI view models). Mapped
+  explicitly to/from domain objects.
+- **Domain objects never leave the domain** — not serialised to a client, not persisted verbatim,
+  not accepted as request bodies. An entity annotated for both JPA and JSON is a review finding:
+  it couples the database schema to the wire format, so neither can change independently.
+
+**Reusability before duplication.** Before writing something new: does it exist in this codebase,
+in the standard library, in an already-installed dependency? Extract shared behaviour into a
+common module rather than copying it. **Generics/type parameters** are the right tool when the same
+logic differs only by type (`Repository<T, ID>`, `Result<T, E>`, a typed mapper) — use them to kill
+duplication, not to build speculative abstraction layers (§3a: YAGNI).
+
+**Complexity is the enemy.**
+- Split a complex task into **small, single-purpose methods** with self-explanatory names. A method
+  that needs a comment to explain *what* it does wants to be two methods.
+- Guard clauses over nesting; no deep `if`-pyramids; no god classes/functions.
+- Cognitive and cyclomatic complexity stay within the §3a metric targets. Every extra branch,
+  flag parameter, and special case has to earn its place.
+
+**Style.** Google Style per §3 — mandatory, no exceptions. Formatter and linter run before a task
+is done.
+
+### 2b. This project's architecture  [EDIT ME]
+
+> Concrete decisions for **this** codebase. Replace the placeholders. If this block is still
+> unfilled when the first real task arrives, the **architect** agent fills it (see below).
+
+- Layer names + directories: `<dir> -> <dir> -> <dir>`
+- Module/package boundaries and what may depend on what: `<...>`
+- Public API lives in `<dir>`; internal helpers in `<dir>`.
+- Persistence: `<db / ORM>`; DAOs in `<dir>`; migrations in `<dir>`.
+- DTO ↔ domain mapping: `<mapper approach / dir>`
+- Errors: never swallow; wrap with context. Project error type: `<...>`
+- Full architecture document: `docs/architecture/` (arc42) + ADRs. Update it when structure changes.
+
+### 2c. Rules must exist — and they win
+
+- **A project without architecture rules gets them.** If §2b is still a placeholder and no ADR
+  defines the structure, the **architect** agent (`/arch`) proposes a sensible set on first use —
+  layering, module boundaries, DAO/DTO convention, interface policy, naming/package structure —
+  writes it into §2b **and** as an ADR under `docs/architecture/`, and has it confirmed. On a
+  brownfield codebase the **onboarder** derives the *actual* rules from the code first and flags
+  where reality already contradicts them.
+- **Once recorded, the rules are binding.** They change only through a new ADR that explicitly
+  supersedes the old one — never silently, never as a side effect of a feature task.
+- **A task that doesn't fit the architecture is not implemented as-is.** When a requirement would
+  break a rule in §2a/§2b, the agent **stops before writing code** and asks — in PO-understandable
+  language, with options and consequences (e.g. *"putting this query in the controller saves a day
+  now, but no other feature can reuse it and the DB type leaks into the API"*). The user decides;
+  the decision is recorded (`/beads:decision` **(Claude Code only)**, or `bd update <id> --design`).
+  Improvising around a rule, or "just this once", is a review BLOCKER.
+- The **reviewer** checks §2a/§2b explicitly (§5) — layer violations, missing interfaces at seams,
+  domain objects on the wire, missing DAO/DTO separation, avoidable complexity, copy-paste instead
+  of reuse — and each of those is a BLOCKER, not a suggestion.
 
 ---
 
@@ -554,19 +638,46 @@ directly, or the live routing table in `.claude/memory/memory-policy.md` once me
 - **Keep context lean:** route via **graphify** (structure) + **cocoindex-code** (semantic RAG)
   before reading whole files, on any agent that has them wired as MCP servers. See §8 +
   `.claude/memory/memory-policy.md`.
+- **Compact regularly (`/compact`) (Claude Code only).** A full context window costs tokens on
+  *every* turn and degrades reasoning. The durable knowledge lives in Beads, `.claude/memory/`,
+  `docs/architecture/` and this file — the raw transcript that produced it does not. Compact:
+  - **right after `aiflow init`** on a greenfield project — the Q&A already wrote the aim,
+    the stack, and the architecture into config + memory; the interview transcript is dead weight;
+  - **right after the onboarder** on a brownfield project — likewise, everything it learned is
+    now in `.claude/memory/codebase-map.md`, AGENTS.md §1/§2 and arc42;
+  - **after every closed bead**, before picking up the next one;
+  - **before a long Ralph run** or any multi-file refactor, so the loop starts with headroom.
+
+  Before compacting, make sure what matters is persisted (bead notes/design, memory file, ADR) —
+  compaction is not a place to store anything. Copilot/Codex have no `/compact`: start a fresh
+  thread at the same four points, and re-read `AGENTS.md` + the bead instead.
 - **Route by difficulty:** trivial/background steps may run on cheap/local models via
   `aiflow shell --router` **(Claude Code only)**; reserve top models for hard reasoning. Measure
   with `aiflow cost` (Claude Code usage only).
-- **Model routing for audit-only subagents** — a separate, Claude-Code-native mechanism from the
-  router above (no external tool, always available). Controlled by `.aiflow/config.json →
-  modelRouting.enabled` (default **on**). When on, `aiflow apply` stamps `model: haiku` into the
-  frontmatter of exactly 5 subagents that only do mechanical/background checks, not deep
-  reasoning: **docs-sync**, **test-gap-advisor**, **dependency-auditor**, **performance-advisor**,
-  **onboarder** — so they run on Haiku 4.5 instead of the session's main model. Every other
-  subagent (`implementer`, `architect`, `security-advisor`, `reviewer`, `planner`,
-  `quality-check`, `requirements-check`, `accessibility-checker`, `modernization-advisor`,
-  `tester`) always keeps the session's default model — they need real reasoning. Toggle it with
-  `aiflow change-settings` **(Claude Code only)**.
+- **Model tiers per activity (MANDATORY).** Thinking-heavy work gets a strong model; mechanical
+  work does not. The rule is about the *activity*, not the agent's name:
+
+  | Activity | Tier | Why |
+  |----------|------|-----|
+  | Architecture, ADRs, concept work, planning/decomposition, **review**, security analysis, modernisation | **reasoning** — Fable 5 / Opus 5 | Wrong calls here are expensive and long-lived; they need real trade-off reasoning. |
+  | Implementation, unit tests, integration/E2E tests, refactoring, quality/a11y audits | **implementation** — Sonnet 5 | Bounded, well-specified work with an explicit AC to check against. |
+  | CI/CD wiring, docs drift, dependency scans, perf scans, test-gap scans, codebase mapping | **mechanical** — Haiku 4.5 | Pattern-matching and enumeration; no design judgement involved. |
+
+  Escalate a tier when a task turns out harder than it looked (a "simple" fix that touches the
+  architecture is architecture work) — never silently downgrade one.
+- **How the tiers are applied** — a Claude-Code-native mechanism, separate from the router above
+  (no external tool, always available). `.aiflow/config.json → modelRouting.enabled` (default
+  **on**); `aiflow apply` stamps the tier's model into each subagent's frontmatter:
+  - **reasoning** → `architect`, `planner`, `reviewer`, `security-advisor`, `requirements-check`,
+    `modernization-advisor`, `orchestrator`
+  - **implementation** → `implementer`, `tester`, `quality-check`, `accessibility-checker`
+  - **mechanical** → `docs-sync`, `test-gap-advisor`, `dependency-auditor`, `performance-advisor`,
+    `onboarder`
+
+  Override any of it in `.aiflow/config.json → modelRouting.tiers` (per-tier model id) and
+  `modelRouting.agents` (per-agent tier). With `modelRouting.enabled: false` every subagent runs
+  on the session's model. Toggle via `aiflow change-settings` **(Claude Code only)**. Copilot and
+  Codex: pick the equivalent model manually per thread and keep it stable within one thread.
 - **Ponytail** — `.aiflow/config.json → ponytail.enabled`/`.mode` (default off). When on, the
   **ponytail** skill (§5) applies a YAGNI decision ladder before new code/dependencies/
   abstractions; `/ponytail-review` audits a diff for over-engineering regardless of the toggle.
@@ -584,6 +695,8 @@ directly, or the live routing table in `.claude/memory/memory-policy.md` once me
 ## 10. Definition of Done (quick checklist)
 
 - [ ] Acceptance criteria met and verified
+- [ ] §2 architecture rules honoured — layering, interfaces at seams, DAO/DTO separation, reuse
+      over duplication — **or** the deviation was asked about *before* coding and is recorded
 - [ ] Pre-analysis done; functional decisions recorded (`/beads:decision` / `--design`)
 - [ ] Tests written/updated and passing — unit + BDD E2E mandatory, coverage > 80 % lines,
       all non-static methods tested (§3a)

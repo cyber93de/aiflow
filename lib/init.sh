@@ -311,12 +311,15 @@ Next steps:
   3) reconcile AGENTS.md / docs/architecture with reality, then: aiflow shell (Claude), or open Copilot/Codex CLI
   4) optional baseline audits: aiflow security-check | quality-check | dependency-check | test-gap | docs-check
 EOF
+  [ "$DID_ONBOARD" = 1 ] && echo "  -> run /compact now: what onboard learned is persisted in memory + AGENTS.md + arc42, the transcript isn't needed"
 else
   cat <<EOF
 This is a NEW project. Next steps:
   1) edit .env        -> GITHUB_TOKEN + (ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN)
   2) review AGENTS.md + .claude/memory/project-aim.md (fill the [EDIT ME] blocks)
   3) aiflow shell     -> start Claude Code (secrets loaded), or open Copilot/Codex CLI directly
+  4) in the session: run /compact right after this - the aim, stack and architecture from the Q&A
+     are already in .aiflow/config.json + .claude/memory/, so the setup transcript is dead weight
 EOF
 fi
 echo "  Change any choice later: aiflow change-settings   |   full manual: README.md / README.de.md"

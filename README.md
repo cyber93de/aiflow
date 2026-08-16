@@ -117,7 +117,8 @@ question, every default, first feature end-to-end).
 | **Remote host** | GitHub, GitHub Enterprise, GitLab, self-managed GitLab, Bitbucket, Forgejo, Gitea, or a custom URL — **token-based** |
 | **Host MCP** | The matching git-host MCP is wired automatically (per remote type) |
 | **Models** | Claude (API key *or* OAuth) + optional **Ollama** local models, selectable & auto-installed |
-| **Model routing** | claude-code-router sends easy/background work to cheap/local models |
+| **Model routing** | claude-code-router sends easy/background work to cheap/local models; per-activity **model tiers** put architecture/planning/review/security on Opus (or Fable), implementation + tests on Sonnet, mechanical scans on Haiku |
+| **Architecture rules** | Binding, every language: layered with inward dependencies, interfaces at every seam, DAO + DTO separation, domain objects never on the wire, reuse/generics over duplication. A task that doesn't fit is **asked about before it's built** |
 | **Agents** | 5 delivery + 9 audit/checker + 1 brownfield specialist subagents |
 | **Autonomy** | Ralph loop (interactive / headless / containerised / CI) |
 | **Quality** | Google style, conventional commits, format/lint/test git hooks, architect+quality-gate review, static analysis on every change, objective metric targets (0 new smells/duplicates, 0 warnings), >80 % coverage + BDD E2E gates, leveled logging, `.http` files for REST endpoints, DB rules §3c (3NF+FKs for new schemas, brownfield schemas handled with care) |

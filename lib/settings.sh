@@ -152,7 +152,12 @@ if [ "$VCS_SYS" = git ]; then
   fi
 fi
 
+# modelRouting.tiers / .agents are hand-edited overrides (AGENTS.md section 9) - this rebuild
+# starts from an empty object, so carry them over instead of silently dropping them.
+MR_EXTRA="$(jq -c '(.modelRouting // {}) | del(.enabled)' "$CFG" 2>/dev/null)"; [ -z "$MR_EXTRA" ] && MR_EXTRA='{}'
+
 jq -n \
+  --argjson mrextra "$MR_EXTRA" \
   --argjson cave "$CAVE_ON" --arg cmode "$CAVE_MODE" \
   --argjson rtk "$RTK_ON" --argjson ptail "$PONYTAIL_ON" --arg ptmode "$PONYTAIL_MODE" \
   --argjson router "$ROUTER_ON" --argjson gfy "$GRAPHIFY_ON" \
@@ -174,7 +179,7 @@ jq -n \
     graphify:{enabled:$gfy},taskmaster:{enabled:$tm},mcp:{filesystem:$fs,context7:$ctx7,cocoindex:$coco},
     memory:{enabled:$mem,graph:$memg,intensity:$memi},
     agents:{claude:$agclaude,copilot:$agcopilot,codex:$agcodex},
-    modelRouting:{enabled:$modelrouting},
+    modelRouting:({enabled:$modelrouting} + $mrextra),
     codexsaver:{enabled:$csaver,provider:$csprov,apiKeyEnv:$cskeyenv},
     claude:{auth:$cauth},
     vcs:{system:$vsys},

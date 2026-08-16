@@ -27,7 +27,7 @@ description: "aiflow features: multi-agent support (Claude Code, GitHub Copilot,
 | **Remote host** | GitHub, GitHub Enterprise, GitLab, self-managed GitLab, Bitbucket, Forgejo, Gitea, or a custom URL — token-based |
 | **Host MCP** | The matching git-host MCP is wired automatically per remote type |
 | **Models** | Claude (API key *or* OAuth) + optional **Ollama** local models, selectable & auto-installed |
-| **Model routing** | claude-code-router sends easy/background work to cheap/local models; separately, `modelRouting.enabled` routes 5 audit-only subagents to Haiku 4.5 |
+| **Model routing** | claude-code-router sends easy/background work to cheap/local models; separately, `modelRouting` stamps a model per activity tier — reasoning (opus/fable) for architecture, planning, review, security; sonnet for implementation and tests; haiku for mechanical scans |
 | **Agents** | 5 delivery + 9 audit/checker + 1 brownfield specialist subagents |
 | **Skills** | Auto-offered checklists: **stack-embedded / stack-mobile / stack-web-frontend / stack-backend**, **api-design / messaging-events / data-storage / cloud-native**, **security** (OWASP + IAM), seo-optimization, **ponytail** (YAGNI, off by default), memory-setup |
 | **Autonomy** | Ralph loop (interactive / headless / containerised / CI) |
@@ -49,7 +49,7 @@ guessing or re-reading dozens of files. See [Memory](memory).
 - **CodexSaver** (Codex CLI, optional) — routes cheap/bounded work to a cheaper MCP worker.
 - **graph + RAG retrieval** — answer from graphify/cocoindex instead of reading whole files (~70% fewer). Agent-agnostic.
 - **model routing** — send easy/background steps to cheap or local (Ollama) models. Agent-agnostic.
-- **haiku audit routing** (Claude Code, on by default) — the 5 audit-only subagents run on Haiku 4.5.
+- **model tiers** (Claude Code, on by default) — architecture/planning/review/security run on the reasoning tier (opus, or fable), implementation and tests on sonnet, mechanical scans on haiku.
 - **ponytail** (off by default) — fewer tokens spent writing and reviewing code nobody needed.
 - **measure first** — `aiflow cost` (ccusage) shows real spend.
 

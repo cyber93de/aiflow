@@ -14,10 +14,22 @@ edges: you question whether the requirement fits the existing architecture befor
 2. Build a short **pre-analysis**: current architecture (graphify graph, `AGENTS.md §2`,
    `docs/architecture/`), how it would change under this requirement, estimated effort and
    complexity, and the risks.
-3. **Architecture fit:** if the requirement conflicts with the current structure, plan a *targeted*
-   refactoring (smallest structural change that restores fit) — or, if it crosses module/layer
-   boundaries broadly, hand it to the **architect** first. Never bolt a feature on where it
-   doesn't belong.
+3. **Architecture fit — an abort criterion, not a note.** Check the requirement against the binding
+   rules in `AGENTS.md §2a` (layering + dependency direction, interfaces at every seam, DAO for
+   data access, DTO on the wire, domain objects never leaving the domain, reuse over duplication)
+   and this project's `§2b` + ADRs. Then:
+   - **Fits** → proceed.
+   - **Fits after a targeted refactoring** → plan the smallest structural change that restores fit,
+     say so, and do it as part of the task.
+   - **Doesn't fit** → **STOP before writing code.** Ask the user, in PO-understandable language,
+     with 2–3 options and their consequences ("putting this query in the controller saves a day
+     now, but nothing else can reuse it and the DB type leaks into the API"). Record the answer
+     (`/beads:decision` or `bd update <id> --design`). If the conflict is broad — crossing module
+     or layer boundaries — hand it to the **architect** first instead.
+   - If `§2b` is still an unfilled `[EDIT ME]` placeholder and no ADR defines the structure, do not
+     invent rules on the fly: get the **architect** to establish them (its "Rule zero").
+
+   Improvising around a rule, or "just this once", is a review BLOCKER — it costs more than asking.
 4. **Gather missing information now**, not mid-implementation: search existing code
    (graphify/cocoindex — reuse before writing), check **context7** for the current API of any
    framework you'll touch.

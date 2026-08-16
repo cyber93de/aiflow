@@ -399,10 +399,13 @@ if ($Existing) {
   Write-Output "  2) $step2 .claude/memory/codebase-map.md + AGENTS.md section 1/2 + docs/architecture/"
   Write-Output "  3) reconcile AGENTS.md / docs/architecture with reality, then: aiflow shell (Claude), or open Copilot/Codex CLI"
   Write-Output "  4) optional baseline audits: aiflow security-check | quality-check | dependency-check | test-gap | docs-check"
+  if ($DidOnboard) { Write-Output "  -> run /compact now: what onboard learned is persisted in memory + AGENTS.md + arc42, the transcript isn't needed" }
 } else {
   Write-Output "This is a NEW project. Next steps:"
   Write-Output "  1) edit .env        -> GITHUB_TOKEN + (ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN)"
   Write-Output "  2) review AGENTS.md + .claude/memory/project-aim.md (fill the [EDIT ME] blocks)"
   Write-Output "  3) aiflow shell     -> start Claude Code (secrets loaded), or open Copilot/Codex CLI directly"
+  Write-Output "  4) in the session: run /compact right after this - the aim, stack and architecture from the Q&A"
+  Write-Output "     are already in .aiflow/config.json + .claude/memory/, so the setup transcript is dead weight"
 }
 Write-Output "  Change any choice later: aiflow change-settings   |   full manual: README.md / README.de.md"

@@ -219,6 +219,15 @@ if ($VCS_SYS -eq 'git') {
   }
 }
 
+# modelRouting.tiers / .agents are hand-edited overrides (AGENTS.md section 9) - this rebuild
+# starts from an empty object, so carry them over instead of silently dropping them.
+$modelRoutingObj = [ordered]@{ enabled = ($MODELROUTING_ON -eq 'true') }
+if ($cfgObj -and $cfgObj.modelRouting) {
+  foreach ($p in $cfgObj.modelRouting.PSObject.Properties) {
+    if ($p.Name -ne 'enabled') { $modelRoutingObj[$p.Name] = $p.Value }
+  }
+}
+
 $cfgOut = [ordered]@{
   caveman = [ordered]@{ enabled = ($CAVE_ON -eq 'true'); mode = $CAVE_MODE }
   rtk = [ordered]@{ enabled = ($RTK_ON -eq 'true') }
@@ -229,7 +238,7 @@ $cfgOut = [ordered]@{
   mcp = [ordered]@{ filesystem = ($FS_ON -eq 'true'); context7 = ($CTX7_ON -eq 'true'); cocoindex = ($COCO_ON -eq 'true') }
   memory = [ordered]@{ enabled = ($MEM_ON -eq 'true'); graph = ($MEM_GRAPH -eq 'true'); intensity = $MEM_INT }
   agents = [ordered]@{ claude = ($AGENT_CLAUDE -eq 'true'); copilot = ($AGENT_COPILOT -eq 'true'); codex = ($AGENT_CODEX -eq 'true') }
-  modelRouting = [ordered]@{ enabled = ($MODELROUTING_ON -eq 'true') }
+  modelRouting = $modelRoutingObj
   codexsaver = [ordered]@{ enabled = ($CODEXSAVER_ON -eq 'true'); provider = $CODEXSAVER_PROVIDER; apiKeyEnv = $CODEXSAVER_KEYENV }
   claude = [ordered]@{ auth = $CLAUDE_AUTH }
   vcs = [ordered]@{ system = $VCS_SYS }

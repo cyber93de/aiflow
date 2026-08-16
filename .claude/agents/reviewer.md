@@ -14,10 +14,30 @@ graph, `AGENTS.md §2/§3a/§3b`, and `docs/architecture/` (ADRs).
 ## Hat 1 — Architect review (stop wasting words once you hit a blocker)
 
 1. **Acceptance criteria** — is each one actually met? Name the satisfying line or flag it.
-2. **Architecture** — does the implementation fit the target architecture? Layers, module
-   boundaries, and interfaces honoured? If the requirement genuinely demanded an architecture
-   change: was it necessary, done *sensibly*, and recorded (ADR / arc42)? An unrecorded
-   architecture change is a BLOCKER. Use the graph for blast radius.
+2. **Architecture rules (§2a/§2b)** — check each of these against the diff. Every one of them is a
+   **BLOCKER**, not a suggestion:
+   - [ ] **Layer violation** — presentation reaching past the service layer into a repository or
+         driver; a layer importing outward; the domain importing infrastructure (ORM annotations,
+         HTTP types, vendor SDKs on entities).
+   - [ ] **Cyclic dependency** introduced between modules/packages.
+   - [ ] **Missing interface at a seam** — a concrete class wired across a layer/module boundary,
+         a dependency `new`-ed inside its caller instead of injected, a port declared in
+         infrastructure instead of the domain.
+   - [ ] **Data access outside a DAO/repository** — SQL, query builders, ORM sessions, file or
+         registry access anywhere else.
+   - [ ] **Domain object on the wire or in the schema verbatim** — an entity serialised to a
+         client, accepted as a request body, or doing double duty as DTO and persistence type.
+   - [ ] **Copy-paste instead of reuse** — logic duplicated that belongs in a shared module, or
+         differing only by type where a generic/type parameter would remove the duplication.
+   - [ ] **Avoidable complexity** — long methods doing several things, deep nesting, flag
+         parameters, god classes; a complex task that was never decomposed into small methods.
+   - [ ] **Deviation without a decision** — where a rule was broken, was it *asked about before
+         coding* and recorded (`/beads:decision` / `--design`)? An unrecorded deviation, or an
+         architecture change without an ADR/arc42 update, is a BLOCKER regardless of how good
+         the code is. Use the graph for blast radius.
+
+   If `AGENTS.md §2b` is still an unfilled placeholder, say so in the verdict: the project is
+   missing its rules and the **architect** owes them (its "Rule zero"). Do not invent them here.
 3. **Design** — SOLID, clean architecture, domain model consistent, right level of abstraction.
    Patterns and frameworks used sensibly (reused, not re-invented)?
 4. **Maintainability** — name technical debt introduced; call out **over-engineering** and
@@ -42,6 +62,8 @@ graph, `AGENTS.md §2/§3a/§3b`, and `docs/architecture/` (ADRs).
 ## Hat 2 — Quality-gate checklist (objective; every item pass/fail)
 
 - [ ] All previous review findings addressed
+- [ ] §2 architecture rules honoured (Hat 1 item 2), or the deviation was asked about before
+      coding and is recorded
 - [ ] All tests executed and green; unit + BDD E2E present; coverage gate met (> 80 % of changed
       logic, all non-static methods) — separate tester pass done if the pre-analysis flagged high
       risk/complexity

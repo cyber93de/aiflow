@@ -8,6 +8,31 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Binding architecture rules (`AGENTS.md` §2).** §2 was an `[EDIT ME]` placeholder; it is now a
+  MANDATORY section that applies in every language: layered architecture with an inward dependency
+  direction and no layer skips, interfaces at every seam (ports in the domain, adapters in
+  infrastructure, injected not `new`-ed), **DAO** as the only place that talks to a data store,
+  **DTO** for anything crossing a process boundary, domain objects never leaving the domain, reuse
+  and generics over duplication, and active complexity avoidance. §2b holds the project's own
+  concrete decisions; §2c makes the rules binding: a task that doesn't fit is **not implemented as
+  is** — the agent stops before writing code, asks in PO language with options and consequences,
+  and the answer is recorded. The **architect** gains a "Rule zero": a project without rules gets a
+  proposed set written into §2b *and* an ADR. The **implementer** treats architecture fit as an
+  abort criterion, and the **reviewer** checks each rule as a BLOCKER.
+- **Model tiers per activity** (`modelRouting`). Instead of "Haiku for 5 audit agents", `aiflow
+  apply` now stamps a model per *kind of work*: **reasoning** (`opus`, override with `fable`) for
+  architect · planner · reviewer · security-advisor · requirements-check · modernization-advisor ·
+  orchestrator; **implementation** (`sonnet`) for implementer · tester · quality-check ·
+  accessibility-checker; **mechanical** (`haiku`) for docs-sync · test-gap-advisor ·
+  dependency-auditor · performance-advisor · onboarder. Override per tier
+  (`modelRouting.tiers.*`) or move a single agent (`modelRouting.agents.<name>: <tier>`); both
+  survive `aiflow change-settings`. `modelRouting.enabled: false` strips every `model:` line again.
+- **`/compact` discipline** is now a rule (`AGENTS.md` §9 + `docs/token-optimization.md`): compact
+  right after `aiflow init` (greenfield) and right after the onboarder (brownfield) — the aim,
+  stack and architecture are already persisted at that point — plus after every closed bead and
+  before long Ralph runs. `aiflow init` and the onboarder say so at the end of their output.
+
+### Added
 - **Windows prerequisites are documented and checked.** A Windows setup that pulls in MinGW/MSYS2
   is a wrong turn: aiflow's own CLI runs in PowerShell + Git Bash, but everything that *compiles
   native code* belongs in **WSL**. `docs/installation.md` gained a "Windows prerequisites" section

@@ -7,6 +7,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-08-16
+
 ### Changed
 - **The frontmatter guard now enforces the documented length limits** — `name` ≤ 64 characters,
   `description` ≤ 1024 — on agents, commands and skills alike, with the limits covered by its

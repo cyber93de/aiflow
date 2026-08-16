@@ -7,6 +7,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Windows prerequisites are documented and checked.** A Windows setup that pulls in MinGW/MSYS2
+  is a wrong turn: aiflow's own CLI runs in PowerShell + Git Bash, but everything that *compiles
+  native code* belongs in **WSL**. `docs/installation.md` gained a "Windows prerequisites" section
+  (BIOS virtualisation VT-x/SVM → `wsl --install` → a WSL2 distro → `build-essential` inside it,
+  plus why not MinGW and where to keep the project), mirrored in both READMEs, `getting-started`,
+  `troubleshooting`, and `llms-full.txt`. `aiflow doctor` reports WSL presence, WSL2, in-distro
+  `gcc`/`g++`, firmware virtualisation, and **warns** when a MinGW/MSYS gcc sits on the Windows
+  PATH. `install-deps` installs `build-essential` *inside WSL* when a native toolchain is needed
+  and never falls back to MinGW.
+
 ### Fixed
 - **New projects landed on `master` instead of `main`.** `aiflow init` called `git init` without
   `--initial-branch=main`, so on git < 2.28 (or without a user-set `init.defaultBranch`) the
@@ -268,6 +279,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Set-ModelRoutingLine` passed a raw relative path to `[System.IO.File]`, which resolves against
   the process working directory rather than PowerShell's — so the model-routing stamp was written
   to (or read from) the wrong file on Windows.
+
+### Fixed
+- **`gh`/`jq`/`dolt`/`ollama` installed via winget/scoop weren't visible to the running shell.**
+  Those installers write the new directory into the *registry* PATH only. `install-deps` now
+  rebuilds the process PATH from Machine+User after each such install (`cygpath -up` in Bash) and,
+  for anything still not resolvable, prints an explicit "open a new terminal for: …" list instead
+  of leaving the next step to report the tool as missing.
+- **rtk could fail to install silently.** The piped upstream installer's result is now verified;
+  on failure the message names the repo (`https://github.com/rtk-ai/rtk`) and the manual route.
+  The PowerShell twin actually attempts the install instead of only printing a hint.
+- **graphify/uv failures looked like successes.** `uv tool install graphifyy` and the follow-up
+  `graphify install` had their output discarded. Errors are visible now, `uv` is verified to be on
+  PATH after its own install, and a failed PyPI install retries from
+  `git+https://github.com/Graphify-Labs/graphify`.
 
 ## [0.5.1] — 2026-07-29
 

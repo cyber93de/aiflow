@@ -44,6 +44,24 @@ Re-run `aiflow change-settings`; ensure `.env` has the variable named in `remote
 Ensure **Podman or Docker** is installed and its daemon/machine is running. Force one with
 `AIFLOW_CONTAINER=podman|docker docker/run.sh "<task>"`.
 
+## Windows: something wants to install MinGW / a native build fails
+You're missing the Windows prerequisites. aiflow itself runs in PowerShell + Git Bash, but anything
+that **compiles native code** (C/C++, `node-gyp`, Python C-extensions, `uv`-built tools) belongs in
+**WSL**, not MinGW/MSYS2 — two parallel toolchains on one machine means ABI mismatches, `PATH`
+collisions between the two `sh.exe`s, and builds that differ from CI.
+
+Fix, in order — the full walkthrough is in
+[Installation → Windows prerequisites](installation#windows-prerequisites-do-this-first):
+
+1. Enable **Intel VT-x** / **AMD SVM Mode** in the BIOS/UEFI. Check with
+   `Get-ComputerInfo -Property HyperVRequirementVirtualizationFirmwareEnabled`.
+2. In an admin PowerShell: `wsl --install`, then reboot.
+3. `wsl --install -d Ubuntu`, start it once, confirm `wsl -l -v` shows **VERSION 2**.
+4. Inside WSL: `sudo apt update && sudo apt install -y build-essential` (plus `cmake`,
+   `python3-dev`, … as your stack needs).
+
+`aiflow doctor` reports all four of these on Windows.
+
 ## `pre-push` blocks a push
 That's the branching model. Use a proper branch/PR. See [Workflows](workflows).
 

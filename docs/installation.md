@@ -19,6 +19,95 @@ description: "Install aiflow on Linux, macOS, or Windows — works with Claude C
 [Node.js](https://nodejs.org) (LTS). Everything else — Claude Code, Beads, Dolt, jq, graphify,
 cocoindex-code, Ollama — aiflow can install for you.
 
+**On Windows, do the [Windows prerequisites](#windows-prerequisites-do-this-first) first.**
+
+## Windows prerequisites (do this first)
+{: .warning }
+> Set this up **before** you clone aiflow. Skipping it is the most common reason a Windows setup
+> fails: a native build gets triggered, no C/C++ toolchain is present, and something tries to pull
+> in **MinGW/MSYS2**. Don't go down that road — use **WSL** instead.
+
+Two different shells are involved on Windows, and they do different jobs:
+
+| Shell | What runs there |
+|-------|-----------------|
+| **PowerShell + Git Bash** | aiflow itself (`bin/aiflow`, `lib/*.sh`), the hooks, the `.aiflow/*` helpers |
+| **WSL (Ubuntu)** | anything that **compiles native code** — `gcc`/`g++`/`clang`, `cmake`, Python C-extensions, `node-gyp` |
+
+### 1. Enable virtualisation in the BIOS/UEFI
+
+WSL2 runs on a lightweight VM, so hardware virtualisation must be on. Reboot into your firmware
+setup (usually <kbd>F2</kbd>, <kbd>Del</kbd>, or <kbd>F10</kbd> during boot) and enable:
+
+- **Intel:** `Intel Virtualization Technology` / `Intel VT-x` (sometimes under *Advanced → CPU Configuration*)
+- **AMD:** `SVM Mode` / `AMD-V` (usually under *Advanced → CPU Configuration* or *OC Tweaker*)
+
+Save and reboot. Verify in Windows — Task Manager → *Performance* → *CPU* → **Virtualization: Enabled**,
+or:
+
+```powershell
+Get-ComputerInfo -Property HyperVRequirementVirtualizationFirmwareEnabled
+```
+
+### 2. Enable WSL + the Virtual Machine Platform
+
+In an **administrator** PowerShell:
+
+```powershell
+wsl --install            # enables WSL + Virtual Machine Platform, installs Ubuntu, sets WSL2
+```
+
+Reboot when asked. On older Windows builds where `wsl --install` isn't available, enable the two
+Windows features manually and reboot:
+
+```powershell
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+wsl --set-default-version 2
+```
+
+### 3. Install a distribution and start it once
+
+```powershell
+wsl --list --online      # what's available
+wsl --install -d Ubuntu  # or Debian, openSUSE, ... — Ubuntu is the default recommendation
+wsl -l -v                # must show your distro with VERSION 2
+```
+
+Start it once so it finishes setup and you create your Linux user.
+
+### 4. Install the build toolchain **inside WSL** — not MinGW
+
+Inside the Ubuntu shell:
+
+```bash
+sudo apt update
+sudo apt install -y build-essential   # gcc, g++, make, libc headers
+```
+
+Add what your project actually needs on top — `g++` comes with `build-essential`; for other stacks:
+
+| Project type | Also install (in WSL) |
+|--------------|------------------------|
+| C / C++ | `cmake ninja-build gdb` (or `clang lld` instead of gcc) |
+| Embedded / cross-compile | `gcc-arm-none-eabi` (or your vendor toolchain) |
+| Python C-extensions, `uv`-built tools | `python3-dev pkg-config` |
+| Node native modules (`node-gyp`) | `python3 make g++` |
+| Rust | `rustup` via <https://rustup.rs> (then `cargo`) |
+
+**Why not MinGW?** MinGW/MSYS2 gives you a second, parallel toolchain and package universe next to
+Git Bash's own MSYS runtime. Header/ABI mismatches, `PATH` collisions between the two `sh.exe`s, and
+libraries that assume glibc are routine — and CI runs on Linux anyway, so anything you build under
+MinGW is built differently from what ships. WSL gives you the same Linux toolchain as CI, and
+Windows can reach it from anywhere via `wsl -e <command>`.
+
+### 5. Choose where your project lives
+
+Put a project that compiles native code **inside the WSL filesystem** (`~/projects/...`, reachable
+from Windows as `\\wsl$\Ubuntu\home\<user>\projects`). Building across the `/mnt/c` boundary is
+slow, and file permissions/line endings get muddled. Pure PowerShell/Node/.NET projects are fine on
+the Windows side.
+
 ## Windows (PowerShell)
 
 ```powershell

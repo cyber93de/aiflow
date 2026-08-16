@@ -32,6 +32,16 @@ jobs:
             \( -name '*.sh' -o -name 'aiflow' -o -path '*/.githooks/*' \) -print0 \
             | xargs -0 shellcheck -S error || true
 
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      # aiflow-wrn: `[ -x ]` in front of `bash <path>` gates on a bit the interpreter never
+      # reads, and Windows' core.filemode=false drops it — the command then dies on Linux for
+      # a reason the error message does not name. shellcheck has no rule for this.
+      - name: Self-test the exec-gate guard
+        run: python .github/scripts/check-exec-gates.py --selftest
+      - name: Check for `[ -x ]` gates before interpreter calls
+        run: python .github/scripts/check-exec-gates.py .
+
   json:
     name: JSON / template validation
     runs-on: ubuntu-latest

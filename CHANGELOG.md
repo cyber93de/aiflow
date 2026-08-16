@@ -52,6 +52,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   extracting rules that must apply reliably on every task into a Claude-Code-only, pattern-matched
   skill would risk them silently not firing, especially for Codex/Copilot which have no skill
   auto-offer mechanism at all.
+- **CI now rejects `[ -x ]` gates in front of interpreted calls.**
+  `.github/scripts/check-exec-gates.py` flags any `-x` test whose operand the same file also runs
+  as `bash <path>` (or `sh`/`pwsh`/`python3`/`node`/…): the exec bit is invisible to an interpreter,
+  and `core.filemode=false` on Windows drops it — which is exactly how `aiflow ralph` and
+  `aiflow close-sync` came to fail on Linux for a reason their error message never named. `[ -x ]`
+  before a *direct* call stays valid and is not reported. shellcheck has no rule for this class.
 
 ### Fixed
 - **`aiflow ralph` and `aiflow close-sync` claimed the script was missing when it wasn't.** Both

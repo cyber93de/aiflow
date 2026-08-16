@@ -67,6 +67,18 @@ Why things are the way they are. Change these only deliberately.
   **Not** covered: `.beads/hooks/*` are executed in
   place by git (`core.hooksPath`) and are 100644 — see aiflow-vly. Verified by `chmod -x`-ing a
   file in a scratch clone; re-run that check if the CI step changes.
+- **No `[ -x ]` gate in front of an interpreted call** (2026-08-16). `[ -x "$f" ] || die; bash "$f"`
+  gates on a bit `bash` never reads, and `core.filemode=false` on Windows drops it — so a project
+  developed there checks the script in as 100644 and the command dies on Linux with an error that
+  names the wrong cause (aiflow-wrn: `close-sync` and `ralph`). Use `[ -f ]`; keep `[ -x ]` only
+  before a **direct** call (`"$f" --flag`), where the bit is exactly what is needed. Enforced by
+  `.github/scripts/check-exec-gates.py` (CI job "shell"): within one file, an `-x` predicate whose
+  operand is also passed to `bash`/`sh`/`pwsh`/`python3`/`node`/… is an error. shellcheck has no
+  rule for this and the class survived aiflow-e0o and its review unnoticed. **Not** covered:
+  a gate and its call in *different* files — resolving paths through variables across files would
+  trade the guard's zero false positives for guesswork. `EXEC_GATE_EXEMPT` exists and is empty.
+  Repo-only like the twin/rendered guards: the shell a generated project runs is aiflow's own and
+  is already checked here, so shipping it would buy a Python CI step per project and nothing else.
 - **`.github/scripts/` is aiflow-owned, `.github/workflows/` is project-owned** (2026-08-15).
   `project-update` overwrites the shipped CI helpers mechanically but never rewrites a workflow —
   `ci.yml` ships as a starting point projects extend, so replacing it would eat their jobs. A helper

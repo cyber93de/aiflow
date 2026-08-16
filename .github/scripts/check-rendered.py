@@ -34,9 +34,12 @@ MIRRORS = [
     ("templates/.aiflow", ".aiflow", ("*.sh", "*.ps1"), frozenset()),
     ("templates/.claude/hooks", ".claude/hooks", ("*.sh", "*.ps1"), frozenset()),
     # the CI guards themselves are mechanically copied into a project by project-update;
-    # these two are about aiflow's own structure and deliberately stay repo-only.
+    # these three deliberately stay repo-only. Two are about aiflow's own structure; the
+    # exec-gate guard is generic shell hygiene, but the shell a project runs is aiflow's
+    # own (`.aiflow/*.sh`, hooks) and is already checked here — shipping it would cost
+    # every generated project a Python CI step for a class it cannot introduce.
     ("templates/.github/scripts", ".github/scripts", ("*.py",),
-     frozenset({"check-twins.py", "check-rendered.py"})),
+     frozenset({"check-twins.py", "check-rendered.py", "check-exec-gates.py"})),
 ]
 
 

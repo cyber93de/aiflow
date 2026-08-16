@@ -42,6 +42,7 @@ live in `.env`.
   "gitkraken": { "enabled": false },                     // GitKraken MCP (client, not a host — alongside remote.*)
   "codexsaver": { "enabled": false, "provider": "deepseek", "apiKeyEnv": "DEEPSEEK_API_KEY" }, // Codex CLI cost-aware MCP router
   "sync":     { "askOnClose": true, "pullOnStart": true },
+  "beads":    { "queueMode": true },                      // keep working the queue after a close
   "ollama":   { "enabled": false, "url": "http://localhost:11434", "models": [] },
   "teamPrefs":{ "enabled": false, "codeStyle": "google" },
   "project":  { "aim": "…", "architecture": "…" },
@@ -66,6 +67,7 @@ live in `.env`.
 | `ollama.*` + `router` | `.aiflow/router-config.json` (provider + background route) |
 | `teamPrefs.*` | `.aiflow/team-prefs.json` |
 | `sync.askOnClose` | `.aiflow/bd-close-sync.sh`; `sync.pullOnStart` → SessionStart auto-pull |
+| `beads.queueMode` | the `Stop` hook `.claude/hooks/queue-continue.*` (hands back the next ready task once); `AIFLOW_QUEUE_MODE=off` overrides it per session |
 | `git.*` | `.aiflow/branching.json` + `docs/branching.md` + enforcement hooks |
 | `dev.os` | which interpreter (`bash`/PowerShell) the rendered Claude Code hook commands use |
 | `meta.aiflowVersion` | compared against the installed CLI on every `aiflow` run; prompts `aiflow project-update` when behind |

@@ -20,6 +20,7 @@ description: "aiflow features: multi-agent support (Claude Code, GitHub Copilot,
 |------|--------------|
 | **Multi-agent** | Agent-agnostic core (`AGENTS.md` + per-agent MCP config): Claude Code (full feature set), GitHub Copilot, OpenAI Codex CLI — pick any combination |
 | **Task tracking** | Beads (`bd`) — Dolt-backed issues with dependencies, status, history; survives context resets |
+| **Queue mode** | Closing a bead ends a task, not the session: `aiflow next` ranks what to do next and a `Stop` hook hands it back (`beads.queueMode`) |
 | **Code memory** | **graphify** (structural graph) + **cocoindex-code** (semantic RAG) + `.claude/memory/` facts |
 | **External docs** | **context7** MCP — live, version-correct library documentation |
 | **Version control** | Choose **git**, **svn**, or **none** at setup |

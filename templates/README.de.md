@@ -611,6 +611,7 @@ LICENSE                    MIT
   branching.json           abgeleitetes Git-Governance-Modell
   ralph-headless.sh        autonomer Loop-Runner
   run-agent.sh             generischer Headless-Agent-Runner (Audits, onboard)
+  next-task.sh             naechster ready Beads-Task, gerankt (aiflow next)
   version.sh, release.sh, protect.sh   Release/Versionierung/Branch-Schutz
   router-config.example.json           claude-code-router Vorlage
 .env / .env.example        Tokens (gitignored)
@@ -624,7 +625,8 @@ LICENSE                    MIT
   commands/                intake-issue, decompose, plan-epic, implement, review-ac, arch,
                            security-check, quality-check, requirements-check, dependency-check,
                            test-gap, perf-check, docs-check, onboard, explain, standup
-  hooks/                   format.sh (Auto-Format), caveman.sh (knapper Output)
+  hooks/                   format.sh (Auto-Format), caveman.sh (knapper Output),
+                           beads-sync.sh (SessionStart-Pull), queue-continue.sh (Stop: naechster Task)
   memory/                  project-aim.md, dev-environment.md, … (wenn Memory an)
 .githooks/                 commit-msg (Conventional Commits), pre-commit (Format+Lint+Test), pre-push (Branching)
 .github/workflows/         agent.yml (Agent in CI) + ci.yml (Lint/Test)

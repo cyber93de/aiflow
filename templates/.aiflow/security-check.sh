@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Headless full-project security audit. Files Beads issues per finding.
-# Usage: aiflow security-check    (or: bash .aiflow/security-check.sh)
+# Usage: aiflow security-check   (direct: bash .aiflow/security-check.sh)
 set -uo pipefail
 
 command -v claude >/dev/null 2>&1 || { echo "ERROR: 'claude' CLI not found" >&2; exit 3; }

@@ -61,10 +61,9 @@ Why things are the way they are. Change these only deliberately.
   claim the script was absent ("Run 'aiflow init' first") on a fresh Linux clone. **Since
   aiflow-wrn those gates are `[ -f ]`, like the other three** — every branch invokes via
   `bash <path>`, which works at 100644, so do **not** re-derive the `[ -x ]`-gate justification.
-  Two live reasons remain: `.aiflow/bd-close-sync.sh:6` documents its usage as a direct
-  `.aiflow/bd-close-sync.sh <issue-id>` call (the only *user-facing* one — `run-agent.sh` and
-  `version.sh` document bare-name calls too; unifying all three is aiflow-ozo),
-  which genuinely needs the bit; and `lib/init.sh:37` + `lib/apply.sh:414` `chmod +x` on copy, so
+  One reason remains (the "documented direct call" one died with aiflow-ozo — every usage header
+  now names `aiflow <command>` or `bash .aiflow/<file>`): `lib/init.sh:37` + `lib/apply.sh:414`
+  `chmod +x` on copy, so
   every rendered project gets 100755 — the assertion is what keeps this repo's self-hosted
   `.aiflow/` matching that **in mode**, which `check-rendered.py` cannot see because it compares
   bytes. `bin/aiflow`, `lib/*.sh`, `install.sh` and everything under `templates/` stay 100644 on
@@ -94,6 +93,16 @@ Why things are the way they are. Change these only deliberately.
   trade the guard's zero false positives for guesswork. `EXEC_GATE_EXEMPT` exists and is empty.
   Repo-only like the twin/rendered guards: the shell a generated project runs is aiflow's own and
   is already checked here, so shipping it would buy a Python CI step per project and nothing else.
+- **One usage convention for `.aiflow/*`: the `aiflow` subcommand is the entry point**
+  (2026-08-16, aiflow-ozo). Every helper's header now reads `Usage: aiflow <command> …`, with the
+  direct `bash .aiflow/<file>` form in parentheses; the three helpers the CLI does not expose
+  (`version`, `run-agent`, and `next-task`'s raw form) name the direct call as the primary, saying
+  why. Both twins carry the same wording. Consequence to remember: `bd-close-sync.sh` used to be
+  the one script documenting a *direct* invocation, which was the last functional justification
+  for asserting 100755 on `.aiflow/*.sh` — that justification is gone. The assertion stays anyway,
+  now on a single ground: `init`/`apply` render those files 100755, so the index must match what
+  was shipped, and since aiflow-3tp every generated project checks the same thing. Nothing depends
+  on the bit at runtime any more (every caller goes through `bash <path>`).
 - **The agent roster is a checked mirror too** (2026-08-16, aiflow-5o3). `check-rendered.py` now
   covers `.claude/agents|commands|skills` against `templates/.claude/`, so "keep them in sync" is
   enforced rather than remembered. Two mechanics this needed: files are compared by their path

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Pick the next Beads task to work on, by the AGENTS.md §4b selection order.
-# Usage: next-task.sh [--after <bead-id>] [--unassigned] [--claim] [--json]
+# Usage: aiflow next [--after <bead-id>] [--unassigned] [--claim] [--json]
+#        (direct: bash .aiflow/next-task.sh [...])
 #
 #   --after <id>   prefer a bead discovered from <id> (the task just closed) — the
 #                  "natural continuation" rule; otherwise ignored
@@ -24,7 +25,7 @@ while [ $# -gt 0 ]; do
     --unassigned) READY_ARGS+=(--unassigned); shift ;;
     --claim)      CLAIM=1; shift ;;
     --json)       AS_JSON=1; shift ;;
-    -h|--help)    sed -n '2,14p' "$0"; exit 0 ;;
+    -h|--help)    sed -n '2,15p' "$0"; exit 0 ;;
     *)            echo "unknown option: $1" >&2; exit 1 ;;
   esac
 done

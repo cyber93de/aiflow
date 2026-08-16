@@ -1,4 +1,6 @@
 # Generic headless runner: run a named aiflow agent over the whole project.
+# Usage: powershell -File .aiflow/run-agent.ps1 <agent> [focus...]
+#        (no aiflow subcommand of its own: the audit commands dispatch through it)
 # The agent's behaviour (what it scans, what it may write) is defined in
 # .claude/agents/<name>.md - this just invokes it. Usage: run-agent.ps1 <agent> [focus...]
 $ErrorActionPreference = 'Stop'

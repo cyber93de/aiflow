@@ -2,7 +2,7 @@
 # Honours the rule: on every local issue close, ASK whether to push and whether to
 # dolt-sync the configured remote (github/gitlab/custom). Never pushes silently.
 #
-# Usage:  powershell -File .aiflow/bd-close-sync.ps1 <issue-id>
+# Usage: aiflow close-sync <issue-id>   (direct: powershell -File .aiflow/bd-close-sync.ps1 <issue-id>)
 # Agents: the AGENTS.md par.Beads-sync rule tells the agent to call this after `bd close`.
 $ErrorActionPreference = 'Continue'
 

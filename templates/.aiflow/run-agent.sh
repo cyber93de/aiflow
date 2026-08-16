@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Generic headless runner: run a named aiflow agent over the whole project.
 # The agent's behaviour (what it scans, what it may write) is defined in
-# .claude/agents/<name>.md — this just invokes it. Usage: run-agent.sh <agent> [focus...]
+# .claude/agents/<name>.md — this just invokes it.
+# Usage: bash .aiflow/run-agent.sh <agent> [focus...]
+#        (no aiflow subcommand of its own: the audit commands dispatch through it)
 set -uo pipefail
 
 AGENT="${1:?usage: run-agent.sh <agent-name> [focus]}"; shift || true

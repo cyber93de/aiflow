@@ -1,5 +1,6 @@
 # Pick the next Beads task to work on, by the AGENTS.md 4b selection order.
-# Usage: next-task.ps1 [--after <bead-id>] [--unassigned] [--claim] [--json]
+# Usage: aiflow next [--after <bead-id>] [--unassigned] [--claim] [--json]
+#        (direct: powershell -File .aiflow/next-task.ps1 [...])
 #
 #   --after <id>   prefer a bead discovered from <id> (the task just closed) - the
 #                  "natural continuation" rule; otherwise ignored
@@ -22,7 +23,7 @@ for ($i = 0; $i -lt $args.Count; $i++) {
     "--unassigned" { $readyArgs += "--unassigned" }
     "--claim"      { $claim = $true }
     "--json"       { $asJson = $true }
-    { $_ -in "-h", "--help" } { Get-Content $PSCommandPath | Select-Object -Skip 1 -First 13; exit 0 }
+    { $_ -in "-h", "--help" } { Get-Content $PSCommandPath | Select-Object -Skip 1 -First 14; exit 0 }
     default        { Write-Error "unknown option: $($args[$i])"; exit 1 }
   }
 }

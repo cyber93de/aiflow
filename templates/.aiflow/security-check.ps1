@@ -1,5 +1,5 @@
 # Headless full-project security audit. Files Beads issues per finding.
-# Usage: aiflow security-check    (or: powershell -File .aiflow/security-check.ps1)
+# Usage: aiflow security-check   (direct: powershell -File .aiflow/security-check.ps1)
 $ErrorActionPreference = 'Stop'
 
 if (-not (Get-Command claude -ErrorAction SilentlyContinue)) { Write-Error "ERROR: 'claude' CLI not found"; exit 3 }

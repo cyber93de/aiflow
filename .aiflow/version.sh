@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Version helper for the configured strategy (semver|calver). Reads/uses the VERSION file.
-# Usage: version.sh current | release | next-dev [release-version] | start-hotfix
+# Usage: bash .aiflow/version.sh current | release | next-dev [release-version] | start-hotfix
+#        (no aiflow subcommand: release.sh and hotfix.sh call this internally)
 #
 # semver in-progress versions always carry a suffix; "release" just strips it, since the
 # number in front of the suffix is already the exact release version:

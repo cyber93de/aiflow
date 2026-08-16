@@ -12,6 +12,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `description` ≤ 1024 — on agents, commands and skills alike, with the limits covered by its
   self-test (at the limit passes, one over fails). The `seo-optimization` skill's description was
   1323 characters; it has been tightened to fit while keeping every trigger word.
+- **The Python CI helpers are now statically checked.** Shell had `bash -n` + shellcheck and JSON
+  had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
+  `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`
+  (advisory, like shellcheck).
 - **The twin guard now looks *inside* a pair.** It compared only the surface (both halves present,
   same subcommands, same help text), so a step added to `lib/apply.sh` and forgotten in
   `lib/apply.ps1` — the exact class that made a feature ship broken on Windows — stayed invisible.

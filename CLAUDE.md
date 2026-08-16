@@ -87,6 +87,9 @@ python3 .github/scripts/check-rendered.py .
 # `[ -x ]` gates in front of `bash <path>` (aiflow-wrn: gates on a bit the interpreter ignores)
 python3 .github/scripts/check-exec-gates.py --selftest
 python3 .github/scripts/check-exec-gates.py .
+# the CI helpers themselves: syntax (blocking) + ruff (advisory, like shellcheck)
+python3 -m compileall -q .github/scripts templates/.github/scripts
+python3 -m ruff check .github/scripts templates/.github/scripts   # pip install ruff
 # `init` renders these 100755 and bd-close-sync.sh documents a direct call, so the mode is part of
 # the rendered copy — and core.filemode=false on Windows drops it without telling you
 git ls-files -s '.aiflow/*.sh' | awk '$1 != "100755"'   # must print nothing

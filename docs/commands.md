@@ -43,6 +43,7 @@ description: "aiflow CLI command reference: init, install-deps, change-settings,
 |---------|------|
 | `aiflow sync [pull\|push\|both]` | Team sync: git + Beads(dolt) pull/push (default pull at start). |
 | `aiflow close-sync <id>` | On issue close: prompt to push + Dolt-sync (pulls before pushing). |
+| `aiflow next [--after <id>] [--unassigned] [--claim] [--json]` | Next ready Beads task, ranked by the AGENTS.md §4b order (priority → unblocks-most → continuation of `--after`). Exits 3 when the queue holds nothing actionable. |
 
 ## Audits (file Beads issues)
 

@@ -264,6 +264,7 @@ $cfgOut = [ordered]@{
   remote = [ordered]@{ type = $REMOTE_TYPE; baseUrl = $REMOTE_URL; api = $REMOTE_API; tokenEnv = $REMOTE_TOKENENV; mcp = $REMOTE_MCP }
   gitkraken = [ordered]@{ enabled = ($GITKRAKEN_ON -eq 'true') }
   sync = [ordered]@{ askOnClose = ($SYNC_ONCLOSE -eq 'true'); pullOnStart = $true }
+  beads = [ordered]@{ queueMode = $true }
   ollama = [ordered]@{ enabled = ($OLLAMA_ON -eq 'true'); url = $OLLAMA_URL; models = $ollamaJson }
   teamPrefs = [ordered]@{ enabled = ($TEAM_ON -eq 'true'); codeStyle = $TEAM_STYLE }
   project = [ordered]@{ aim = $AIM; architecture = $ARCH }

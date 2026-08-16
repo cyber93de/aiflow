@@ -8,6 +8,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Queue mode — a closed task no longer ends the session.** Beads is treated as an authoritative
+  work queue: after closing a bead the agent refreshes the queue and starts the next task instead
+  of asking what to do next. Three parts, so it does not depend on the model remembering:
+  `AGENTS.md` §4b states the loop, the ranking (priority → unblocks-most → epic/workstream →
+  continuation of the bead just closed) and the only four legitimate reasons to stop (nothing
+  actionable, everything blocked, the user says stop, a decision/credential only they have);
+  **`aiflow next`** (`.aiflow/next-task.sh|ps1`) applies that ranking mechanically and exits `3`
+  on an empty queue, with `--after <closed-id>`, `--unassigned`, `--claim` and `--json`; and a
+  Claude Code **`Stop` hook** (`.claude/hooks/queue-continue.sh|ps1`, wired by `apply`) hands the
+  next ready task back when the agent tries to end its turn. The hook blocks **at most once** per
+  stop (`stop_hook_active`), so naming a legitimate stop reason always ends the session. Opt out
+  per project with `.aiflow/config.json → beads.queueMode = false` (asked by `aiflow
+  change-settings`) or per session with `AIFLOW_QUEUE_MODE=off`. Queue mode changes nothing about
+  the §4 gates or the §7 rule that merging to `main` and releasing always need explicit
+  confirmation.
 - **The agent-roster check now runs in `pre-commit`, not just in CI.** Staging any file under
   `.claude/agents|commands|skills` runs `.github/scripts/check-frontmatter.py` over the roster and
   **blocks the commit** on invalid frontmatter — the same failure that used to cost a push, a red

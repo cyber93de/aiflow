@@ -29,3 +29,7 @@ Implement bead **$ARGUMENTS** (if no id, run `/beads:ready` and take the top tas
 9. Run `/review-ac` (architect review + quality-gate checklist in one). Address every BLOCKER and
    SHOULD; out-of-scope improvement ideas become `[suggestion]` beads for the next loop.
 10. Commit referencing the bead id (Conventional Commits). Close the bead with a verification note.
+11. **Continue the queue (AGENTS.md §4b):** run `aiflow next --after <closed-id>`. If it names a
+    task, start it with this same command — do not ask what to work on next. Stop only when it
+    exits 3 (nothing actionable), everything left is blocked, the user says stop, or you need a
+    decision/credential only they can give — and say which applies.

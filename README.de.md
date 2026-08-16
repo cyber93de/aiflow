@@ -468,6 +468,12 @@ synct — ein Issue-Graph fürs ganze Team, kein Extra-Server.
   Issue-Änderungen der Kollegen mergst statt sie zu überschreiben. Bei Konflikt: `bd dolt pull`
   (mergen), auflösen, pushen. Nie force-pushen.
 - **Status ist das Koordinationssignal.** Aktuell halten; veralteter Status = Doppelarbeit.
+- **Queue-Modus: ein geschlossener Task beendet keine Session.** Nach jedem Close frischt der Agent
+  die Queue auf und startet den nächsten Task — `aiflow next` rankt ihn (Priorität → entblockt am
+  meisten → Fortsetzung des gerade geschlossenen Beads). Schluss ist nur aus einem echten Grund:
+  nichts Handlungsfähiges übrig, alles blockiert, du sagst Stopp, oder eine Entscheidung, die nur du
+  treffen kannst. Ein `Stop`-Hook reicht den nächsten Task einmal nach, falls der Agent es vergisst;
+  abschaltbar über `.aiflow/config.json → beads.queueMode = false` oder `AIFLOW_QUEUE_MODE=off`.
 - **Entdeckte Arbeit → neuer Bead** (`--deps discovered-from:<id>`); **Entscheidungen →
   `/beads:decision`** (mit Begründung) — so sieht das ganze Team das *Warum*.
 - **Geteilte Preferences** (Code-Stil, Sprache) liegen in einer committeten
@@ -634,6 +640,7 @@ aiflow change-settings [--no-token-saving]   Config neu justieren, dann alles ne
 aiflow shell [--router]            .env laden, Claude Code starten (--router = günstige/lokale Modelle)
 aiflow sync [pull|push|both]       Team-Sync: git + Beads(dolt) pull/push
 aiflow close-sync <id>             bei Issue-Close: Push + Dolt-Sync anbieten
+aiflow next [--after <id>] [--claim] [--json]  naechster ready Beads-Task, gerankt (Queue-Modus)
 aiflow ollama [pull|add <m>|list]  lokale Ollama-Modelle verwalten
 aiflow index                       Code-Memory aktualisieren: graphify (Graph) + cocoindex (RAG)
 aiflow ralph "<prompt|bead id>"    die Headless-Ralph-Schleife laufen lassen
@@ -704,11 +711,12 @@ dein-projekt/
 │  ├─ team-prefs.json        # geteilte Team-Preferences (committet)
 │  ├─ router-config.json     # generiert: Ollama/Cost-Provider (gitignored)
 │  ├─ bd-close-sync.sh       # Close → Push + Dolt-Sync anbieten
+│  ├─ next-task.sh           # naechster ready Bead, gerankt (Queue-Modus)
 │  └─ *.sh                   # Audit-/Release-/Ralph-Helfer
 ├─ .beads/                   # Beads-Issue-Datenbank (Dolt)
 ├─ .claude/
 │  ├─ agents/  commands/     # Subagenten + Slash-Commands
-│  ├─ hooks/                 # caveman, Formatter, beads-sync (SessionStart)
+│  ├─ hooks/                 # caveman, Formatter, beads-sync (SessionStart), queue-continue (Stop)
 │  ├─ memory/                # project-aim, dev-environment, memory-policy
 │  └─ settings.json          # Permissions + Hooks + MCP-Allow-List
 ├─ .githooks/                # commit-msg, pre-commit, pre-push (Durchsetzung)

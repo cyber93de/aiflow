@@ -92,6 +92,12 @@ Beads issues live in a shared Dolt database synced over `refs/dolt/data` on the 
 graph, no extra server. Rules: session-start auto-pull (`bd dolt pull` hook), atomic claiming
 (`bd ready --claim` / `bd update --claim`, prevents double-grab), pull-before-push
 (`aiflow sync`, `aiflow close-sync`), never force-push, conflicts resolved via `bd dolt pull`.
+Queue mode (AGENTS.md §4b): Beads is an authoritative work queue — closing a bead ends a task, not the
+session. The agent refreshes the queue (`aiflow next`, ranked: priority → unblocks-most → continuation
+of the bead just closed) and continues; it stops only when nothing is actionable, everything left is
+blocked, the user says stop, or a decision/credential only the user has is required. A Claude Code
+`Stop` hook (`.claude/hooks/queue-continue.*`) hands the next task back once; opt out via
+`beads.queueMode = false` or `AIFLOW_QUEUE_MODE=off`.
 
 ## Agents
 Delivery: architect, planner, implementer (senior engineer: mandatory pre-analysis of architecture
@@ -222,6 +228,7 @@ archives on VERSION bump), `pages.yml` (deploy docs). No Dagger.
 
 ## Key commands
 init · install-deps · change-settings · shell [--router] · sync [pull|push|both] · close-sync <id> ·
+next [--after <id>] [--claim] [--json] (next ready bead, queue mode) ·
 ollama [pull|add|list] · index · ralph "<prompt|bead>" · onboard · security-check / quality-check /
 requirements-check / dependency-check / test-gap / perf-check / docs-check · hotfix <name> ·
 release [--yes] [--push] · protect · cost · doctor · upgrade · update · project-update · version.

@@ -21,6 +21,12 @@ bd close <id>         # Complete work
 - Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
 - Run `bd prime` for detailed command reference and session close protocol
 - Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
+- **Queue mode applies here too** (`templates/AGENTS.md` §4b — this repo is the first user of the
+  rule it ships): closing a bead ends a task, not the session. After every close, run
+  `aiflow next` / `bd ready --json` and continue with the next task. Stop only when the queue is
+  empty, the rest is blocked, the user says so, or a decision/credential only they have is
+  needed — and name which. The `Stop` hook `.claude/hooks/queue-continue.ps1` hands the next task
+  back once if you forget.
 
 **Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
 

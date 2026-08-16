@@ -285,10 +285,57 @@ share one issue graph.
    It **asks** (never automatic) whether to `git push` and whether to Dolt-sync the issue DB.
    It **pulls before it pushes** (`bd dolt pull` → `bd dolt push`) so it never clobbers a
    teammate's changes. Do not push or sync silently, and do not skip the prompt.
+10. **Continue the queue:** refresh it (`aiflow next`, or `bd ready --json`) and start the next
+    task. Closing a bead ends a *task*, not the session — see §4b.
 
 A task is **DONE** only when: AC met • quality gates §3a/§3b/§3c passed (tests + coverage, static
 analysis, logging, `.http` files, database rules) • style/lint clean • review gate passed •
-decisions recorded • bead closed • sync gate honoured.
+decisions recorded • bead closed • sync gate honoured • queue refreshed (§4b).
+
+### 4b. Queue mode — work the queue, not one bead
+
+Beads is an authoritative **work queue**, not a notepad. There is a difference between "execute
+this task" and "work through the available tasks", and this project expects the second:
+
+```
+bd ready --json → select → claim → inspect → implement → validate → close → refresh → repeat
+```
+
+**Completing a task never ends the session by itself.** After closing a bead, re-run the queue
+check immediately and continue with the next appropriate task. Do not ask the user what to work
+on next while Beads already holds a ready one — announce which one you picked and why, then work
+it.
+
+**Selecting the next task** (`aiflow next` applies the first two mechanically and prints the
+winner; `--after <closed-id>` feeds it the third):
+1. higher priority (P0 first),
+2. a task that unblocks others,
+3. a task in the epic/workstream currently being implemented,
+4. a natural continuation of the task just closed (e.g. `discovered-from` it),
+5. otherwise the most appropriate ready task by description and dependencies.
+
+Don't jump to unrelated work while a clear continuation of the current thread exists.
+
+**Stop only for a real reason** — and say which one:
+- the queue holds nothing actionable (`aiflow next` exits 3),
+- everything left is blocked by unresolved dependencies (`bd blocked`),
+- continuing needs a decision, clarification, credentials, permission or information only the
+  user has,
+- the user said stop.
+
+"The task I was given is finished" is **not** one of them. Neither is a queue you did not look at.
+
+This is not left to memory: with Claude Code, the `Stop` hook `.claude/hooks/queue-continue.*`
+checks the queue when the agent tries to end its turn and hands back the next ready task. It
+fires **at most once** per stop, so stating a legitimate reason above always ends the session.
+Turn it off per project with `.aiflow/config.json → beads.queueMode = false`, or for one session
+with `AIFLOW_QUEUE_MODE=off`. Copilot/Codex have no Stop-hook equivalent: run `aiflow next`
+yourself after every close.
+
+**Autonomy still has limits.** Queue mode does not authorise blanket execution of every open
+bead: the §4 gates (AC, review, decisions) apply to each task unchanged, work outside a bead's
+scope becomes a new bead rather than silent extra work, and the git/release rules in §7 —
+especially "never merge to `main` or release without explicit confirmation" — are untouched by it.
 
 ### 4a. Team collaboration rules (multiple members, one issue graph)
 - **Single source of truth:** Beads only. Do NOT use TodoWrite / markdown TODOs / ad-hoc lists.
@@ -551,3 +598,4 @@ directly, or the live routing table in `.claude/memory/memory-policy.md` once me
       persisted as `[suggestion]` beads
 - [ ] Bead updated/closed, commit references bead id
 - [ ] Docs/architecture updated if structure changed (ADR for architecture changes)
+- [ ] Queue refreshed (`aiflow next`): next task started, or the stop reason named (§4b)

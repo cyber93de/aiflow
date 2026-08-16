@@ -460,6 +460,11 @@ one issue graph for the whole team, no extra server.
   teammates' issue changes instead of clobbering them. On conflict: `bd dolt pull` (merge), resolve,
   push. Never force-push.
 - **Status is the coordination signal.** Keep it current; stale status = duplicate work.
+- **Queue mode: a closed task is not a finished session.** After every close the agent refreshes the
+  queue and starts the next task — `aiflow next` ranks it (priority → unblocks-most → continuation of
+  the bead just closed). It stops only for a real reason: nothing actionable, everything blocked, you
+  said stop, or a decision only you can make. A `Stop` hook hands the next task back once if the
+  agent forgets; disable with `.aiflow/config.json → beads.queueMode = false` or `AIFLOW_QUEUE_MODE=off`.
 - **Discovered work → a new bead** (`--deps discovered-from:<id>`); **decisions → `/beads:decision`**
   (recorded with rationale) so the whole team sees the *why*.
 - **Shared preferences** (code style, language) live in a committed `.aiflow/team-prefs.json` — the
@@ -624,6 +629,7 @@ aiflow change-settings [--no-token-saving]   re-adjust config, then re-render ev
 aiflow shell [--router]            load .env then launch Claude Code (--router = cheap/local models)
 aiflow sync [pull|push|both]       team sync: git + Beads(dolt) pull/push
 aiflow close-sync <id>             on issue close: prompt to push + Dolt-sync the remote
+aiflow next [--after <id>] [--claim] [--json]  next ready Beads task, ranked (queue mode)
 aiflow ollama [pull|add <m>|list]  manage local Ollama models
 aiflow index                       refresh code memory: graphify (graph) + cocoindex (RAG)
 aiflow ralph "<prompt|bead id>"    run the headless Ralph loop
@@ -694,11 +700,12 @@ your-project/
 │  ├─ team-prefs.json        # shared team preferences (committed)
 │  ├─ router-config.json     # generated: Ollama/cost providers (gitignored)
 │  ├─ bd-close-sync.sh       # close → prompt push + Dolt-sync
+│  ├─ next-task.sh           # next ready bead, ranked (queue mode)
 │  └─ *.sh                   # audit/release/ralph helpers
 ├─ .beads/                   # Beads issue database (Dolt)
 ├─ .claude/
 │  ├─ agents/  commands/     # subagents + slash commands
-│  ├─ hooks/                 # caveman, formatter, beads-sync (SessionStart)
+│  ├─ hooks/                 # caveman, formatter, beads-sync (SessionStart), queue-continue (Stop)
 │  ├─ memory/                # project-aim, dev-environment, memory-policy
 │  └─ settings.json          # permissions + hooks + MCP allow-list
 ├─ .githooks/                # commit-msg, pre-commit, pre-push (enforcement)

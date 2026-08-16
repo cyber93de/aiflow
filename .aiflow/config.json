@@ -50,6 +50,9 @@
     "askOnClose": true,
     "pullOnStart": true
   },
+  "beads": {
+    "queueMode": true
+  },
   "ollama": {
     "enabled": false,
     "url": "http://localhost:11434",

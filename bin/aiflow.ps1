@@ -115,6 +115,10 @@ switch ($cmd) {
     if (Test-Path '.aiflow/bd-close-sync.ps1') { & '.aiflow/bd-close-sync.ps1' @rest }
     else { Write-Error "No .aiflow/bd-close-sync.ps1 (enable sync-on-close via 'aiflow change-settings')." }
   }
+  'next' {
+    if (Test-Path '.aiflow/next-task.ps1') { & '.aiflow/next-task.ps1' @rest }
+    else { Write-Error "No .aiflow/next-task.ps1 in this project. Run 'aiflow init' first." }
+  }
   { $_ -in 'version','-v','--version' } {
     $vf = Join-Path $AIFLOW_HOME 'VERSION'
     $ver = if (Test-Path $vf) { (Get-Content $vf -TotalCount 1).Trim() } else { '0.0.0' }
@@ -143,6 +147,7 @@ USAGE
   aiflow sync [pull|push|both]  team sync: git + Beads(dolt) pull/push (default pull at start)
   aiflow ollama [pull|add <m>|list]  manage local Ollama models (from config)
   aiflow close-sync <id>   on Beads issue close: prompt to push + dolt-sync the remote
+  aiflow next [--after <id>] [--claim] [--json]  next ready Beads task, ranked (AGENTS.md 4b)
   aiflow hotfix <name>     branch hotfix/<name> from main, bump VERSION to X.Y.(Z+1)-HOTFIX
   aiflow release [--yes] [--push]  cut a release per the branching model (version bump + tag);
                            dry run without --yes

@@ -60,7 +60,8 @@ the CLI/templates; existing projects don't change until you say so.
 
 **A project isn't picking up the latest aiflow templates — how do I fix that?**
 `aiflow project-update` refreshes its mechanical scripts (`.aiflow/*`, `.claude/hooks/*`,
-`docker/run.*`, `.github/scripts/*`) from the installed templates. Your `.github/workflows/*`
+`docker/run.*`, `.github/scripts/*`) from the installed templates, and brings the agent
+definitions and git hooks (`.githooks/*`) forward under the `*.bak` rule. Your `.github/workflows/*`
 is left alone — a shipped CI helper that no workflow calls yet is listed at the end of the run
 so you can wire it in yourself. Every project stamps the aiflow version it
 was generated with (`meta.aiflowVersion` in `.aiflow/config.json`); any `aiflow` command

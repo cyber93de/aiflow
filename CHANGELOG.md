@@ -7,6 +7,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **`aiflow project-update` now refreshes `.githooks/*` too**, under the same `*.bak` rule as the
+  agent definitions. They were excluded before, which meant a shipped hook improvement (the
+  frontmatter guard in `pre-commit`, for one) only ever reached projects generated *after* it —
+  never an existing one. A hook you customised is kept as `<file>.bak` and reported; hooks you
+  added yourself are untouched; a deleted one is restored; the exec bit is re-applied, since git
+  silently skips a hook that lost it. `.github/workflows/*` stays untouched, for its own reason.
+
 ### Added
 - **Queue mode — a closed task no longer ends the session.** Beads is treated as an authoritative
   work queue: after closing a bead the agent refreshes the queue and starts the next task instead

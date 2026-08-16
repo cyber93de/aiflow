@@ -3,19 +3,17 @@
 #
 # Refreshed (mechanical, always safe to overwrite): .aiflow/*.sh+ps1, .claude/hooks/*.sh+ps1,
 # docker/run.sh+ps1, .github/scripts/* (aiflow's CI helpers - not meant to be edited).
-# Refreshed (agent definitions - see backup rule below): AGENTS.md, CLAUDE.md,
+# Refreshed (agent definitions + git hooks - see backup rule below): AGENTS.md, CLAUDE.md,
 # .github/copilot-instructions.md, .claude/agents/*.md, .claude/commands/*.md,
-# .claude/skills/*/SKILL.md.
+# .claude/skills/*/SKILL.md, .githooks/*.
 # Backup rule: if a refreshed agent-definition file already differs from the incoming template
 # (i.e. you customised it, or it's genuinely changed upstream), the OLD file is renamed to
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
 # diff/reapply your customisations. Identical files are overwritten silently (nothing lost).
 # NEVER touched: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map, ...),
-# .github/workflows/* (yours to extend - see below), .githooks/* (enforcement policy you are
-# expected to tune; refreshing it would need the .bak rule and a decision of its own - aiflow-y23,
-# so a hook improvement reaches an existing project only if you copy it yourself), and
-# .aiflow/config.json's own content (only meta.aiflowVersion is stamped at the end) - your project
-# aim, task history, and learned memory always survive a project-update.
+# .github/workflows/* (yours to extend - see below), and .aiflow/config.json's own content (only
+# meta.aiflowVersion is stamped at the end) - your project aim, task history, and learned memory
+# always survive a project-update.
 #
 # Why scripts but not workflows: the helpers aiflow ships into .github/scripts/ are mechanical and
 # not meant to be edited, so they are simply overwritten. .github/workflows/ci.yml ships as a
@@ -81,7 +79,7 @@ if (Test-Path $ciScriptsSrc) {
 Write-Output "   scripts refreshed"
 
 # ---- agent definitions: back up before overwrite if the existing file was customised ----
-Write-Output ">> refreshing agent definitions (customised files are kept as *.bak)..."
+Write-Output ">> refreshing agent definitions + git hooks (customised files are kept as *.bak)..."
 $script:added = @()
 $script:backedUp = @()
 
@@ -132,6 +130,15 @@ if (Test-Path $skillsSrc) {
     }
   }
 }
+# Git hooks are enforcement policy a project tunes - but they are also how a shipped check
+# reaches an existing project at all (aiflow-1l4's frontmatter guard reached only NEW projects
+# while these were excluded). So they follow the .bak rule like the agent definitions.
+$hooksSrc = Join-Path $TPL '.githooks'
+if (Test-Path $hooksSrc) {
+  Get-ChildItem -Path $hooksSrc -File -ErrorAction SilentlyContinue | ForEach-Object {
+    Update-WithBackup $_.FullName (Join-Path '.githooks' $_.Name)
+  }
+}
 
 if ($script:added.Count -gt 0) {
   Write-Output ("   new: " + ($script:added -join " "))
@@ -144,7 +151,7 @@ if ($script:backedUp.Count -gt 0) {
   foreach ($f in $script:backedUp) { Write-Output "        $f  (backup: $f.bak)" }
   Write-Output ""
 } else {
-  Write-Output "   agent definitions were already up to date - nothing backed up."
+  Write-Output "   agent definitions + git hooks were already up to date - nothing backed up."
 }
 
 & (Join-Path $AIFLOW_HOME 'lib/apply.ps1')

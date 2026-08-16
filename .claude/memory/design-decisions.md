@@ -89,6 +89,14 @@ Why things are the way they are. Change these only deliberately.
   trade the guard's zero false positives for guesswork. `EXEC_GATE_EXEMPT` exists and is empty.
   Repo-only like the twin/rendered guards: the shell a generated project runs is aiflow's own and
   is already checked here, so shipping it would buy a Python CI step per project and nothing else.
+- **`project-update` refreshes `.githooks/*` under the `.bak` rule** (2026-08-16, aiflow-y23).
+  They were excluded as "policy you tune", which meant a shipped hook improvement reached only
+  projects generated *afterwards* — aiflow-1l4's frontmatter guard could never arrive in an
+  existing project. The `.bak` rule already exists for exactly this class (`AGENTS.md`, agents,
+  commands, skills are customised too): a hook that differs from the template is renamed to
+  `<file>.bak`, never deleted, and reported at the end. Hooks the project added itself are
+  untouched, a deleted one is restored, and `chmod +x` runs afterwards because git silently skips
+  a non-executable hook. `.github/workflows/` stays excluded — different reason, see below.
 - **`.github/scripts/` is aiflow-owned, `.github/workflows/` is project-owned** (2026-08-15).
   `project-update` overwrites the shipped CI helpers mechanically but never rewrites a workflow —
   `ci.yml` ships as a starting point projects extend, so replacing it would eat their jobs. A helper

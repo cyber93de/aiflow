@@ -643,7 +643,8 @@ aiflow cost [...]                  token/cost baseline via ccusage
 aiflow doctor                      check prerequisites + project summary
 aiflow upgrade                     update the bundled toolchain
 aiflow update                      self-update aiflow (git pull, or GitHub-release download if not a git checkout)
-aiflow project-update               refresh THIS project (scripts incl. .github/scripts + agent defs;
+aiflow project-update               refresh THIS project (scripts incl. .github/scripts + agent defs
+                                    + .githooks;
                                     customised files -> *.bak; .github/workflows never rewritten)
 aiflow version
 ```

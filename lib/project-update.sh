@@ -4,19 +4,17 @@
 #
 # Refreshed (mechanical, always safe to overwrite): .aiflow/*.sh+ps1, .claude/hooks/*.sh+ps1,
 # docker/run.sh+ps1, .github/scripts/* (aiflow's CI helpers - not meant to be edited).
-# Refreshed (agent definitions - see backup rule below): AGENTS.md, CLAUDE.md,
+# Refreshed (agent definitions + git hooks - see backup rule below): AGENTS.md, CLAUDE.md,
 # .github/copilot-instructions.md, .claude/agents/*.md, .claude/commands/*.md,
-# .claude/skills/*/SKILL.md.
+# .claude/skills/*/SKILL.md, .githooks/*.
 # Backup rule: if a refreshed agent-definition file already differs from the incoming template
 # (i.e. you customised it, or it's genuinely changed upstream), the OLD file is renamed to
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
 # diff/reapply your customisations. Identical files are overwritten silently (nothing lost).
 # NEVER touched: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map, ...),
-# .github/workflows/* (yours to extend - see below), .githooks/* (enforcement policy you are
-# expected to tune; refreshing it would need the .bak rule and a decision of its own - aiflow-y23,
-# so a hook improvement reaches an existing project only if you copy it yourself), and
-# .aiflow/config.json's own content (only meta.aiflowVersion is stamped at the end) - your project
-# aim, task history, and learned memory always survive a project-update.
+# .github/workflows/* (yours to extend - see below), and .aiflow/config.json's own content (only
+# meta.aiflowVersion is stamped at the end) - your project aim, task history, and learned memory
+# always survive a project-update.
 #
 # Why scripts but not workflows: the helpers aiflow ships into .github/scripts/ are mechanical and
 # not meant to be edited, so they are simply overwritten. .github/workflows/ci.yml ships as a
@@ -54,7 +52,7 @@ chmod +x .aiflow/*.sh .claude/hooks/*.sh docker/*.sh 2>/dev/null || true
 echo "   scripts refreshed"
 
 # ---- agent definitions: back up before overwrite if the existing file was customised ----
-echo ">> refreshing agent definitions (customised files are kept as *.bak)..."
+echo ">> refreshing agent definitions + git hooks (customised files are kept as *.bak)..."
 BACKED_UP=()
 ADDED=()
 refresh_with_backup() { # src dest
@@ -87,7 +85,15 @@ for f in "$TPL"/.claude/skills/*/SKILL.md; do
   name="$(basename "$(dirname "$f")")"
   refresh_with_backup "$f" ".claude/skills/$name/SKILL.md"
 done
+# Git hooks are enforcement policy a project tunes — but they are also how a shipped check
+# reaches an existing project at all (aiflow-1l4's frontmatter guard reached only NEW projects
+# while these were excluded). So they follow the .bak rule like the agent definitions, and the
+# exec bit is re-applied below: a hook that lost it is silently skipped by git.
+for f in "$TPL"/.githooks/*; do
+  [ -f "$f" ] && refresh_with_backup "$f" ".githooks/$(basename "$f")"
+done
 shopt -u nullglob
+chmod +x .githooks/* 2>/dev/null || true
 
 if [ "${#ADDED[@]}" -gt 0 ]; then
   echo "   new: ${ADDED[*]}"
@@ -100,7 +106,7 @@ if [ "${#BACKED_UP[@]}" -gt 0 ]; then
   for f in "${BACKED_UP[@]}"; do echo "        $f  (backup: $f.bak)"; done
   echo ""
 else
-  echo "   agent definitions were already up to date - nothing backed up."
+  echo "   agent definitions + git hooks were already up to date - nothing backed up."
 fi
 
 bash "$AIFLOW_HOME/lib/apply.sh"

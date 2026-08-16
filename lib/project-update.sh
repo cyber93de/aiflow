@@ -131,7 +131,17 @@ bash "$AIFLOW_HOME/lib/apply.sh"
 DEFAULTS="$TPL/.aiflow/config.defaults.json"
 if [ -f "$DEFAULTS" ]; then
   TMPD="$(mktemp)"
-  if jq -s '.[0] * .[1] | del(.["$comment"])' "$DEFAULTS" "$CFG" > "$TMPD" 2>/dev/null && [ -s "$TMPD" ]; then
+  # `defaults * config` would work but reorders: the defaults' keys jump to the front, so every
+  # project gets a needlessly large diff. This walks the defaults instead and only INSERTS what is
+  # missing, leaving the project's own key order alone - which is what the .ps1 twin already did.
+  if jq --slurpfile d "$DEFAULTS" '
+       def addmissing($x):
+         reduce ($x | to_entries[]) as $e (.;
+           if has($e.key)
+           then (if (.[$e.key] | type) == "object" and ($e.value | type) == "object"
+                 then .[$e.key] |= addmissing($e.value) else . end)
+           else .[$e.key] = $e.value end);
+       addmissing($d[0] | del(.["$comment"]))' "$CFG" > "$TMPD" 2>/dev/null && [ -s "$TMPD" ]; then
     if cmp -s "$TMPD" "$CFG"; then
       rm -f "$TMPD"
     else

@@ -33,6 +33,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   templates no longer contain — and still deletes nothing, because that file may equally well be
   one you added. `.github/scripts/` is not scanned: it is a shared directory where your own CI
   scripts belong.
+- **`aiflow project-update` also brings `.aiflow/router-config.example.json` forward.** The
+  mechanical block copies only `*.sh`/`*.ps1`, so the router example — a reference file you copy
+  to `~/.claude-code-router/config.json` — only ever reached freshly generated projects. It now
+  follows the `*.bak` rule, so a sample you tweaked is preserved rather than overwritten.
 - **`aiflow project-update` now refreshes `.githooks/*` too**, under the same `*.bak` rule as the
   agent definitions. They were excluded before, which meant a shipped hook improvement (the
   frontmatter guard in `pre-commit`, for one) only ever reached projects generated *after* it —

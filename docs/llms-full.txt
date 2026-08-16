@@ -48,7 +48,8 @@ matching per-OS archive, verifies it against the published `SHA256SUMS.txt`, and
 mechanical scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`, `.github/scripts/*`) always,
 plus agent definitions
 (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/agents/*`,
-`.claude/commands/*`, `.claude/skills/*`) and the git hooks (`.githooks/*`) — any of those that was customised (differs from the
+`.claude/commands/*`, `.claude/skills/*`), the git hooks (`.githooks/*`) and
+`.aiflow/router-config.example.json` — any of those that was customised (differs from the
 incoming template) is renamed to `<file>.bak` first, never deleted, and reported so you can
 reapply your changes; identical files are overwritten silently. Nothing is ever deleted: a script
 the templates no longer ship is listed at the end of the run (for `.aiflow/` and `.claude/hooks/`;

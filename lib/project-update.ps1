@@ -5,7 +5,7 @@
 # docker/run.sh+ps1, .github/scripts/* (aiflow's CI helpers - not meant to be edited).
 # Refreshed (agent definitions + git hooks - see backup rule below): AGENTS.md, CLAUDE.md,
 # .github/copilot-instructions.md, .claude/agents/*.md, .claude/commands/*.md,
-# .claude/skills/*/SKILL.md, .githooks/*.
+# .claude/skills/*/SKILL.md, .githooks/*, .aiflow/router-config.example.json.
 # Backup rule: if a refreshed agent-definition file already differs from the incoming template
 # (i.e. you customised it, or it's genuinely changed upstream), the OLD file is renamed to
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
@@ -133,6 +133,11 @@ if (Test-Path $skillsSrc) {
     }
   }
 }
+# The router example is a reference file a project copies to ~/.claude-code-router/config.json,
+# so a stale one is worth refreshing - but it is also the obvious place to keep a tweaked sample,
+# hence the .bak rule rather than the mechanical block above (aiflow-ver).
+Update-WithBackup (Join-Path $TPL '.aiflow/router-config.example.json') '.aiflow/router-config.example.json'
+
 # Git hooks are enforcement policy a project tunes - but they are also how a shipped check
 # reaches an existing project at all (aiflow-1l4's frontmatter guard reached only NEW projects
 # while these were excluded). So they follow the .bak rule like the agent definitions.

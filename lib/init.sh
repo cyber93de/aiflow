@@ -238,7 +238,15 @@ echo "  wrote .aiflow/config.json"
 
 # ---- local version control ----
 case "$VCS_SYS" in
-  git)  [ "$NO_GIT" = 0 ] && [ ! -d .git ] && { git init -q && echo "  git initialised"; } ;;
+  # --initial-branch=main is mandatory: the whole branching governance (branching.sh,
+  # branching.json, pre-push hook, release.sh, hotfix.sh) hard-codes 'main'. Without it,
+  # git < 2.28 or an unset init.defaultBranch silently produces 'master' and nothing
+  # enforces anything (aiflow-33g). Old git has no such flag -> symbolic-ref fallback.
+  git)  if [ "$NO_GIT" = 0 ] && [ ! -d .git ]; then
+          if git init -q --initial-branch=main 2>/dev/null; then echo "  git initialised (branch main)"
+          elif git init -q; then git symbolic-ref HEAD refs/heads/main; echo "  git initialised (branch main)"
+          fi
+        fi ;;
   svn)  if command -v svn >/dev/null 2>&1; then
           [ -d .svn ] || echo "  svn selected — run 'svnadmin create' / 'svn checkout' for your repo (aiflow won't auto-create it)"
         else echo "  ! svn selected but 'svn' not installed"; fi ;;

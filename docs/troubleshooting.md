@@ -47,6 +47,21 @@ Ensure **Podman or Docker** is installed and its daemon/machine is running. Forc
 ## `pre-push` blocks a push
 That's the branching model. Use a proper branch/PR. See [Workflows](workflows).
 
+## My project is on `master`, and the branching rules never apply
+aiflow governs the mainline **by name**: `main`. `branching.json`, the `pre-push` hook,
+`aiflow release` and `aiflow hotfix` all reference `main`, so a repo sitting on `master` is simply
+ungoverned. Since 0.6.x, `aiflow init` forces `main` at `git init` time, and `aiflow apply` renames
+an existing `master` → `main` and prints the remote-migration commands:
+
+```bash
+git push -u origin main
+# switch the default branch to 'main' in your host's settings, then:
+git push origin --delete master
+```
+
+If **both** `master` and `main` exist, aiflow refuses to touch either — merge or delete `master`
+yourself, then re-run `aiflow apply`. To suppress the rename entirely: `AIFLOW_NO_BRANCH_RENAME=1`.
+
 ## A project's hooks/scripts feel out of date, or a fix in a new aiflow release isn't showing up
 Two separate steps: `aiflow update` brings the *installed CLI* (`AIFLOW_HOME`) up to the
 latest release; `aiflow project-update` then refreshes *this project's* mechanical scripts

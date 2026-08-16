@@ -3,7 +3,7 @@ layout: default
 title: Changelog
 parent: Support
 nav_order: 4
-description: "aiflow changelog and release history: 0.6.0 model routing for audit subagents, ponytail YAGNI skill, memory-setup skill; 0.5.0 native PowerShell (no more Git Bash on Windows) + OS-scoped release archives; 0.4.0 real multi-agent tooling (CLI installs, Copilot token-optimization, CodexSaver, open-ralph-wiggum); 0.3.0 agent-agnostic core + gitflow automation + Skills; 0.2.0 cross-platform scripts + self-update; 0.1.1 quality-gate release; and the 0.1.0 first public release."
+description: "aiflow changelog and release history: 0.7.0 queue mode (Beads as a work queue), four self-testing CI guards, hardened git hooks, project-update reach; 0.6.0 model routing for audit subagents, ponytail YAGNI skill, memory-setup skill; 0.5.0 native PowerShell (no more Git Bash on Windows) + OS-scoped release archives; 0.4.0 real multi-agent tooling (CLI installs, Copilot token-optimization, CodexSaver, open-ralph-wiggum); 0.3.0 agent-agnostic core + gitflow automation + Skills; 0.2.0 cross-platform scripts + self-update; 0.1.1 quality-gate release; and the 0.1.0 first public release."
 ---
 
 # Changelog
@@ -12,6 +12,34 @@ description: "aiflow changelog and release history: 0.6.0 model routing for audi
 aiflow follows [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/). The authoritative, always-current changelog lives in the
 repository: **[CHANGELOG.md](https://github.com/Cyber93de/aiflow/blob/main/CHANGELOG.md)**.
+
+## 0.7.0 — queue mode, four CI guards, hardened git hooks
+
+Highlights:
+
+- **Queue mode — a closed task no longer ends the session.** Beads is treated as an authoritative
+  work queue: after closing an issue the agent refreshes the queue and starts the next task instead
+  of asking what to do. `aiflow next` ranks the candidates (priority → unblocks-most → continuation
+  of the issue just closed) and exits `3` when nothing is actionable; a Claude Code `Stop` hook
+  hands the next task back once if the agent forgets. Four documented reasons to stop, and the
+  agent must name the one that applies. Opt out with `beads.queueMode` or `AIFLOW_QUEUE_MODE=off`.
+  See [Workflows](workflows#queue-mode--a-closed-task-is-not-a-finished-session).
+- **Four mechanical guards in CI, each with its own self-test.** The twin guard now looks *inside*
+  a `.sh`/`.ps1` pair (a step added to one half only is reported), a new guard rejects `[ -x ]`
+  gates in front of interpreted calls (the exec bit is invisible to `bash` and Windows drops it),
+  the rendered-copy guard covers the agent/command/skill roster, and the Python CI helpers are
+  finally compiled and linted themselves.
+- **Git hooks that hold up in practice.** `pre-commit` now judges the **staged** content rather
+  than your working tree, hooks warn about issue ids that do not exist, path lists are read with
+  `core.quotePath=false` so non-ASCII filenames stop slipping through, merge and revert commits
+  pass `commit-msg`, and scopes may be path-shaped (`docs(.aiflow)`).
+- **`aiflow project-update` reaches further and still deletes nothing.** It now refreshes
+  `.githooks/*` and `router-config.example.json` under the `*.bak` rule — so a shipped hook
+  improvement finally arrives in existing projects — and reports helpers aiflow no longer ships
+  instead of removing them.
+- **Runs on macOS's system bash again.** Empty arrays under `set -u` and `mapfile` (bash 4+) broke
+  `project-update` and `ollama pull` on bash 3.2; a macOS CI job now proves the fix, after
+  asserting the runner really is on 3.2.
 
 ## 0.6.0 — cheap-model audit routing, ponytail, memory-setup skill
 

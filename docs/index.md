@@ -18,7 +18,7 @@ process.
 [Get started](getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View on GitHub](https://github.com/Cyber93de/aiflow){: .btn .fs-5 .mb-4 .mb-md-0 }
 
-**Version 0.6.0 · MIT License**
+**Version 0.7.0 · MIT License**
 
 ![aiflow init: bootstrap a project in one interactive Q&A](assets/terminal/init.gif)
 

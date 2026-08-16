@@ -81,7 +81,8 @@ python3 .github/scripts/check-frontmatter.py \
 # Bash/PowerShell twin parity (pairing + dispatch + usage block + per-pair step banners)
 python3 .github/scripts/check-twins.py --selftest
 python3 .github/scripts/check-twins.py .
-# rendered copies (.aiflow/, .claude/hooks/, .github/scripts/) vs templates/ — content drift too
+# rendered copies (.aiflow/, .claude/hooks/, .github/scripts/, .claude/agents|commands|skills)
+# vs templates/ — content drift too
 python3 .github/scripts/check-rendered.py --selftest
 python3 .github/scripts/check-rendered.py .
 # `[ -x ]` gates in front of `bash <path>` (aiflow-wrn: gates on a bit the interpreter ignores)

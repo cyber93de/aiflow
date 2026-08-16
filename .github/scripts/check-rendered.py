@@ -26,10 +26,20 @@ import pathlib
 import sys
 import tempfile
 
+# `apply.sh`/`apply.ps1` stamp this line into exactly these five audit-only subagents when
+# `modelRouting.enabled` is true (the default), and strip it again when it is false — the
+# templates deliberately never carry it (aiflow-jxe). So the rendered copy here legitimately
+# has one line the template does not, and comparing bytes would fail forever without this.
+STAMPED_LINE = b"model: haiku\n"
+STAMPED_FILES = frozenset({
+    "docs-sync.md", "test-gap-advisor.md", "dependency-auditor.md",
+    "performance-advisor.md", "onboarder.md",
+})
+
 # (template dir, rendered copy, globs, exempt). `exempt` names files in the RENDERED copy that
-# legitimately have no template counterpart — add one only with a comment saying why.
-# `.claude/agents|commands|skills` is not here yet: five agents carry a deliberate local
-# `model: haiku` line that would have to be exempted first (aiflow-jxe).
+# legitimately have no template counterpart — add one only with a comment saying why. Globs are
+# matched recursively, so `SKILL.md` reaches `skills/<name>/SKILL.md`, and files are compared by
+# their path below the directory, not by bare name.
 MIRRORS = [
     ("templates/.aiflow", ".aiflow", ("*.sh", "*.ps1"), frozenset()),
     ("templates/.claude/hooks", ".claude/hooks", ("*.sh", "*.ps1"), frozenset()),
@@ -40,17 +50,25 @@ MIRRORS = [
     # every generated project a Python CI step for a class it cannot introduce.
     ("templates/.github/scripts", ".github/scripts", ("*.py",),
      frozenset({"check-twins.py", "check-rendered.py", "check-exec-gates.py"})),
+    # CLAUDE.md requires .claude/ and templates/.claude/ to stay in sync — keeping them so is part
+    # of shipping a template change, and until aiflow-5o3 nothing checked it.
+    ("templates/.claude/agents", ".claude/agents", ("*.md",), frozenset()),
+    ("templates/.claude/commands", ".claude/commands", ("*.md",), frozenset()),
+    ("templates/.claude/skills", ".claude/skills", ("SKILL.md",), frozenset()),
 ]
 
 
-def normalised(path: pathlib.Path) -> bytes:
+def normalised(path: pathlib.Path, strip_stamp: bool = False) -> bytes:
     """File content with line endings flattened.
 
     `.gitattributes` pins `*.sh` to LF and `*.ps1` to CRLF, so both copies normally agree
     byte for byte — but a checkout with different settings must not fail the build over
     invisible characters. Real content drift survives this.
     """
-    return path.read_bytes().replace(b"\r\n", b"\n")
+    content = path.read_bytes().replace(b"\r\n", b"\n")
+    if strip_stamp:
+        content = content.replace(STAMPED_LINE, b"", 1)
+    return content
 
 
 def check_mirror(root: pathlib.Path, src_rel: str, dst_rel: str, globs: tuple[str, ...],
@@ -64,10 +82,16 @@ def check_mirror(root: pathlib.Path, src_rel: str, dst_rel: str, globs: tuple[st
             return [(rel, f"{rel} is not a directory but MIRRORS expects it — fix this script "
                           f"instead of trusting it")]
     problems = []
-    # exempt applies to BOTH sides: a repo-only script that later gains a template counterpart
-    # must stay ignored, not flip into "missing from the rendered copy".
-    expected = {p.name for g in globs for p in src.glob(g)} - exempt
-    present = {p.name for g in globs for p in dst.glob(g)} - exempt
+
+    def below(base: pathlib.Path) -> set[str]:
+        # rglob, and keyed by the path BELOW the directory: `skills/<name>/SKILL.md` needs the
+        # subdirectory to be part of the identity, or every skill would collide on "SKILL.md".
+        # exempt applies to BOTH sides: a repo-only script that later gains a template
+        # counterpart must stay ignored, not flip into "missing from the rendered copy".
+        found = {q.relative_to(base).as_posix() for g in globs for q in base.rglob(g)}
+        return {rel for rel in found if rel not in exempt and rel.rsplit("/", 1)[-1] not in exempt}
+
+    expected, present = below(src), below(dst)
     for name in sorted(expected - present):
         problems.append((f"{dst_rel}/{name}",
                          f"{dst_rel}/{name} is missing — copy it from {src_rel}/"))
@@ -76,7 +100,8 @@ def check_mirror(root: pathlib.Path, src_rel: str, dst_rel: str, globs: tuple[st
                          f"{dst_rel}/{name} has no counterpart in {src_rel}/ — this copy is "
                          f"rendered from the templates, so add the script there instead"))
     for name in sorted(expected & present):
-        if normalised(src / name) != normalised(dst / name):
+        stamped = name.rsplit("/", 1)[-1] in STAMPED_FILES
+        if normalised(src / name) != normalised(dst / name, strip_stamp=stamped):
             problems.append((f"{dst_rel}/{name}",
                              f"{dst_rel}/{name} differs from {src_rel}/{name} — refresh it from "
                              f"the template rather than editing it here"))
@@ -155,6 +180,37 @@ def selftest() -> int:
         with contextlib.redirect_stdout(io.StringIO()):
             rc = main([str(root)])
         expect(rc == 1, "main() did not exit non-zero on findings")
+
+    # nested identity + the stamped line, on their own tree
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        src, dst = root / "templates/.claude/skills", root / ".claude/skills"
+        for base in (src, dst):
+            (base / "alpha").mkdir(parents=True)
+            (base / "beta").mkdir(parents=True)
+            (base / "alpha/SKILL.md").write_text("alpha body\n", encoding="utf-8")
+        # same basename, different subdirectory, different content: must be compared per skill
+        (src / "beta/SKILL.md").write_text("beta body\n", encoding="utf-8")
+        (dst / "beta/SKILL.md").write_text("beta CHANGED\n", encoding="utf-8")
+        nested = check_mirror(root, "templates/.claude/skills", ".claude/skills", ("SKILL.md",))
+        expect(len(nested) == 1 and "beta/SKILL.md" in nested[0][0],
+               f"nested SKILL.md not compared per directory: {nested}")
+
+        agents_src, agents_dst = root / "templates/.claude/agents", root / ".claude/agents"
+        agents_src.mkdir(parents=True)
+        agents_dst.mkdir(parents=True)
+        body = "---\nname: x\n---\nbody\n"
+        stamped_name = sorted(STAMPED_FILES)[0]
+        (agents_src / stamped_name).write_text(body, encoding="utf-8")
+        (agents_dst / stamped_name).write_text(
+            body.replace("name: x\n", "name: x\nmodel: haiku\n"), encoding="utf-8")
+        # the identical extra line on a NOT-stamped agent must still be reported
+        (agents_src / "reviewer.md").write_text(body, encoding="utf-8")
+        (agents_dst / "reviewer.md").write_text(
+            body.replace("name: x\n", "name: x\nmodel: haiku\n"), encoding="utf-8")
+        stamp = check_mirror(root, "templates/.claude/agents", ".claude/agents", ("*.md",))
+        expect(len(stamp) == 1 and "reviewer.md" in stamp[0][0],
+               f"stamp handling wrong — expected only reviewer.md: {stamp}")
 
     print("selftest: mirror drift shapes" + (" — FAILED" if failed else " — ok"))
     return failed

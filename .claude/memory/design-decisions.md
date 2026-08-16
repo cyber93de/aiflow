@@ -94,6 +94,13 @@ Why things are the way they are. Change these only deliberately.
   trade the guard's zero false positives for guesswork. `EXEC_GATE_EXEMPT` exists and is empty.
   Repo-only like the twin/rendered guards: the shell a generated project runs is aiflow's own and
   is already checked here, so shipping it would buy a Python CI step per project and nothing else.
+- **The agent roster is a checked mirror too** (2026-08-16, aiflow-5o3). `check-rendered.py` now
+  covers `.claude/agents|commands|skills` against `templates/.claude/`, so "keep them in sync" is
+  enforced rather than remembered. Two mechanics this needed: files are compared by their path
+  *below* the directory (every skill is a `SKILL.md`, so bare filenames would collide), and the
+  `model: haiku` line is stripped from the rendered side for exactly the five stamped agents —
+  the same line on any other agent is still reported. Adopting the mirror surfaced three files
+  this repo had been missing: `ponytail-review.md`, and the `ponytail` and `memory-setup` skills.
 - **`model: haiku` on five agent files here is RENDERED, not a hand edit** (2026-08-16, aiflow-jxe).
   `.claude/agents/{docs-sync,test-gap-advisor,dependency-auditor,performance-advisor,onboarder}.md`
   carry a `model: haiku` line that `templates/.claude/agents/*` deliberately do not: `apply.sh`

@@ -19,6 +19,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
   `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`
   (advisory, like shellcheck).
+- **The rendered-copy guard now covers the agent roster.** `.claude/agents`, `.claude/commands`
+  and `.claude/skills` are compared against `templates/.claude/` too, so this repo's copies can no
+  longer silently fall behind a template change. Skills are matched per directory (`<name>/
+  SKILL.md`, not bare filename), and the `model: haiku` line that `apply` stamps into the five
+  audit-only subagents is tolerated on exactly those five — the templates never carry it. Syncing
+  the guard in also pulled three files this repo was missing: `ponytail-review.md` and the
+  `ponytail` and `memory-setup` skills.
 - **The twin guard now looks *inside* a pair.** It compared only the surface (both halves present,
   same subcommands, same help text), so a step added to `lib/apply.sh` and forgotten in
   `lib/apply.ps1` — the exact class that made a feature ship broken on Windows — stayed invisible.

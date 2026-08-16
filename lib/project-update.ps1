@@ -10,6 +10,9 @@
 # (i.e. you customised it, or it's genuinely changed upstream), the OLD file is renamed to
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
 # diff/reapply your customisations. Identical files are overwritten silently (nothing lost).
+# Never deleted: project-update only copies. A helper aiflow drops or renames stays in the
+# project; it is REPORTED at the end of the run (for .aiflow/ and .claude/hooks/, which are
+# aiflow-owned) and left in place, because the same file may be one you added yourself.
 # NEVER touched: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map, ...),
 # .github/workflows/* (yours to extend - see below), and .aiflow/config.json's own content (only
 # meta.aiflowVersion is stamped at the end) - your project aim, task history, and learned memory
@@ -133,9 +136,9 @@ if (Test-Path $skillsSrc) {
 # Git hooks are enforcement policy a project tunes - but they are also how a shipped check
 # reaches an existing project at all (aiflow-1l4's frontmatter guard reached only NEW projects
 # while these were excluded). So they follow the .bak rule like the agent definitions.
-$hooksSrc = Join-Path $TPL '.githooks'
-if (Test-Path $hooksSrc) {
-  Get-ChildItem -Path $hooksSrc -File -ErrorAction SilentlyContinue | ForEach-Object {
+$gitHooksSrc = Join-Path $TPL '.githooks'
+if (Test-Path $gitHooksSrc) {
+  Get-ChildItem -Path $gitHooksSrc -File -ErrorAction SilentlyContinue | ForEach-Object {
     Update-WithBackup $_.FullName (Join-Path '.githooks' $_.Name)
   }
 }
@@ -184,4 +187,25 @@ if ((Test-Path '.github/workflows') -and (Test-Path $ciScriptsSrc)) {
     foreach ($b in $wfMissing) { Write-Output "        .github/scripts/$b" }
     Write-Output ("   Copy the matching step from " + (Join-Path $TPL '.github/workflows/ci.yml') + " to enforce it.")
   }
+}
+
+# ---- orphan advice: scripts in YOUR aiflow-owned directories that the templates no longer ship ----
+# project-update copies, it never deletes - so a helper aiflow renamed or dropped would sit in the
+# project forever, unmentioned (aiflow-400). Reported, never touched: the file may equally well be
+# one you added. .github/scripts/ is deliberately NOT scanned - it is a conventional shared
+# directory, so a project's own CI script there is normal and flagging it would be pure noise.
+$orphans = @()
+foreach ($d in @('.aiflow', '.claude/hooks')) {
+  if (-not (Test-Path $d)) { continue }
+  Get-ChildItem -Path $d -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Extension -eq '.sh' -or $_.Extension -eq '.ps1' } |
+    ForEach-Object {
+      if (-not (Test-Path (Join-Path (Join-Path $TPL $d) $_.Name))) { $orphans += "$d/$($_.Name)" }
+    }
+}
+if ($orphans.Count -gt 0) {
+  Write-Output ""
+  Write-Output "   note: these are in your project but aiflow no longer ships them - a helper removed"
+  Write-Output "   upstream, or one of your own. Nothing was deleted; remove them yourself if unused:"
+  foreach ($f in $orphans) { Write-Output "        $f" }
 }

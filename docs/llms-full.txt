@@ -50,7 +50,9 @@ plus agent definitions
 (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/agents/*`,
 `.claude/commands/*`, `.claude/skills/*`) and the git hooks (`.githooks/*`) — any of those that was customised (differs from the
 incoming template) is renamed to `<file>.bak` first, never deleted, and reported so you can
-reapply your changes; identical files are overwritten silently. Never touches `.beads/`,
+reapply your changes; identical files are overwritten silently. Nothing is ever deleted: a script
+the templates no longer ship is listed at the end of the run (for `.aiflow/` and `.claude/hooks/`;
+`.github/scripts/` is shared, so project-owned scripts there are not flagged). Never touches `.beads/`,
 `.claude/memory/*`, `.github/workflows/*` (yours to extend — a shipped CI helper that no workflow
 calls yet is advised at the end of the run, never written in), or your `.aiflow/config.json`
 project settings (aim, architecture) — only

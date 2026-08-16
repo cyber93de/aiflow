@@ -148,6 +148,8 @@ jobs:
           cp "$proj/.github/workflows/ci.yml" "$RUNNER_TEMP/ci-before.yml"
           # a project's OWN script must survive and must NOT be advised on
           mkdir -p "$proj/.github/scripts" && echo 'echo mine' > "$proj/.github/scripts/deploy.sh"
+          # a helper aiflow no longer ships must be REPORTED and left alone, never deleted
+          echo 'echo stale' > "$proj/.aiflow/removed-helper.sh"
 
           out="$(cd "$proj" && AIFLOW_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/lib/project-update.sh" 2>&1)"
           echo "$out"
@@ -165,6 +167,10 @@ jobs:
           if grep -q 'deploy.sh' <<<"$out"; then
             echo "::error::advised on a project-owned script"; exit 1
           fi
+          test -f "$proj/.aiflow/removed-helper.sh" \
+            || { echo "::error::project-update DELETED a file it no longer ships"; exit 1; }
+          grep -q 'removed-helper.sh' <<<"$out" \
+            || { echo "::error::no advisory for the no-longer-shipped helper"; exit 1; }
           echo "render + project-update round-trip OK"
 
       - uses: actions/setup-python@v6

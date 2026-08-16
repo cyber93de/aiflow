@@ -63,7 +63,8 @@ the CLI/templates; existing projects don't change until you say so.
 `docker/run.*`, `.github/scripts/*`) from the installed templates, and brings the agent
 definitions and git hooks (`.githooks/*`) forward under the `*.bak` rule. Your `.github/workflows/*`
 is left alone — a shipped CI helper that no workflow calls yet is listed at the end of the run
-so you can wire it in yourself. Every project stamps the aiflow version it
+so you can wire it in yourself. Nothing is ever deleted either: a helper aiflow dropped or
+renamed stays in `.aiflow/`/`.claude/hooks/` and is listed too, for you to remove if unused. Every project stamps the aiflow version it
 was generated with (`meta.aiflowVersion` in `.aiflow/config.json`); any `aiflow` command
 run in a project whose stamp is behind the installed CLI offers to run this for you.
 

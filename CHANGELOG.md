@@ -12,6 +12,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `description` ≤ 1024 — on agents, commands and skills alike, with the limits covered by its
   self-test (at the limit passes, one over fails). The `seo-optimization` skill's description was
   1323 characters; it has been tightened to fit while keeping every trigger word.
+- **`aiflow project-update` now reports scripts aiflow no longer ships.** It only ever copied, so a
+  helper that was renamed or dropped upstream stayed in the project forever and went unmentioned.
+  The end of the run now lists any `*.sh`/`*.ps1` in `.aiflow/` or `.claude/hooks/` that the
+  templates no longer contain — and still deletes nothing, because that file may equally well be
+  one you added. `.github/scripts/` is not scanned: it is a shared directory where your own CI
+  scripts belong.
 - **`aiflow project-update` now refreshes `.githooks/*` too**, under the same `*.bak` rule as the
   agent definitions. They were excluded before, which meant a shipped hook improvement (the
   frontmatter guard in `pre-commit`, for one) only ever reached projects generated *after* it —

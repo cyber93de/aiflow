@@ -126,7 +126,8 @@ falls behind the installed CLI, any `aiflow` command run inside the project asks
 never-hand-edited scripts (`.aiflow/*`, `.claude/hooks/*`, `docker/run.*`, `.github/scripts/*`),
 refreshes the agent definitions (`AGENTS.md`/`CLAUDE.md`, `.claude/agents|commands|skills`) and the
 git hooks (`.githooks/*`) keeping any file you customised as `<file>.bak`, and re-applies your config. Your `.beads/`,
-`.claude/memory/*`, `.github/workflows/*` and your own settings are untouched.
+`.claude/memory/*`, `.github/workflows/*` and your own settings are untouched, and nothing is ever
+deleted — a script aiflow no longer ships is listed at the end of the run, not removed.
 
 ## Next
 

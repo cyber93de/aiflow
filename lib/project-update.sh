@@ -11,6 +11,9 @@
 # (i.e. you customised it, or it's genuinely changed upstream), the OLD file is renamed to
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
 # diff/reapply your customisations. Identical files are overwritten silently (nothing lost).
+# Never deleted: project-update only copies. A helper aiflow drops or renames stays in the
+# project; it is REPORTED at the end of the run (for .aiflow/ and .claude/hooks/, which are
+# aiflow-owned) and left in place, because the same file may be one you added yourself.
 # NEVER touched: .beads/ (issues), .claude/memory/* (project aim, conventions, codebase map, ...),
 # .github/workflows/* (yours to extend - see below), and .aiflow/config.json's own content (only
 # meta.aiflowVersion is stamped at the end) - your project aim, task history, and learned memory
@@ -138,4 +141,25 @@ if [ -d .github/workflows ]; then
     for b in "${WF_MISSING[@]}"; do echo "        .github/scripts/$b"; done
     echo "   Copy the matching step from $TPL/.github/workflows/ci.yml to enforce it."
   fi
+fi
+
+# ---- orphan advice: scripts in YOUR aiflow-owned directories that the templates no longer ship ----
+# project-update copies, it never deletes - so a helper aiflow renamed or dropped would sit in the
+# project forever, unmentioned (aiflow-400). Reported, never touched: the file may equally well be
+# one you added. .github/scripts/ is deliberately NOT scanned - it is a conventional shared
+# directory, so a project's own CI script there is normal and flagging it would be pure noise.
+ORPHANS=()
+shopt -s nullglob
+for d in .aiflow .claude/hooks; do
+  [ -d "$d" ] || continue
+  for f in "$d"/*.sh "$d"/*.ps1; do
+    [ -f "$TPL/$d/$(basename "$f")" ] || ORPHANS+=("$f")
+  done
+done
+shopt -u nullglob
+if [ -n "${ORPHANS[*]+x}" ]; then
+  echo ""
+  echo "   note: these are in your project but aiflow no longer ships them - a helper removed"
+  echo "   upstream, or one of your own. Nothing was deleted; remove them yourself if unused:"
+  for f in "${ORPHANS[@]}"; do echo "        $f"; done
 fi

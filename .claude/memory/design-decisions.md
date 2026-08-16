@@ -89,6 +89,16 @@ Why things are the way they are. Change these only deliberately.
   trade the guard's zero false positives for guesswork. `EXEC_GATE_EXEMPT` exists and is empty.
   Repo-only like the twin/rendered guards: the shell a generated project runs is aiflow's own and
   is already checked here, so shipping it would buy a Python CI step per project and nothing else.
+- **`project-update` never deletes — it reports** (2026-08-16, aiflow-400). It only ever copied, so
+  a helper aiflow renamed or dropped sat in the project forever, and since aiflow-coy it was not
+  even mentioned (that advisory iterates the *template's* helpers). Rejected: silent deletion
+  (a file aiflow does not ship may simply be the project's own) and move-to-`.bak` (same problem,
+  plus it breaks a working setup at update time). So the end of the run lists `*.sh`/`*.ps1` in
+  `.aiflow/` and `.claude/hooks/` that the templates no longer contain, and touches nothing.
+  `.github/scripts/` is deliberately excluded: it is a conventional shared directory, so a
+  project's own CI script there is normal and flagging it would be noise — the render CI job
+  asserts exactly that (a planted `deploy.sh` is not advised on, a planted stale `.aiflow` helper
+  is, and still exists afterwards).
 - **`project-update` refreshes `.githooks/*` under the `.bak` rule** (2026-08-16, aiflow-y23).
   They were excluded as "policy you tune", which meant a shipped hook improvement reached only
   projects generated *afterwards* — aiflow-1l4's frontmatter guard could never arrive in an

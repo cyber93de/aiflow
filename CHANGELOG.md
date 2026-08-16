@@ -7,6 +7,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-08-16
+
 ### Added
 - **The agent roster is now a network, with an orchestrator.** There was no entry point: agents
   knew the rules but not each other, so routing lived in the user's head. New **orchestrator**
@@ -19,11 +21,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   a "Net & handoffs" section naming who it receives from and hands to. `AGENTS.md` §5 and
   `docs/agents.md` carry the network diagram and the edge table. The audit agents stay explicitly
   outside the delivery loop: they only file beads, which re-enter the route at the top.
-- **`.aiflow/roster-drift.sh`** + a `roster-drift` CI job — this repo self-hosts its roster, and
-  `.claude/` had silently fallen behind `templates/.claude/` (the `ponytail` and `memory-setup`
-  skills and `/ponytail-review` were missing here for a whole release). The check compares all
-  three directories, ignoring the generated `model:` frontmatter line; `--fix` copies the templates
-  over.
 - **Binding architecture rules (`AGENTS.md` §2).** §2 was an `[EDIT ME]` placeholder; it is now a
   MANDATORY section that applies in every language: layered architecture with an inward dependency
   direction and no layer skips, interfaces at every seam (ports in the domain, adapters in
@@ -48,7 +45,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   stack and architecture are already persisted at that point — plus after every closed bead and
   before long Ralph runs. `aiflow init` and the onboarder say so at the end of their output.
 
-### Added
 - **Windows prerequisites are documented and checked.** A Windows setup that pulls in MinGW/MSYS2
   is a wrong turn: aiflow's own CLI runs in PowerShell + Git Bash, but everything that *compiles
   native code* belongs in **WSL**. `docs/installation.md` gained a "Windows prerequisites" section

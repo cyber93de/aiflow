@@ -3,7 +3,7 @@ layout: default
 title: Changelog
 parent: Support
 nav_order: 4
-description: "aiflow changelog and release history: 0.7.0 queue mode (Beads as a work queue), four self-testing CI guards, hardened git hooks, project-update reach; 0.6.0 model routing for audit subagents, ponytail YAGNI skill, memory-setup skill; 0.5.0 native PowerShell (no more Git Bash on Windows) + OS-scoped release archives; 0.4.0 real multi-agent tooling (CLI installs, Copilot token-optimization, CodexSaver, open-ralph-wiggum); 0.3.0 agent-agnostic core + gitflow automation + Skills; 0.2.0 cross-platform scripts + self-update; 0.1.1 quality-gate release; and the 0.1.0 first public release."
+description: "aiflow changelog and release history: 0.8.0 orchestrated agent network, binding architecture rules, model tiers, Windows/WSL prerequisites; 0.7.0 queue mode (Beads as a work queue), four self-testing CI guards, hardened git hooks, project-update reach; 0.6.0 model routing for audit subagents, ponytail YAGNI skill, memory-setup skill; 0.5.0 native PowerShell (no more Git Bash on Windows) + OS-scoped release archives; 0.4.0 real multi-agent tooling (CLI installs, Copilot token-optimization, CodexSaver, open-ralph-wiggum); 0.3.0 agent-agnostic core + gitflow automation + Skills; 0.2.0 cross-platform scripts + self-update; 0.1.1 quality-gate release; and the 0.1.0 first public release."
 ---
 
 # Changelog
@@ -12,6 +12,38 @@ description: "aiflow changelog and release history: 0.7.0 queue mode (Beads as a
 aiflow follows [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/). The authoritative, always-current changelog lives in the
 repository: **[CHANGELOG.md](https://github.com/Cyber93de/aiflow/blob/main/CHANGELOG.md)**.
+
+## 0.8.0 — an orchestrated agent network, binding architecture rules, Windows/WSL
+
+Highlights:
+
+- **The agent roster became a network, with an orchestrator.** Agents knew the rules but not each
+  other, so routing lived in your head. The new **orchestrator** agent and `/orchestrate
+  <goal|bead>` decide which specialist handles each step, dispatch exactly one at a time, judge the
+  result and route on — planner → architect (when boundaries are crossed) → implementer → tester
+  (risky changes) → reviewer → close. It never writes code, and every handover is written **into
+  the bead**, so it survives a `/compact`. Every agent file gained a "Net & handoffs" section, and
+  the audit agents stay outside the delivery loop: they only file beads, which re-enter at the top.
+  See [Agents](agents).
+- **Architecture rules are now binding (`AGENTS.md` §2).** What was an `[EDIT ME]` placeholder is a
+  MANDATORY section in every language: layered with inward dependencies, interfaces at every seam,
+  DAO as the only thing that talks to a store, DTOs across process boundaries, domain objects that
+  never leave the domain. §2c makes it stick — a task that does not fit is **not implemented as
+  is**: the agent stops before writing code, asks in PO language with options and consequences, and
+  the answer is recorded. The reviewer treats each rule as a BLOCKER.
+- **Model tiers per activity.** Instead of "Haiku for five audit agents", `aiflow apply` stamps a
+  model per *kind of work*: reasoning (Opus, or Fable) for architecture, planning, review and
+  security; Sonnet for implementation and tests; Haiku for mechanical scans. Override a whole tier
+  or move a single agent, both surviving `aiflow change-settings`. See [Models](models).
+- **Windows without MinGW.** aiflow's CLI runs in PowerShell + Git Bash, but anything that
+  *compiles native code* belongs in WSL. `docs/installation.md` gained a Windows prerequisites
+  section, `aiflow doctor` reports WSL, WSL2, the in-distro toolchain and firmware virtualisation —
+  and warns when a MinGW/MSYS `gcc` sits on the Windows PATH. `install-deps` installs
+  `build-essential` *inside* WSL and never falls back to MinGW.
+- **New projects land on `main`, not `master`.** `aiflow init` never passed `--initial-branch`, so
+  on older git the mainline was `master` — while the whole branching governance references `main`
+  by name and therefore never applied. `init` forces `main` now, and `aiflow apply` renames an
+  existing `master`, printing the remote-migration commands.
 
 ## 0.7.0 — queue mode, four CI guards, hardened git hooks
 

@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Fixed
+- **`aiflow project-update` now fills in config keys a newer release introduced.** Only `init` and
+  `change-settings` ever wrote `.aiflow/config.json`, so a key added by a release never reached an
+  already-generated project — upgrading 22 projects to 0.8.0 left every one of them without
+  `beads.queueMode`. Missing keys are now merged in from `templates/.aiflow/config.defaults.json`;
+  a value the project set itself always wins, and a second run changes nothing.
+
+### Fixed
 - **The `pre-push` branching guard rejected the release push itself.** It walked every merge
   commit newly reachable on `main`, so a `develop` → `main` release push was blocked by the
   `feature/*` → `develop` merges it legitimately carries along (`merge of 'feature/x' into main

@@ -1,0 +1,6 @@
+{
+  "$comment": "Defaults that `aiflow project-update` folds into an EXISTING project's .aiflow/config.json (aiflow-vxy). Only `init` and `change-settings` ever write that file, so a key introduced by a new release never reached an already-generated project — after upgrading 22 projects to 0.8.0 every one of them had `beads.queueMode` missing. The merge is `defaults * config`: a key the project already sets always wins, so this can only ADD. Keep it to keys whose default is universal — never project state (aim, remote, os, models). This file is read from the templates and never copied into a project.",
+  "beads": { "queueMode": true },
+  "modelRouting": { "enabled": true },
+  "sync": { "pullOnStart": true }
+}

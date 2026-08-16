@@ -7,6 +7,8 @@
 # Refreshed (agent definitions + git hooks - see backup rule below): AGENTS.md, CLAUDE.md,
 # .github/copilot-instructions.md, .claude/agents/*.md, .claude/commands/*.md,
 # .claude/skills/*/SKILL.md, .githooks/*, .aiflow/router-config.example.json.
+# Config: .aiflow/config.json keeps every value you set; keys a NEWER release introduced are
+# filled in from templates/.aiflow/config.defaults.json, and meta.aiflowVersion is stamped.
 # Backup rule: if a refreshed agent-definition file already differs from the incoming template
 # (i.e. you customised it, or it's genuinely changed upstream), the OLD file is renamed to
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
@@ -121,6 +123,26 @@ else
 fi
 
 bash "$AIFLOW_HOME/lib/apply.sh"
+
+# ---- config defaults: add keys a newer release introduced, never touch existing values ----
+# Only `init`/`change-settings` write config.json, so a key added by a release never reached an
+# already-generated project (aiflow-vxy). `defaults * config` merges recursively with the RIGHT
+# side winning, so this can only add what the project does not set.
+DEFAULTS="$TPL/.aiflow/config.defaults.json"
+if [ -f "$DEFAULTS" ]; then
+  TMPD="$(mktemp)"
+  if jq -s '.[0] * .[1] | del(.["$comment"])' "$DEFAULTS" "$CFG" > "$TMPD" 2>/dev/null && [ -s "$TMPD" ]; then
+    if cmp -s "$TMPD" "$CFG"; then
+      rm -f "$TMPD"
+    else
+      mv "$TMPD" "$CFG"
+      echo "   config.json: filled in defaults for keys this project did not have yet"
+    fi
+  else
+    rm -f "$TMPD"
+    echo "   ! could not merge config defaults - .aiflow/config.json left untouched" >&2
+  fi
+fi
 
 NEW_VER="$(cat "$AIFLOW_HOME/VERSION" 2>/dev/null || echo 0.0.0)"
 TMP="$(mktemp)"

@@ -178,6 +178,10 @@ jobs:
           mkdir -p "$proj/.github/scripts" && echo 'echo mine' > "$proj/.github/scripts/deploy.sh"
           # a helper aiflow no longer ships must be REPORTED and left alone, never deleted
           echo 'echo stale' > "$proj/.aiflow/removed-helper.sh"
+          # a project generated before a config key existed must GAIN it, while a value the
+          # project set itself survives (aiflow-vxy)
+          jq 'del(.beads) | .modelRouting.enabled = false' "$proj/.aiflow/config.json" > "$proj/c.tmp"
+          mv "$proj/c.tmp" "$proj/.aiflow/config.json"
 
           out="$(cd "$proj" && AIFLOW_HOME="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/lib/project-update.sh" 2>&1)"
           echo "$out"
@@ -199,6 +203,12 @@ jobs:
             || { echo "::error::project-update DELETED a file it no longer ships"; exit 1; }
           grep -q 'removed-helper.sh' <<<"$out" \
             || { echo "::error::no advisory for the no-longer-shipped helper"; exit 1; }
+          [ "$(jq -r '.beads.queueMode' "$proj/.aiflow/config.json")" = "true" ] \
+            || { echo "::error::project-update did not add the missing config default"; exit 1; }
+          [ "$(jq -r '.modelRouting.enabled' "$proj/.aiflow/config.json")" = "false" ] \
+            || { echo "::error::project-update overwrote a value the project had set"; exit 1; }
+          [ "$(jq -r '."$comment" // "absent"' "$proj/.aiflow/config.json")" = "absent" ] \
+            || { echo "::error::the defaults file comment leaked into a project config"; exit 1; }
           echo "render + project-update round-trip OK"
 
       - uses: actions/setup-python@v6

@@ -12,4 +12,10 @@ if ! printf '%s' "$msg" | grep -Eq "$pattern"; then
 EOF
   exit 1
 fi
+
+# Warn (never block) about bead ids that do not exist — an invented id reads exactly like a real
+# one, and CI cannot check it: no `bd` in the runner, and the issue DB is not a tracked file.
+lib="$(dirname "$0")/lib-bead-ids.sh"
+# shellcheck source=/dev/null
+[ -f "$lib" ] && { . "$lib"; printf '%s' "$(cat "$1")" | warn_unknown_bead_ids "commit message"; }
 exit 0

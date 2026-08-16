@@ -49,7 +49,17 @@ if [ -f "$guard" ] && grep -q '^\.claude/\(agents\|commands\|skills\)/' <<< "$st
   fi
 fi
 
-# 3) Lint + tests by detected stack (best-effort; fails the commit on error).
+# 3) Bead ids in the ADDED lines: same warning as in commit-msg, for files rather than the
+# message. Added lines only — an id already sitting in a file you touched is not this commit's
+# problem, and warning about it every time would train you to ignore the warning.
+lib="$(dirname "$0")/lib-bead-ids.sh"
+# shellcheck source=/dev/null
+if [ -f "$lib" ]; then
+  . "$lib"
+  git diff --cached -U0 | grep '^+' | warn_unknown_bead_ids "staged changes"
+fi
+
+# 4) Lint + tests by detected stack (best-effort; fails the commit on error).
 if [ -f package.json ]; then
   have npx && npx --no-install eslint . >/dev/null 2>&1 || true
   if grep -q '"test"' package.json; then npm test --silent || fail "npm test failed"; fi

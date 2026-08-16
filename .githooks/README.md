@@ -11,7 +11,7 @@ Each hook runs the beads shim first (beads needs its hooks), then aiflow's own c
 |------|--------------|
 | `commit-msg` | beads shim → `templates/.githooks/commit-msg` (Conventional Commits) |
 | `pre-push` | beads shim → `templates/.githooks/pre-push` (branching model from `.aiflow/branching.json`) |
-| `pre-commit` | beads shim → `bash -n` on staged shell + the four guards in `.github/scripts/` |
+| `pre-commit` | beads shim → `bash -n` on staged shell + the four guards in `.github/scripts/` + the shipped bead-id warning |
 
 `commit-msg` and `pre-push` **delegate to the shipped template hooks on purpose**: the file a
 generated project gets is the file that runs here, so a break in it surfaces on the next commit

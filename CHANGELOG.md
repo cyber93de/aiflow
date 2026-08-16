@@ -19,6 +19,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
   `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`
   (advisory, like shellcheck).
+- **The git hooks now warn about bead ids that do not exist.** An invented id reads exactly like
+  a real one, and CI cannot catch it — there is no `bd` in the runner and the issue DB is not a
+  tracked file. `commit-msg` checks the message, `pre-commit` checks the lines being added, both
+  through the shipped `.githooks/lib-bead-ids.sh`. It **warns and never blocks** (the id may just
+  be a teammate's bead you have not pulled), skips silently without `bd`/`jq`, and reads the
+  project's issue prefix from the database instead of hardcoding one.
 - **The rendered-copy guard now covers the agent roster.** `.claude/agents`, `.claude/commands`
   and `.claude/skills` are compared against `templates/.claude/` too, so this repo's copies can no
   longer silently fall behind a template change. Skills are matched per directory (`<name>/

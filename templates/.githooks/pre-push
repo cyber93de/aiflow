@@ -69,7 +69,10 @@ while read -r lref lsha rref rsha; do
           *)  [ "$src" = "$f" ] && fail "merge of '$src' into main is not allowed" ;;
         esac
       done
-    done < <(git rev-list --merges "$rsha..$lsha" 2>/dev/null)
+    # --first-parent: only merges made ONTO main, i.e. commits on its own line. Without it the
+    # walk also reaches the feature/*->develop merges that a release's develop->main merge
+    # brings along, and the guard rejects a perfectly correct release push (aiflow-l4p).
+    done < <(git rev-list --merges --first-parent "$rsha..$lsha" 2>/dev/null)
   fi
 
   # main must never carry an in-progress version: -SNAPSHOT (develop) or -HOTFIX (hotfix/*)

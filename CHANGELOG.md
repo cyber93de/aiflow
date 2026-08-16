@@ -7,6 +7,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **The `pre-push` branching guard rejected the release push itself.** It walked every merge
+  commit newly reachable on `main`, so a `develop` → `main` release push was blocked by the
+  `feature/*` → `develop` merges it legitimately carries along (`merge of 'feature/x' into main
+  is not allowed`) — hitting every gitflow project at exactly the wrong moment. It now walks
+  `--first-parent`, so only merges made *onto* `main` are judged. A direct `feature/*` → `main`
+  merge is still rejected; both cases are verified against a scratch repository.
+
 ## [0.8.0] — 2026-08-16
 
 ### Added

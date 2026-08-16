@@ -3,7 +3,7 @@
 > Self-contained explanation of what aiflow is and how it works, for AI assistants and context7.
 > aiflow turns any repository into a governed, AI-driven software-delivery pipeline — agent-agnostic
 > across Claude Code, GitHub Copilot, and OpenAI Codex CLI.
-> Version 0.7.0 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
+> Version 0.8.0 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
 
 ## What aiflow is
 A cross-platform CLI (POSIX bash + a Windows PowerShell launcher) that bootstraps and governs

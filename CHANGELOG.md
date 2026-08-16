@@ -19,6 +19,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
   `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`
   (advisory, like shellcheck).
+- **Generated projects now check their own `.aiflow/*.sh` exec bits in CI.** `aiflow init`
+  renders them 100755 and `bd-close-sync.sh` documents a direct call, but `core.filemode=false`
+  on Windows drops the bit from the index without a word — and a colleague on Linux then cannot
+  run the script. The assertion aiflow runs on itself now ships in the project `ci.yml` too, and
+  the render test asserts both that the step is there and that `init` really wrote the files
+  executable.
 - **Non-ASCII paths no longer slip past the hooks.** Every place that reads a git path list now
   sets `core.quotePath=false` — the bead-id scan in `pre-commit` and the conflict check in
   `release.sh`/`release.ps1`, matching what the formatter and roster guard already did. Without

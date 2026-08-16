@@ -155,6 +155,14 @@ jobs:
           test -f "$proj/AGENTS.md" || { echo "::error::init produced no AGENTS.md"; exit 1; }
           test -f "$proj/.github/scripts/check-frontmatter.py" \
             || { echo "::error::init did not ship the CI helpers"; exit 1; }
+          # the generated project must police its own .aiflow exec bits (aiflow-3tp), and the
+          # files init just wrote must actually carry them
+          grep -q 'executable in the index' "$proj/.github/workflows/ci.yml" \
+            || { echo "::error::generated ci.yml lacks the exec-bit assertion"; exit 1; }
+          notx="$(find "$proj/.aiflow" -name '*.sh' ! -perm -u+x)"
+          if [ -n "$notx" ]; then
+            echo "::error::init rendered .aiflow scripts without the exec bit: $notx"; exit 1
+          fi
 
           # Simulate a project generated before the helper existed: no .github/scripts, and the
           # workflow step that calls it stripped out. project-update must restore the script,

@@ -95,10 +95,13 @@ done
 shopt -u nullglob
 chmod +x .githooks/* 2>/dev/null || true
 
-if [ "${#ADDED[@]}" -gt 0 ]; then
+# bash 3.2 (macOS system bash) treats an EMPTY array as unset under `set -u`, so
+# "${ARR[@]}" / "${ARR[*]}" abort instead of expanding to nothing. The `+` form is the
+# portable guard; the counts below only run where the array is known non-empty.
+if [ -n "${ADDED[*]+x}" ]; then
   echo "   new: ${ADDED[*]}"
 fi
-if [ "${#BACKED_UP[@]}" -gt 0 ]; then
+if [ -n "${BACKED_UP[*]+x}" ]; then
   echo ""
   echo "   !! ${#BACKED_UP[@]} customised file(s) were REPLACED with the new template version."
   echo "      Your previous version was kept as *.bak — review the diff and reapply anything you"
@@ -128,7 +131,7 @@ if [ -d .github/workflows ]; then
     grep -rqsF -- "$base" .github/workflows/ || WF_MISSING+=("$base")
   done
   shopt -u nullglob
-  if [ "${#WF_MISSING[@]}" -gt 0 ]; then
+  if [ -n "${WF_MISSING[*]+x}" ]; then
     echo ""
     echo "   note: .github/workflows/ is yours - project-update never rewrites it. These aiflow CI"
     echo "   helpers are now present, but no workflow under .github/workflows/ references them:"

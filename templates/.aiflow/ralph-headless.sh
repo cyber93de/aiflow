@@ -48,5 +48,5 @@ ${GUARD}" \
   --completion-promise COMPLETE \
   --abort-promise BLOCKED \
   --max-iterations "$MAX" \
-  "${AGENT_FLAG[@]}" \
+  ${AGENT_FLAG[@]+"${AGENT_FLAG[@]}"} \
   "$@"

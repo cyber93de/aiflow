@@ -178,6 +178,37 @@ jobs:
           python .github/scripts/check-frontmatter.py \
             .claude/agents .claude/commands .claude/skills
 
+  render-macos-bash32:
+    name: macOS system bash 3.2 (empty arrays under set -u)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      # macOS still ships bash 3.2, where an EMPTY array is treated as unset under `set -u` —
+      # "${ARR[@]}" aborts the script instead of expanding to nothing, and `mapfile` does not
+      # exist at all. Neither shows up on the ubuntu runner (bash 5), so nothing caught it
+      # (aiflow-13x). The runner also has a newer bash on PATH, so call /bin/bash explicitly.
+      - name: prove this really is bash 3.2
+        run: |
+          set -euo pipefail
+          ver="$(/bin/bash -c 'echo "$BASH_VERSION"')"
+          echo "/bin/bash is $ver"
+          case "$ver" in
+            3.2*) ;;
+            *) echo "::error::/bin/bash is $ver, not 3.2 — this job would prove nothing"; exit 1 ;;
+          esac
+      - name: init + project-update + ollama under /bin/bash
+        run: |
+          set -euo pipefail
+          proj="$RUNNER_TEMP/rendertest-mac"
+          AIFLOW_HOME="$PWD" /bin/bash lib/init.sh "$proj" --yes --no-beads --no-install-deps
+          # a fresh project changes nothing, so every reporting array is EMPTY here — exactly the
+          # case that aborts on 3.2.
+          (cd "$proj" && AIFLOW_HOME="$GITHUB_WORKSPACE" /bin/bash "$GITHUB_WORKSPACE/lib/project-update.sh")
+          # `ollama pull` with no models configured hits the other empty-array guard (and used
+          # to reach `mapfile`, which 3.2 does not have).
+          (cd "$proj" && AIFLOW_HOME="$GITHUB_WORKSPACE" /bin/bash "$GITHUB_WORKSPACE/lib/ollama.sh" pull)
+          echo "bash 3.2 round-trip OK"
+
   render-windows:
     name: project-update parity (PowerShell twin)
     runs-on: windows-latest

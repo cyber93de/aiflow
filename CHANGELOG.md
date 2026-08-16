@@ -87,6 +87,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   before a *direct* call stays valid and is not reported. shellcheck has no rule for this class.
 
 ### Fixed
+- **aiflow died on macOS's system bash.** `/bin/bash` there is 3.2, where an empty array under
+  `set -u` aborts the script instead of expanding to nothing, and `mapfile` does not exist at all —
+  so `aiflow project-update` on a project with nothing to report, and `aiflow ollama pull` with no
+  models configured, both failed. Every reporting array now uses the portable `${ARR[*]+x}` guard,
+  `ollama.sh` builds its list without `mapfile`, and a new `macos-latest` CI job runs the whole
+  round-trip through `/bin/bash` — after asserting that it really is 3.2, so the job cannot quietly
+  start proving nothing on a future runner image.
 - **`aiflow ralph` and `aiflow close-sync` claimed the script was missing when it wasn't.** Both
   gated on `[ -x .aiflow/… ]` while the other three `.aiflow` commands gated on `[ -f ]` — and all
   five invoke the script via `bash <path>`, which never needed the executable bit. A project

@@ -19,6 +19,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   had `jq empty`, but the guards that decide whether the build goes green had nothing: CI now runs
   `compileall` over `.github/scripts/` and `templates/.github/scripts/` (blocking) plus `ruff`
   (advisory, like shellcheck).
+- **`commit-msg` no longer blocks merge and revert commits.** It checked git's own generated
+  subjects (`Merge branch …`, `Revert "…"`) against the Conventional-Commits pattern, so every
+  local merge in a project with aiflow's hooks failed. It now skips when git says the message
+  source is a merge, when a `MERGE_HEAD` exists, and for those two subject forms; a plain
+  non-conventional message is still rejected.
 - **`commit-msg` accepts path-shaped scopes.** The Conventional-Commits pattern allowed only
   `[a-z0-9_-]` in a scope, so a natural `docs(.aiflow):` or `feat(api/v2):` was rejected — the
   spec puts no restriction on scope characters. `.` and `/` are now allowed; an upper-case scope,

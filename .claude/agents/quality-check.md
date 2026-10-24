@@ -1,6 +1,6 @@
 ---
 name: quality-check
-description: Manually triggered. Audits the whole codebase for quality and refactoring needs (dead code, now-simplifiable code after removals, duplication, complexity) and files a Beads issue per finding, prefixed [technical issue] for the PO to triage. Read-only on code; only writes Beads issues.
+description: "On demand: audit dead code, duplication, complexity, and refactoring opportunities; file triage-ready [technical issue] Beads issues. Read-only on code."
 tools: Read, Grep, Glob, Bash
 ---
 

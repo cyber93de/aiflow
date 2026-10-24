@@ -373,9 +373,10 @@ Zwei verschiedene Claude-Code-Mechanismen, beide dabei:
 Beads und die Ralph-Schleife gibt es auch als Plugin-Commands (`/beads:ready`, `/beads:decision`,
 `/ralph-loop`).
 
-**Skills** — automatisch angeboten, `.claude/skills/<name>/SKILL.md`, Claude Code gleicht die
-`description` des Skills gegen den aktuellen Kontext ab und bietet ihn an (vor größeren Änderungen
-wird nachgefragt). Ein **Agent** ist eine Rolle (wer handelt, mit welcher Befugnis, in welcher
+**Skills** — gemeinsame Checklisten unter `.agents/skills/<name>/SKILL.md`, gespiegelt nach
+`.claude/skills/<name>/SKILL.md`. Die Skill-Erkennung unterscheidet sich je Agent; Claude Code kann
+passende Skills automatisch vorschlagen. Codex und Copilot nutzen die gemeinsamen Dateien ebenfalls.
+Ein **Agent** ist eine Rolle (wer handelt, mit welcher Befugnis, in welcher
 Reihenfolge); ein **Skill** ist Wissen, das mehrere Rollen brauchen — der Implementierer, der einen
 Endpunkt baut, und der Reviewer, der ihn prüft, lesen dieselbe Liste. Vollständiger Katalog:
 [Skills](https://cyber93de.github.io/aiflow/skills).
@@ -413,7 +414,7 @@ Endpunkt baut, und der Reviewer, der ihn prüft, lesen dieselbe Liste. Vollstän
   (Beads → Memory-Dateien → graphify → cocoindex-code → context7), geteilte Team-Präferenzen,
   Ollama-Routing. AGENTS.md §8 behält nur Schalter + Essenzielles; der Rest steht hier.
 
-Eigene Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen — siehe die mitgelieferten für
+Eigene Skills: neues `<name>/SKILL.md` in `.agents/skills/` ablegen — siehe die mitgelieferten für
 das erwartete Frontmatter (`name`, `description`) und die Struktur. **Eine `description` mit
 Doppelpunkt muss in Anführungszeichen** — `description: zwei Hüte: Architekt …` ist ungültiges
 YAML, und nichts warnt davor: Skill oder Command fallen still auf ihren Fließtext als Beschreibung

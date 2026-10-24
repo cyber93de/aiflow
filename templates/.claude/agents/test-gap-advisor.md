@@ -1,6 +1,6 @@
 ---
 name: test-gap-advisor
-description: Manually triggered. Finds untested or under-tested critical paths across the project and files a Beads issue per gap, prefixed [test gap]. Read-only — does not write tests or code, only Beads issues.
+description: "On demand: find untested critical paths and file [test gap] Beads issues. Does not write tests or production code."
 tools: Read, Grep, Glob, Bash
 ---
 

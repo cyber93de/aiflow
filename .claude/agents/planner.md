@@ -1,6 +1,6 @@
 ---
 name: planner
-description: Use to turn a goal, epic, or VCS issue into a dependency-ordered set of Beads tasks, each with checkable acceptance criteria. Run before starting non-trivial work. Does not implement.
+description: "Turn a goal, epic, or VCS issue into dependency-ordered Beads tasks with checkable acceptance criteria. Use before non-trivial work; does not implement."
 tools: Read, Grep, Glob, Bash
 ---
 

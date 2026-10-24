@@ -1,6 +1,6 @@
 ---
 name: onboarder
-description: Manually triggered for existing (brownfield) projects. Studies the codebase and writes what it learns into project memory + AGENTS.md + arc42, so future sessions start informed. Writes docs/memory only — never changes application code.
+description: "On demand for brownfield projects: map the codebase into project memory, AGENTS.md, and arc42. Documentation only; never changes application code."
 tools: Read, Grep, Glob, Bash, Edit, Write
 ---
 

@@ -3,7 +3,7 @@ layout: default
 title: Multi-Agent Support
 parent: Agents & Workflows
 nav_order: 3
-description: "aiflow is agent-agnostic: a shared AGENTS.md plus per-tool MCP config for Claude Code, GitHub Copilot, and OpenAI Codex CLI. What's shared, what's Claude Code-only, and how to pick which agent(s) a project targets."
+description: "Shared aiflow project rules, portable skills, per-agent MCP configuration, token controls, and current differences between Claude Code, Codex, and GitHub Copilot."
 ---
 
 # Multi-agent support
@@ -14,100 +14,71 @@ description: "aiflow is agent-agnostic: a shared AGENTS.md plus per-tool MCP con
 
 ---
 
-aiflow started as a Claude Code integration and still gives Claude Code the deepest feature set —
-but the project rules, quality gates, task workflow, and git/branching model are useful to *any*
-coding agent working in the repo. As of the config's `agents` key, aiflow renders what it can for
-**GitHub Copilot** and **OpenAI Codex CLI** too, from the same `.aiflow/config.json`.
+aiflow keeps project policy and reusable knowledge portable, then writes native configuration for
+the agents selected in `.aiflow/config.json`. This gives each agent the same engineering rules and
+skills, while tool-specific features remain explicit instead of pretending every integration is
+identical.
 
-## Picking your agent(s)
+## Shared foundation
 
-`aiflow init` / `aiflow change-settings` ask three yes/no questions — pick as many as you actually
-use, they're not mutually exclusive:
+`AGENTS.md` is the canonical project instruction file. It contains architecture and quality rules,
+task flow, branching policy, token-saving practices, and the definition of done. Claude Code loads
+it through the generated `CLAUDE.md` pointer; Codex reads it natively; GitHub Copilot is pointed to
+it by `.github/copilot-instructions.md`.
 
-| Agent | Config key | What gets rendered |
-|-------|-----------|---------------------|
-| Claude Code | `agents.claude` (default **on**) | `.mcp.json`, `.claude/agents/*`, `.claude/commands/*`, hooks in `.claude/settings.json` |
-| GitHub Copilot | `agents.copilot` (default off) | `.github/copilot-instructions.md` (points to `AGENTS.md`), `.vscode/mcp.json` |
-| OpenAI Codex CLI | `agents.codex` (default off) | `.codex/config.toml` (`[mcp_servers.*]` tables) — Codex reads `AGENTS.md` directly, no pointer file needed |
+Reusable checklists live in `.agents/skills/<name>/SKILL.md`. aiflow mirrors these to
+`.claude/skills/` for Claude Code. Codex, Copilot, and Claude Code support skills, but the exact
+matching and invocation behavior depends on each agent and version. The files remain plain Markdown
+with YAML frontmatter so an agent can also read them directly.
 
-Re-run `aiflow change-settings` any time to add or drop an agent; it re-renders every file above,
-idempotently.
+## Native integration coverage
 
-## The shared foundation: `AGENTS.md`
+| Agent | Generated project files | Native workflow automation |
+|---|---|---|
+| Claude Code | `.mcp.json`, `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, hooks | Specialist subagents, commands, hooks and model routing |
+| Codex CLI | `.codex/config.toml`, shared `AGENTS.md` and `.agents/skills/` | Shared instructions and skills; use Codex's own subagent support where available |
+| GitHub Copilot in VS Code | `.vscode/mcp.json`, `.github/copilot-instructions.md`, shared skills | Shared instructions and skills; Copilot's native agents and hooks are not yet rendered by aiflow |
 
-**`AGENTS.md`** at the repo root is the single, agent-agnostic source of truth: code style
-(§3), quality gates (§3a/§3b/§3c), the Beads task workflow (§4), git/branching rules (§7),
-memory conventions (§8), and the Definition of Done (§10). Every agent should read it before
-touching the repo.
+Enable the agents you use with `aiflow init` or `aiflow change-settings`. aiflow renders one logical
+MCP selection into each enabled agent's native format. For Codex, use `aiflow codex` when credentials
+are in the project `.env`; it loads the environment before launching Codex. VS Code MCP tokens use
+secure input prompts rather than storing secret values in the generated JSON.
 
-- **Claude Code** reads `CLAUDE.md`, which is a one-line pointer — `@AGENTS.md` — using
-  [Claude Code's native memory-import syntax][claude-memory]. Edit `AGENTS.md`, never `CLAUDE.md`;
-  the pointer file exists purely so Claude Code's default lookup finds something.
-- **OpenAI Codex CLI** reads `AGENTS.md` directly — that convention is the reason the file is
-  named `AGENTS.md` in the first place, no pointer needed.
-- **GitHub Copilot** reads `.github/copilot-instructions.md`, which applies the highest-ROI
-  techniques from the [GitHub Copilot token-optimization
-  guide](https://github.com/olivomarco/github-copilot-token-optimization) (output control,
-  "landmines only" context files, model/cache stability) and tells Copilot to read `AGENTS.md`
-  for the actual rules.
+## Skills, roles, loops, and hooks
 
-Sections in `AGENTS.md` marked **(Claude Code only)** — §5 (subagents), the `rtk`/caveman
-output-shaping in §9 — describe automation that only Claude Code can dispatch in-session. Every
-other agent still follows the *same* workflow and rules manually, step by step; it just doesn't
-get the automatic dispatch. Concretely: where Claude Code runs `/review-ac` to invoke the
-`reviewer` subagent, a Copilot or Codex session (or the human driving it) reads `AGENTS.md`
-§3a/§5 and performs that same architecture + quality-gate pass itself. The **Ralph loop** (§6) is
-no longer Claude Code-only — it runs on
-[open-ralph-wiggum](https://github.com/Th0rgal/open-ralph-wiggum), agent-agnostic across all
-three via `--agent`.
+Skills hold reusable domain knowledge and task checklists. Agent profiles hold role, authority, and
+handoff instructions. The full specialist role roster and its automated dispatch currently belong
+to Claude Code under `.claude/agents/`; `AGENTS.md` carries the common workflow for every agent.
+Codex can delegate through its native subagents, while Copilot has its own custom-agent surface,
+but aiflow does not yet generate equivalent role profiles for those tools. Do not assume Claude
+commands, hooks, or model-routing metadata are portable.
 
-## What stays Claude Code-only (and why)
+The headless `aiflow ralph` loop is agent-agnostic through its configured `--agent` runner. Claude
+Code also has interactive command/hook flows. Other agents follow the shared task and quality gates
+through their native session workflow; Claude's hooks are not silently represented as cross-agent
+automation.
 
-| Feature | Why it doesn't carry over (yet) |
-|---------|----------------------------------|
-| Subagents (`.claude/agents/*`) | Copilot/Codex have no equivalent "dispatch a specialised subagent with its own tool scope" mechanism today. |
-| Slash-commands (`/review-ac`, `/implement`, `/ralph-loop`, …) | Tool-specific command surface; not portable syntax. Note: `/ralph-loop` here is the *interactive* Claude Code plugin skill — the *headless* `aiflow ralph` CLI is agent-agnostic (see below). |
-| Hooks (`.claude/settings.json` — format/lint/test/beads-sync on tool use) | Claude Code's hook system has no direct Copilot/Codex equivalent. |
-| caveman / rtk output shaping | Claude Code-specific output filters for token savings — Copilot/Codex get their own token-saving approach instead (see below). |
+## Token savings
 
-None of this blocks Copilot/Codex from doing the *work* — the underlying rules (code style,
-tests, git hygiene, branching, Beads) are tool-agnostic and described in plain language in
-`AGENTS.md` precisely so any capable agent can follow them without the Claude Code machinery.
+All agents inherit the same baseline: keep `AGENTS.md` concise, load only the relevant skill, inspect
+targeted files, use focused MCPs only when enabled, and avoid repeating repository context. The
+generated instruction files encourage bounded output and stable tools/models per session.
 
-## MCP servers per agent
+Claude Code can additionally use RTK output filtering and its model routing for specialist agents;
+Caveman is an optional Claude-specific terse-output tool. CodexSaver is optional for Codex and off by
+default. Copilot gets the shared concise instructions and skill discovery; Claude-only filters and
+CodexSaver are not activated for it. Large-project retrieval add-ons such as Graphify and
+CocoIndex are opt-in to limit context and tool overhead on smaller repositories.
 
-`.aiflow/config.json`'s `mcp.*`, `remote.mcp`, and `gitkraken.enabled` describe one logical set of
-MCP servers (filesystem, the git-host MCP, graphify, cocoindex-code, context7, GitKraken, …).
-`apply.sh` renders that same set into whichever agent-specific format(s) you enabled:
+## MCP choices
 
-- **Claude Code** — `.mcp.json` (the format Claude Code reads natively).
-- **Codex CLI** — `.codex/config.toml`, `[mcp_servers.<name>]` TOML tables. Codex CLI's own MCP
-  config commonly lives in `~/.codex/config.toml` (global) — check whether your Codex version
-  picks up a project-local file, or merge this generated file into the global one.
-- **Copilot (VS Code)** — `.vscode/mcp.json`, `{"servers": {...}}`. VS Code's MCP config schema
-  evolves — if a server doesn't load, check the current VS Code docs for the exact shape/`env`
-  interpolation syntax expected.
+The default keeps the MCP set small: the selected git-host integration and Context7 (when configured)
+are available; filesystem, Graphify, CocoIndex, Task Master, and GitKraken are opt-in. See
+[MCP servers](mcp-servers) for uses, requirements, and settings. Prefer a skill for stable knowledge
+or a checklist; add an MCP when an agent needs a live external system or a genuinely useful tool.
 
-Token/secret values are written as `${VAR}` placeholders resolved from `.env` — this is aiflow's
-own convention (matching how Claude Code's `.mcp.json` resolves them) and may need adjusting to
-whatever environment-variable syntax your Codex/Copilot version actually supports.
+## Branches and release flow
 
-## Token savings per agent
-
-Each agent gets its own approach — the mechanisms differ, but the goal is the same: cut cost
-without cutting quality.
-
-| Agent | Approach |
-|-------|----------|
-| Claude Code | **caveman** (terse output) + **rtk** (CLI-output filtering) + graph/RAG retrieval instead of reading whole files + **haiku model routing** for the 5 audit-only subagents + the optional **ponytail** YAGNI skill. |
-| GitHub Copilot | `.github/copilot-instructions.md` applies the [token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization)'s highest-ROI techniques: output control, "landmines only" context files, stable model/tool-set per thread. |
-| OpenAI Codex CLI | Optional [CodexSaver](https://github.com/fendouai/CodexSaver) (`codexsaver.enabled`) — an MCP tool that routes cheap/bounded work (docs, tests, explanation, search) to a cheaper worker (Pi Agent by default, or another provider like DeepSeek), keeping Codex for architecture/security/final review. Needs Python + a provider API key (`codexsaver.apiKeyEnv` in `.env`) — `aiflow install-deps` installs it (clone + editable pip install, since it has no published package) when enabled. `apply.sh` owns `.codex/config.toml` and appends CodexSaver's entry itself, pointing at the stable script path its own `codexsaver install` creates — so re-running `aiflow apply` never clobbers or duplicates it. |
-
-## Branching, releases, and CI
-
-The gitflow branching model, the `pre-push` governance hook, `aiflow hotfix`/`aiflow release`, and
-the predefined release-publish workflows (GitHub/GitLab/Gitea/Forgejo/Bitbucket) are all plain git
-and shell — they work identically no matter which agent (or human) is driving the commits. See
-[Workflows & CI/CD](workflows).
-
-[claude-memory]: https://docs.claude.com/en/docs/claude-code/memory
+The shared gitflow rules and CI apply no matter which agent edits the code. Feature work merges into
+`develop`; release preparation promotes `develop` to `main`. Normal work follows that workflow and
+does not create a separate “aiflow release” task. See [Workflows & CI/CD](workflows).

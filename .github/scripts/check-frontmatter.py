@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Validate the YAML frontmatter of agent / command / skill markdown files.
 
-Claude Code parses the frontmatter block of every `.claude/agents/*.md`,
-`.claude/commands/*.md` (including namespaced subdirectories) and
-`.claude/skills/*/SKILL.md`. A malformed block is not reported anywhere: an agent
+The agent, command and skill formats use YAML frontmatter. This checks Claude files under
+`.claude/agents/`, `.claude/commands/` (including namespaced subdirectories), `.claude/skills/`,
+and portable `.agents/skills/`. A malformed block may go unnoticed: an agent
 with unparseable frontmatter is silently dropped from the roster, a command/skill
 silently falls back to its body text. The classic trigger is an unquoted
 description containing ": " — YAML then reads it as a nested mapping key and the

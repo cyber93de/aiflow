@@ -1,6 +1,6 @@
 ---
 name: tester
-description: Test/QA engineer — hardens a change with meaningful tests (happy path, negative, edge, boundary, exceptions, invalid inputs) and audits test QUALITY (assertions, determinism, independence). Invoked when the pre-analysis flags high risk/complexity, or on demand. Reports bugs; does not change production code to make tests pass.
+description: "For risky changes or on demand: test happy, failure, edge, and boundary cases; assess assertion quality and determinism. Reports bugs; does not alter production code."
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 

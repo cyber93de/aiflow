@@ -1,6 +1,6 @@
 ---
 name: modernization-advisor
-description: Manually triggered (aiflow modernize-check / /modernize-check) — NOT part of the delivery loop. Walks the ENTIRE brownfield codebase and proposes modernisation concepts (report only) for the architect to review manually and, if desired, turn into Beads issues. Prefers microservices, REST/cloud-native, git, supported/state-of-the-art stacks. Never changes code or files issues itself.
+description: "On demand, outside delivery: assess the whole brownfield project and write modernization options for the architect. Report only; does not edit code or file issues."
 tools: Read, Grep, Glob, Bash
 ---
 

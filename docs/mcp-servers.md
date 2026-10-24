@@ -31,8 +31,17 @@ can wire:
 
 The git-host MCP is chosen per `remote.type`, with the base URL threaded in (`GITHUB_HOST` /
 `GITLAB_API_URL` / `GITEA_URL`) so enterprise/self-managed hosts work. Tokens come from `.env`
-(`remote.tokenEnv`), referenced as `${VAR}` placeholders — Codex CLI/VS Code may expect a
-different interpolation syntax; see [Multi-Agent Support](multi-agent) for the caveats per agent.
+(`remote.tokenEnv`). Claude receives environment placeholders, Codex gets `env_vars` forwarding,
+and VS Code receives password-protected input prompts. For Codex `.env` forwarding, launch with
+`aiflow codex`.
+
+## Lightweight defaults
+
+The default keeps the optional tool set small. Context7 is enabled, and the selected git-host MCP
+is wired when a remote host is configured. Filesystem, Graphify, CocoIndex, Task Master, and
+GitKraken start disabled; enable them with `aiflow change-settings` when a project benefits from
+them. Graphify and CocoIndex are most useful on larger codebases where retrieval cost justifies the
+extra local service and tool context.
 
 ## Adding your own MCP server
 
@@ -50,9 +59,9 @@ Add an entry to `.mcp.json` — servers aiflow doesn't manage are preserved on r
 }
 ```
 
-Then allow it in `.claude/settings.json` under `permissions.allow` (e.g. `"mcp__my-server"`) and put
-the secret in `.env`. Browse vetted servers with `npx claude-code-templates@latest`. Prefer a focused
-MCP over a broad one — fewer tools = less context and fewer wrong turns.
+Then configure the server in the native config for each agent that needs it and store secrets in
+`.env` or the agent's secure prompt mechanism. Prefer a focused MCP over a broad one — fewer tools
+mean less context and fewer wrong turns.
 
 See [Configuration](configuration) and the
 [MCP servers ecosystem](https://github.com/modelcontextprotocol/servers).

@@ -52,8 +52,9 @@ stripped again. Toggle with `aiflow change-settings`; `tiers`/`agents` are hand-
 that (they are carried over, not rebuilt).
 
 **Escalate, never silently downgrade:** if a "simple" task turns out to touch the architecture, it
-*is* architecture work — move it up a tier. Copilot and Codex have no subagents; pick the
-equivalent model manually and keep it stable within a thread.
+*is* architecture work — move it up a tier. aiflow currently stamps this routing only into Claude
+subagent profiles. For Codex or Copilot, choose the equivalent model in that agent's native
+configuration and keep it stable within a thread.
 
 ## Ollama (local, no API key)
 

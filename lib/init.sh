@@ -62,11 +62,11 @@ fi
 PONYTAIL_ON="$(ask_yn 'Use ponytail (YAGNI skill: reuse/simplify before writing new code)?' n)"
 PONYTAIL_MODE=full
 [ "$PONYTAIL_ON" = true ] && PONYTAIL_MODE="$(ask 'ponytail mode (full recommended / lite / ultra)' full)"
-GRAPHIFY_ON="$(ask_yn 'Use graphify (structural code graph: imports/call-graph) for memory?' y)"
-COCO_ON="$(ask_yn 'Use cocoindex-code (semantic code RAG search, local, ~70% fewer tokens)?' y)"
-TM_ON="$(ask_yn 'Use claude-task-master for task decomposition?' y)"
-FS_ON="$(ask_yn 'Enable filesystem MCP?' y)"
-CTX7_ON="$(ask_yn 'Enable context7 MCP (live library docs)?' y)"
+GRAPHIFY_ON="$(ask_yn 'Enable graphify structural index? Recommended for large codebases.' n)"
+COCO_ON="$(ask_yn 'Enable cocoindex semantic code search? Recommended for large codebases.' n)"
+TM_ON="$(ask_yn 'Enable the optional task-master MCP? Beads is the default task workflow.' n)"
+FS_ON="$(ask_yn 'Enable filesystem MCP? Native file tools are enough for most agents.' n)"
+CTX7_ON="$(ask_yn 'Enable context7 live library documentation MCP?' y)"
 
 # ---- Claude memory + graph-memory intensity ----
 echo; echo "Claude memory (intensive graph-memory learning is recommended):"

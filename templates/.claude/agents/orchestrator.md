@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: Use as the entry point for any goal, epic, or bead that is not a single obvious edit. Decides which specialist agent handles each step, dispatches exactly one at a time, evaluates what comes back, and routes the next step. Never writes code, tests, or docs itself.
+description: "Entry point for non-trivial goals: dispatch one specialist at a time, evaluate results, and route handoffs. Never implements or writes docs."
 tools: Read, Grep, Glob, Bash
 ---
 

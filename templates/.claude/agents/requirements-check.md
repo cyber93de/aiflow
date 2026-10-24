@@ -1,6 +1,6 @@
 ---
 name: requirements-check
-description: Manually triggered, advisory only. Audits Beads issues for description completeness and quality, compares them against the existing architecture, and surfaces undescribed cases. Read-only — never edits issues or code, never triggers implementation.
+description: "On demand, advisory: check Beads issues for completeness, architecture fit, and missing cases. Read-only; never edits issues or starts implementation."
 tools: Read, Grep, Glob, Bash
 ---
 

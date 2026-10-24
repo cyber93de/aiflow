@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Use to build exactly one ready Beads task — production code plus tests — as a senior engineer. Works strategy-first (pre-analysis before code), questions architecture fit, prefers proven frameworks and patterns over self-built code, and enforces the quality gates in AGENTS.md §3a/§3b.
+description: "Implement one ready Beads task with production code and tests. Analyze first, check architecture fit, prefer proven patterns, and follow AGENTS.md quality gates."
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 

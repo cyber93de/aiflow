@@ -59,6 +59,21 @@ case "$cmd" in
     fi
     exec claude "$@"
     ;;
+  codex)
+    load_env
+    if [ -f .aiflow/config.json ] && command -v jq >/dev/null 2>&1; then
+      token_env="$(jq -r '.remote.tokenEnv // "GITHUB_TOKEN"' .aiflow/config.json)"
+      token_value=""
+      [[ "$token_env" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] && token_value="${!token_env:-}"
+      case "$(jq -r '.remote.mcp // "none"' .aiflow/config.json)" in
+        github)  [ -n "$token_value" ] && export GITHUB_PERSONAL_ACCESS_TOKEN="$token_value" ;;
+        gitlab)  [ -n "$token_value" ] && export GITLAB_PERSONAL_ACCESS_TOKEN="$token_value" ;;
+        bitbucket) [ -n "$token_value" ] && export ATLASSIAN_BITBUCKET_ACCESS_TOKEN="$token_value" ;;
+        gitea|forgejo) [ -n "$token_value" ] && export GITEA_ACCESS_TOKEN="$token_value" ;;
+      esac
+    fi
+    exec codex "$@"
+    ;;
   cost)    exec npx -y ccusage@latest "$@" ;;          # baseline: measure token spend first
   sync)                                                # team sync: pull (then optionally push) code + Beads issues
     dir="pull"; case "${1:-}" in push) dir=push;; pull) dir=pull;; both|"") dir=both;; esac
@@ -149,6 +164,7 @@ USAGE
   aiflow change-settings [--no-token-saving]  re-adjust this project's config (alias: settings)
                            --no-token-saving = switch caveman + rtk OFF (full output)
   aiflow shell [--router]  load .env then launch Claude Code (--router = via claude-code-router)
+  aiflow codex [...]      load .env credentials and launch Codex CLI
   aiflow ralph [...]       run the headless Ralph loop in this project
   aiflow security-check    full-project security audit -> files Beads issues per finding
   aiflow requirements-check  advisory audit of issue quality/completeness (report only)

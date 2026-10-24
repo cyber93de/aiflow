@@ -58,6 +58,27 @@ switch ($cmd) {
       & ccr code @r2
     } else { & claude @rest }
   }
+  'codex'   {
+    Import-DotEnv
+    if (Test-Path '.aiflow/config.json') {
+      try {
+        $cfg = Get-Content '.aiflow/config.json' -Raw | ConvertFrom-Json
+        $tokenEnv = if ($cfg.remote.tokenEnv) { $cfg.remote.tokenEnv } else { 'GITHUB_TOKEN' }
+        $token = [Environment]::GetEnvironmentVariable($tokenEnv)
+        if ($token) {
+          $targetEnv = switch ($cfg.remote.mcp) {
+            'github' { 'GITHUB_PERSONAL_ACCESS_TOKEN' }
+            'gitlab' { 'GITLAB_PERSONAL_ACCESS_TOKEN' }
+            'bitbucket' { 'ATLASSIAN_BITBUCKET_ACCESS_TOKEN' }
+            { $_ -in 'gitea','forgejo' } { 'GITEA_ACCESS_TOKEN' }
+            default { $null }
+          }
+          if ($targetEnv) { [Environment]::SetEnvironmentVariable($targetEnv, $token, 'Process') }
+        }
+      } catch { }
+    }
+    & codex @rest
+  }
   'cost'    { & npx -y ccusage@latest @rest }
   'index'   {
     $did = $false
@@ -133,6 +154,7 @@ USAGE
   aiflow install-deps [--all]  install missing tools (enabled in config; --all = full set)
   aiflow change-settings   re-adjust this project's config (alias: settings)
   aiflow shell [--router]  load .env then launch Claude Code (--router = claude-code-router)
+  aiflow codex [...]      load .env credentials and launch Codex CLI
   aiflow ralph [...]       run the headless Ralph loop in this project
   aiflow security-check    full-project security audit -> files Beads issues per finding
   aiflow requirements-check  advisory audit of issue quality/completeness (report only)

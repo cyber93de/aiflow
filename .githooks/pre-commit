@@ -40,11 +40,11 @@ if [ -z "$py" ]; then
   exit 0
 fi
 
-if grep -q '^\(templates/\)\?\.claude/\(agents\|commands\|skills\)/' <<< "$staged"; then
+if grep -q '^\(templates/\)\?\.\(claude/\(agents\|commands\|skills\)/\|agents/skills/\)' <<< "$staged"; then
   if "$py" .github/scripts/check-frontmatter.py --selftest >/dev/null 2>&1; then
     "$py" .github/scripts/check-frontmatter.py \
-      .claude/agents .claude/commands .claude/skills \
-      templates/.claude/agents templates/.claude/commands templates/.claude/skills \
+      .claude/agents .claude/commands .claude/skills .agents/skills \
+      templates/.claude/agents templates/.claude/commands templates/.claude/skills templates/.agents/skills \
       || fail "invalid frontmatter in the agent/command/skill roster (errors above)"
   else
     echo "  note: skipping the frontmatter guard - needs PyYAML (pip install pyyaml)" >&2

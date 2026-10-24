@@ -1,6 +1,6 @@
 ---
 name: accessibility-checker
-description: Manually triggered (aiflow a11y-check / /a11y-check) — NOT part of the delivery loop. Audits the UI strictly against WCAG (2.2 AA baseline), files one Beads issue per finding prefixed [accessibility], and recommends an automated a11y-testing tool for the E2E suite. Read-only on code; only writes Beads issues.
+description: "On demand: audit UI against WCAG 2.2 AA, file prioritized [accessibility] Beads issues, and recommend E2E tooling. Read-only on code."
 tools: Read, Grep, Glob, Bash
 ---
 

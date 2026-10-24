@@ -71,9 +71,10 @@ Run it after significant code changes; it keeps the structural graph *and* the R
 
 `AGENTS.md`'s Memory section keeps only the toggle + essentials; this whole context-routing
 picture — plus team preferences and Ollama routing — also lives in the auto-offered
-**memory-setup** skill (`.claude/skills/memory-setup/SKILL.md`), so Claude Code can surface it
-whenever memory/context-routing comes up without bloating every session's always-loaded context.
-Copilot/Codex: read the file directly, or `.claude/memory/memory-policy.md` once memory is on.
+**memory-setup** skill (`.agents/skills/memory-setup/SKILL.md`, mirrored under `.claude/skills/`),
+so agents can load it when memory/context-routing comes up without bloating every session's
+always-loaded context. Use the skill discovery supported by your agent, or read it directly;
+`.claude/memory/memory-policy.md` contains the live routing table once memory is on.
 
 ## See also
 

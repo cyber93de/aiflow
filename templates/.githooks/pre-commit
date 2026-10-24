@@ -49,7 +49,7 @@ done <<< "$staged"
 # outgrows the pipe buffer printf dies of SIGPIPE, which under `pipefail` reads as "no match" -
 # the guard would silently skip on exactly the big commits that need it most.
 guard=".github/scripts/check-frontmatter.py"
-if [ -f "$guard" ] && grep -q '^\.claude/\(agents\|commands\|skills\)/' <<< "$staged"; then
+if [ -f "$guard" ] && grep -q '^\(\.claude/\(agents\|commands\|skills\)/\|\.agents/skills/\)' <<< "$staged"; then
   py=""
   # --selftest, not `import yaml`: it proves interpreter version, PyYAML AND the guard's own
   # logic in one 0.4s run. A bare import probe passes on Python < 3.9, where the guard then
@@ -68,12 +68,12 @@ if [ -f "$guard" ] && grep -q '^\.claude/\(agents\|commands\|skills\)/' <<< "$st
     mkdir -p "$stage_dir"
     trap 'rm -rf "$stage_dir"' EXIT
     git -c core.quotePath=false diff --cached --name-only --diff-filter=ACM -z \
-      -- .claude/agents .claude/commands .claude/skills \
+      -- .claude/agents .claude/commands .claude/skills .agents/skills \
       | xargs -0 -r git checkout-index --prefix="$stage_dir/" --
     # The guard reports the paths it was given, which are inside the temp tree - strip the prefix
     # so the message names the file you actually have to fix.
     out="$("$py" "$guard" "$stage_dir/.claude/agents" "$stage_dir/.claude/commands" \
-      "$stage_dir/.claude/skills" 2>&1)"; rc=$?
+      "$stage_dir/.claude/skills" "$stage_dir/.agents/skills" 2>&1)"; rc=$?
     printf '%s\n' "$out" | sed "s|$stage_dir/||g" >&2
     rm -rf "$stage_dir"
     trap - EXIT

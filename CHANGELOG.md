@@ -7,6 +7,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Portable skills:** the shared `.agents/skills/` catalog is available to Codex and Copilot and
+  mirrored to `.claude/skills/`; project-update and CI keep both copies aligned.
+- **Codex credential launcher:** `aiflow codex` loads `.env` and forwards the configured host token
+  to the MCP environment names expected by Codex.
+
+### Changed
+- **Lean MCP defaults:** Context7 stays enabled; Graphify, CocoIndex, Task Master, filesystem and
+  GitKraken are opt-in to avoid unnecessary services and context overhead.
+- **Agent and setup docs:** clarify each tool's native features and aiflow's actual support; VS Code
+  asks for MCP tokens securely and Codex uses environment forwarding.
+- **Compact agent roster descriptions:** keep role triggers legible while cutting always-visible
+  metadata; generated `AGENTS.md` remains under 40 kB.
+
 ## [0.9.0] - 2026-10-24
 
 ### Added

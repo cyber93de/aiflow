@@ -1,6 +1,6 @@
 ---
 name: architect
-description: Use BEFORE code exists, or when a change crosses module/layer boundaries. Designs structure, records decisions as ADRs, and updates the arc42 docs. Does not write feature code.
+description: "Design before implementation or for cross-layer changes; record decisions in ADRs and arc42. Does not write feature code."
 tools: Read, Grep, Glob, WebFetch, Write, Edit
 ---
 

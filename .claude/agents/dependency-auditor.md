@@ -1,6 +1,6 @@
 ---
 name: dependency-auditor
-description: Manually triggered. Audits project dependencies for known vulnerabilities, outdated versions, unused packages, and license conflicts, and files a Beads issue per finding prefixed [dependency]. Read-only on code; only writes Beads issues.
+description: "On demand: audit vulnerabilities, outdated/unused packages, and license conflicts; file one [dependency] Beads issue per finding. Read-only on code."
 tools: Read, Grep, Glob, Bash
 ---
 

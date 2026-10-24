@@ -87,20 +87,7 @@
     "required": false
   },
   "release": {
-    "auto": true,
-    "manualConfirm": true,
-    "triggers": [
-      "merge develop -> main (minor release, strips -SNAPSHOT)",
-      "merge hotfix/* -> main (patch release)"
-    ],
-    "excludesTrigger": [
-      "chore/* -> main"
-    ],
-    "versionStrategy": "semver",
-    "tag": {
-      "enabled": true,
-      "format": "v{version}"
-    }
+    "auto": false
   },
   "branchNaming": "not enforced (temporary branches may use any name)"
 }

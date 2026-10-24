@@ -7,21 +7,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Fixed
-- **`aiflow project-update` now fills in config keys a newer release introduced.** Only `init` and
-  `change-settings` ever wrote `.aiflow/config.json`, so a key added by a release never reached an
-  already-generated project — upgrading 22 projects to 0.8.0 left every one of them without
-  `beads.queueMode`. Missing keys are now merged in from `templates/.aiflow/config.defaults.json`;
-  a value the project set itself always wins, and a second run changes nothing.
+## [0.9.0] - 2026-10-24
+
+### Added
+- **Consistent agent task flow:** Codex, Copilot and Claude start gitflow work on a task branch
+  from `develop`, build and validate every pushed branch, and merge feature work back to `develop`.
+  Promoting to `main` and publishing are separate maintainer actions, not task-completion steps.
+- **Shared release packager:** CI and the release workflow now call the same script to build and
+  validate Linux, macOS and Windows archives plus SHA256 checksums. CI uploads all four artifacts.
+- **Codex-ready instructions:** the generated `AGENTS.md` is under 40 KB and retains the core
+  architecture, quality, task and branch rules while explaining which Claude automations Codex
+  must perform manually.
 
 ### Fixed
-- **The `pre-push` branching guard rejected the release push itself.** It walked every merge
-  commit newly reachable on `main`, so a `develop` → `main` release push was blocked by the
-  `feature/*` → `develop` merges it legitimately carries along (`merge of 'feature/x' into main
-  is not allowed`) — hitting every gitflow project at exactly the wrong moment. It now walks
-  `--first-parent`, so only merges made *onto* `main` are judged. A direct `feature/*` → `main`
-  merge is still rejected; both cases are verified against a scratch repository.
-
+- **`aiflow project-update` fills in config keys a newer release introduced.** Missing keys are
+  merged from `templates/.aiflow/config.defaults.json`, existing project values win, and a second
+  run changes nothing.
+- **The `pre-push` branching guard no longer rejects a valid develop-to-main merge.** It checks
+  only merges made onto `main`, so earlier feature-to-develop merges do not cause false failures.
+- **The CI dry-run now builds and validates every release artifact.** It previously omitted macOS,
+  uploaded no Windows archive, and used a different staging layout from the release workflow.
+- **Self-hosted project metadata now records the current generator version**, avoiding repeated
+  prompts to upgrade templates that already match the installed tool.
 ## [0.8.0] — 2026-08-16
 
 ### Added
@@ -818,6 +825,9 @@ release process. Everything is project-scoped; secrets never leave the project.
 - **GitHub Pages documentation site** under `docs/` (just-the-docs).
 - **MIT License**; **no funding / donation prompts** — feedback, a ⭐, and bug reports are the ask.
 
-[Unreleased]: https://github.com/Cyber93de/aiflow/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/Cyber93de/aiflow/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/Cyber93de/aiflow/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/Cyber93de/aiflow/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/Cyber93de/aiflow/compare/v0.6.0...v0.7.0
 [0.1.1]: https://github.com/Cyber93de/aiflow/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Cyber93de/aiflow/releases/tag/v0.1.0

@@ -2,9 +2,8 @@ name: ci
 
 on:
   push:
-    # aiflow governs 'main' + 'develop' by name (see docs/branching.md); a repo on 'master'
-    # is renamed to 'main' by 'aiflow apply', so 'master' is deliberately not a trigger.
-    branches: [main, develop]
+    # Build every task branch as it changes, before or after a PR is opened.
+    branches: ['**']
   pull_request:
 
 jobs:

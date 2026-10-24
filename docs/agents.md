@@ -3,7 +3,7 @@ layout: default
 title: Agents
 parent: Agents & Workflows
 nav_order: 1
-description: "aiflow's Claude Code subagents in detail: what architect, planner, implementer, reviewer, tester, the audit agents, accessibility-checker, modernization-advisor, and the onboarder do and watch for. Plus Skills (seo-optimization, ponytail YAGNI, memory-setup) and slash-commands, and what GitHub Copilot / OpenAI Codex CLI users do instead."
+description: "aiflow's Claude Code subagents in detail: architect, planner, implementer, reviewer, tester, audit agents, accessibility-checker, modernization-advisor and onboarder. Also covers shared Skills, slash-commands, and differences for GitHub Copilot and OpenAI Codex CLI."
 ---
 
 # Agents — the full roster
@@ -14,10 +14,9 @@ description: "aiflow's Claude Code subagents in detail: what architect, planner,
 
 ---
 
-> **Claude Code only.** Subagents, Skills, and slash-commands below are dispatched automatically
-> by Claude Code and have no equivalent in GitHub Copilot or OpenAI Codex CLI today. Every agent —
-> Claude Code, Copilot, or Codex CLI — follows the same roles and rules from the shared
-> `AGENTS.md`; Copilot/Codex just do it manually instead of via automatic dispatch. See
+> **Claude Code roles.** The detailed specialist profiles and slash commands below are generated
+> for Claude Code. Skills and project rules are shared; Codex and Copilot have their own native
+> delegation features, but aiflow does not yet generate matching role profiles for them. See
 > [Multi-Agent Support](multi-agent).
 
 Specialist subagents live in `.claude/agents/`. Claude picks one by its `description`, or you invoke
@@ -181,8 +180,9 @@ so the product owner can triage (except the two report-only agents).
 
 Beads and the Ralph loop also ship as plugin commands (`/beads:ready`, `/beads:decision`, `/ralph-loop`).
 
-**Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`: Claude Code matches the skill's
-`description` against what you're doing and offers to run it, no `/name` needed. Ships with
+**Skills** — shared checklists live under `.agents/skills/<name>/SKILL.md` and are mirrored to
+`.claude/skills/<name>/SKILL.md`; discovery varies by agent and Claude Code can suggest matches.
+The catalogue includes
 technology-stack skills (**stack-embedded**, **stack-mobile**, **stack-web-frontend**,
 **stack-backend**), integration/data skills (**api-design**, **messaging-events**,
 **data-storage**, **cloud-native**), and cross-cutting ones (**security**, **seo-optimization**,

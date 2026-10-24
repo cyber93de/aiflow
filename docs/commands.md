@@ -32,6 +32,8 @@ description: "aiflow CLI command reference: init, install-deps, change-settings,
 | Command | Does |
 |---------|------|
 | `aiflow shell [--router]` | Load `.env`, launch Claude Code (`--router` = cheap/local models). |
+| `aiflow codex [args...]` | Load `.env` credentials and launch Codex CLI with Git-host MCP token forwarding. |
+| `aiflow codex [args...]` | Load `.env` credentials and launch Codex CLI with Git-host MCP token forwarding. |
 | `aiflow index` | Refresh code memory: graphify (graph) + cocoindex (RAG). |
 | `aiflow ralph "<prompt|bead id>"` | Run the headless Ralph loop. |
 | `aiflow onboard` | Learn an existing codebase into memory + AGENTS.md + arc42. |

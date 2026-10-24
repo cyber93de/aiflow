@@ -135,6 +135,15 @@ if (Test-Path $skillsSrc) {
     }
   }
 }
+$sharedSkillsSrc = Join-Path $TPL '.agents/skills'
+if (Test-Path $sharedSkillsSrc) {
+  Get-ChildItem -Path $sharedSkillsSrc -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+    $skillFile = Join-Path $_.FullName 'SKILL.md'
+    if (Test-Path $skillFile) {
+      Update-WithBackup $skillFile (Join-Path ".agents/skills/$($_.Name)" 'SKILL.md')
+    }
+  }
+}
 # The router example is a reference file a project copies to ~/.claude-code-router/config.json,
 # so a stale one is worth refreshing - but it is also the obvious place to keep a tweaked sample,
 # hence the .bak rule rather than the mechanical block above (aiflow-ver).

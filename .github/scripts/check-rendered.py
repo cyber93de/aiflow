@@ -55,6 +55,9 @@ MIRRORS = [
     ("templates/.claude/agents", ".claude/agents", ("*.md",), frozenset()),
     ("templates/.claude/commands", ".claude/commands", ("*.md",), frozenset()),
     ("templates/.claude/skills", ".claude/skills", ("SKILL.md",), frozenset()),
+    # Open Agent Skills are shared with Codex and Copilot; the repository's Beads skill is
+    # project-local and intentionally has no generated-project counterpart.
+    ("templates/.agents/skills", ".agents/skills", ("SKILL.md",), frozenset({"beads/SKILL.md"})),
 ]
 
 

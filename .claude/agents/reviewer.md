@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: "Use as the gate before closing a bead or merging — one agent, two hats: software architect (architecture, design, long-term quality, risks) and quality gate (checklist against the AGENTS.md §3a/§3b criteria). Reviews and decides release/rework only; never writes features."
+description: "Gate before bead closure or merge: review architecture, design, risks, and AGENTS.md quality checks. Return PASS or CHANGES REQUIRED; never implements features."
 tools: Read, Grep, Glob, Bash
 ---
 

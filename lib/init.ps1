@@ -103,11 +103,11 @@ if ($NoTokenSave) {
 $PONYTAIL_ON = AskYn 'Use ponytail (YAGNI skill: reuse/simplify before writing new code)?' 'n'
 $PONYTAIL_MODE = 'full'
 if ($PONYTAIL_ON -eq 'true') { $PONYTAIL_MODE = Ask 'ponytail mode (full recommended / lite / ultra)' 'full' }
-$GRAPHIFY_ON = AskYn 'Use graphify (structural code graph: imports/call-graph) for memory?' 'y'
-$COCO_ON = AskYn 'Use cocoindex-code (semantic code RAG search, local, ~70% fewer tokens)?' 'y'
-$TM_ON = AskYn 'Use claude-task-master for task decomposition?' 'y'
-$FS_ON = AskYn 'Enable filesystem MCP?' 'y'
-$CTX7_ON = AskYn 'Enable context7 MCP (live library docs)?' 'y'
+$GRAPHIFY_ON = AskYn 'Enable graphify structural index? Recommended for large codebases.' 'n'
+$COCO_ON = AskYn 'Enable cocoindex semantic code search? Recommended for large codebases.' 'n'
+$TM_ON = AskYn 'Enable optional task-master MCP? Beads is the default task workflow.' 'n'
+$FS_ON = AskYn 'Enable filesystem MCP? Native file tools are enough for most agents.' 'n'
+$CTX7_ON = AskYn 'Enable context7 live library documentation MCP?' 'y'
 
 # ---- Claude memory + graph-memory intensity ----
 Write-Output ""

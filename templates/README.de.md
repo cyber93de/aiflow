@@ -289,9 +289,10 @@ Ziel: **passe sie an die Bedürfnisse deines Projekts an** (Markdown editieren: 
 
 (Beads und der Ralph-Loop sind zudem als eigene Plugin-Commands verfügbar, z. B. `/beads:ready`.)
 
-**Skills** — automatisch angeboten, `.claude/skills/<name>/SKILL.md`: Claude Code gleicht die
-`description` des Skills gegen den aktuellen Kontext ab und bietet ihn an. Ein **Agent** ist eine
-Rolle (wer handelt, mit welcher Befugnis, in welcher Reihenfolge); ein **Skill** ist Wissen, das
+**Skills** — gemeinsame Checklisten unter `.agents/skills/<name>/SKILL.md`, gespiegelt nach
+`.claude/skills/<name>/SKILL.md`. Die Skill-Erkennung unterscheidet sich je Agent; Claude Code kann
+passende Skills automatisch vorschlagen. Codex und Copilot nutzen die gemeinsamen Dateien ebenfalls.
+Ein **Agent** ist eine Rolle (wer handelt, mit welcher Befugnis, in welcher Reihenfolge); ein **Skill** ist Wissen, das
 mehrere Rollen brauchen — der Implementierer, der einen Endpunkt baut, und der Reviewer, der ihn
 prüft, lesen dieselbe Liste. Mitgeliefert:
 
@@ -309,8 +310,8 @@ prüft, lesen dieselbe Liste. Mitgeliefert:
   Secrets, Supply Chain), `seo-optimization`, `ponytail` (YAGNI-Leiter, standardmäßig aus),
   `memory-setup`.
 
-Eigene Skills: neues `<name>/SKILL.md` in `.claude/skills/` ablegen — die **description ist der
-Trigger**, also als „invoke when …" plus die passenden Stichworte formulieren.
+Eigene Skills: neues `<name>/SKILL.md` in `.agents/skills/` ablegen — die **description unterstützt
+die Erkennung** und sollte konkrete Auslöser plus passende Stichworte nennen.
 
 ---
 

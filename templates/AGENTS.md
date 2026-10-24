@@ -8,12 +8,11 @@ GitHub Copilot, OpenAI Codex CLI, or any tool that reads a repo-root instruction
 single source of truth shared by interactive sessions and headless/CI runs. Edit the sections
 marked **[EDIT ME]** for your project.
 
-Sections marked **(Claude Code only)** describe subagents/hooks/slash-commands that only Claude
-Code can invoke automatically. Every other agent still follows the same workflow and rules —
-manually, step by step, in the order described — it just doesn't get the automated
-dispatch/enforcement. `CLAUDE.md` in this repo root is a one-line pointer that makes Claude Code
-load this exact file; Codex CLI and most other tools read `AGENTS.md` directly by convention.
-GitHub Copilot reads `.github/copilot-instructions.md`, which also just points here.
+Sections marked **(Claude Code only)** describe aiflow-generated Claude subagents, hooks and slash
+commands. Other agents can use native delegation features, but aiflow does not yet render
+equivalent role profiles for them. All agents follow the common workflow and rules here.
+`CLAUDE.md` is a one-line pointer to this file; Codex reads `AGENTS.md` directly and Copilot is
+pointed here by `.github/copilot-instructions.md`.
 
 ---
 
@@ -455,12 +454,13 @@ state in the bead so it survives context resets.
   **accessibility-checker**, and **requirements-check** report findings as Beads issues. The
   **modernization-advisor** writes a report for the architect and does not change code or beads.
 
-Claude Code skills live in `.claude/skills/`; slash commands live in `.claude/commands/`. Skills
-provide reusable checklists, while agents define roles and handoffs. Rules that apply on every task
-remain in this file. Copilot and Codex must read relevant skill files manually. Stack skills cover
+Reusable skills live in `.agents/skills/` using the open `SKILL.md` format, discovered by Codex
+and Copilot; aiflow mirrors them to `.claude/skills/` for Claude Code. Their detailed bodies load
+only when relevant, so they keep this always-loaded file short. Slash commands and dispatchable
+subagents remain Claude-specific in `.claude/commands/` and `.claude/agents/`. Stack skills cover
 embedded, mobile, web and backend; architecture skills cover API, messaging, storage and cloud;
-cross-cutting skills cover security, SEO, YAGNI and memory setup. The descriptions in each
-`SKILL.md` define their Claude trigger.
+cross-cutting skills cover security, SEO, YAGNI and memory setup. Skill descriptions state when
+all compatible agents should use them.
 
 Keep agent/command/skill frontmatter valid YAML. Quote descriptions containing `: `; malformed
 frontmatter silently removes an item from Claude's roster. The pre-commit hook and
@@ -549,8 +549,8 @@ Refresh graphify + cocoindex-code together with `aiflow index` after significant
 Full detail — what to save, the context-routing stack (Beads vs memory files vs graphify vs
 cocoindex-code vs context7, in priority order), shared team preferences (`.aiflow/team-prefs.json`),
 and local-model (Ollama) routing — lives in the **memory-setup** skill
-(`.claude/skills/memory-setup/SKILL.md`, Claude Code auto-offers it; Copilot/Codex: read it
-directly, or the live routing table in `.claude/memory/memory-policy.md` once memory is on).
+(`.agents/skills/memory-setup/SKILL.md`; mirrored under `.claude/skills/`). Load it when memory or
+context routing is relevant, or consult `.claude/memory/memory-policy.md` once memory is on.
 
 ---
 
@@ -558,8 +558,9 @@ directly, or the live routing table in `.claude/memory/memory-policy.md` once me
 
 - Be concise, except for code, commits, PRs and security warnings, which require clear full prose.
   Claude Code's caveman output mode is optional (`AIFLOW_CAVEMAN=off`).
-- Use graphify for structure and cocoindex-code for semantic search when available; avoid loading
-  whole files before targeted search. See §8 and `.claude/memory/memory-policy.md`.
+- Use `rtk <command>` for noisy shell output when installed; keep errors and diffs visible. Use
+  graphify/cocoindex only when enabled and useful for this codebase; avoid loading whole files
+  before targeted search. See §8 and `.claude/memory/memory-policy.md`.
 - Claude Code users should compact after init/onboarding, each closed bead and before long Ralph or
   refactor work. Persist decisions in Beads, memory or ADRs first. Codex/Copilot users should start
   a fresh thread at those points and reread this file and the active bead.
@@ -567,9 +568,8 @@ directly, or the live routing table in `.claude/memory/memory-policy.md` once me
   security; implementation models for bounded coding and tests; lighter models for scans, docs
   drift and mapping. Escalate when scope grows. Claude routing is configured in
   `.aiflow/config.json`; Codex/Copilot users choose an equivalent model manually.
-- The optional ponytail skill checks new code/dependencies for YAGNI. rtk filters command output
-  for Claude Code; errors and diffs must remain visible. Codex/Copilot should keep output focused
-  and use available code search/context tools.
+- The optional ponytail skill checks new code/dependencies for YAGNI. All agents should keep
+  output focused and use targeted code search; RTK is an optional shell wrapper, not a Claude hook.
 
 ---
 ## 10. Definition of Done (quick checklist)

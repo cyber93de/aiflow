@@ -79,7 +79,7 @@ MIN_GROUPS = 15
 SH_CASE = re.compile(r"^\s{2,4}[\"']?([a-z0-9|_.-]+)[\"']?\)")
 # `'cmd' {` or `{ $_ -in 'cmd','alias' } {` — a switch label in bin/aiflow.ps1.
 PS_CASE = re.compile(
-    r"^(?:\{\s*\$_\s+-in\s+)?((?:[\"'][a-z0-9._-]+[\"']\s*,\s*)*[\"'][a-z0-9._-]+[\"'])\s*(?:\}\s*)?\{")
+    r"^[ \t]{2,4}(?:\{\s*\$_\s+-in\s+)?((?:[\"'][a-z0-9._-]+[\"']\s*,\s*)*[\"'][a-z0-9._-]+[\"'])\s*(?:\}\s*)?\{")
 PS_LABEL = re.compile(r"[\"']([a-z0-9._-]+)[\"']")
 
 
@@ -130,7 +130,7 @@ def ps_dispatch(text: str) -> list[set[str]]:
     """Alias groups dispatched by bin/aiflow.ps1, one set per switch label."""
     groups = []
     for line in ps_dispatch_block(text).splitlines():
-        m = PS_CASE.match(line.strip())
+        m = PS_CASE.match(line)
         if m:
             groups.append(set(PS_LABEL.findall(m.group(1))))
     return groups

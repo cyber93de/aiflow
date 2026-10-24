@@ -90,6 +90,10 @@ for f in "$TPL"/.claude/skills/*/SKILL.md; do
   name="$(basename "$(dirname "$f")")"
   refresh_with_backup "$f" ".claude/skills/$name/SKILL.md"
 done
+for f in "$TPL"/.agents/skills/*/SKILL.md; do
+  name="$(basename "$(dirname "$f")")"
+  refresh_with_backup "$f" ".agents/skills/$name/SKILL.md"
+done
 # The router example is a reference file a project copies to ~/.claude-code-router/config.json,
 # so a stale one is worth refreshing — but it is also the obvious place to keep a tweaked sample,
 # hence the .bak rule rather than the mechanical block above (aiflow-ver).

@@ -92,9 +92,9 @@ question, every default, first feature end-to-end).
   tokens **and time** in the end.
 - **Better memory, fewer hallucinations.** Two complementary code indexes plus durable task memory
   mean the agent *looks things up* instead of guessing or re-reading dozens of files. See §6.
-- **Big token reduction.** caveman (terse output ~75% fewer output tokens), rtk (CLI-output
-  filtering 60–90% fewer), graph + RAG retrieval (~70% fewer than reading whole files), and optional
-  cheap/local model routing. Measured with `aiflow cost`.
+- **Token control across agents.** Shared compact instructions, task-loaded skills and targeted file
+  reads work across agents. Claude can additionally use caveman, RTK and role-based model routing;
+  Graphify, CocoIndex and CodexSaver are opt-in. Measure actual usage with `aiflow cost`.
 - **Team-ready.** Issues live in a shared Dolt database that syncs over your git remote. Atomic
   claiming prevents two people grabbing the same task; pull-before-push prevents clobbering. See §10.
 - **Governed & auditable.** Conventional Commits, enforced Google style, a review gate against
@@ -124,7 +124,7 @@ question, every default, first feature end-to-end).
 | **Quality** | Google style, conventional commits, format/lint/test git hooks, architect+quality-gate review, static analysis on every change, objective metric targets (0 new smells/duplicates, 0 warnings), >80 % coverage + BDD E2E gates, leveled logging, `.http` files for REST endpoints, DB rules §3c (3NF+FKs for new schemas, brownfield schemas handled with care) |
 | **Branching** | simple / gitflow / none, PR-only, auto-release, SemVer/CalVer |
 | **Team** | shared issue DB, atomic claim, session-start auto-pull, pull-before-push, shared preferences |
-| **Token savings** | Claude Code: caveman + rtk on by default, graph/RAG retrieval, cost routing. Copilot: [token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization) baked into `copilot-instructions.md`. Codex: optional [CodexSaver](https://github.com/fendouai/CodexSaver) MCP router (`codexsaver.enabled`) |
+| **Token savings** | All agents: concise shared instructions, task-loaded skills, targeted file reads and opt-in retrieval. Claude: optional caveman/RTK and specialist model routing. Codex: optional CodexSaver. Copilot: concise project instructions. |
 
 ---
 
@@ -196,11 +196,11 @@ aiflow init --no-token-saving   # same, but with caveman + rtk off (full, unfilt
 
 <p align="center"><img src="docs/assets/terminal/init.gif" alt="aiflow init: the interactive Q&A — token saving, memory, Claude auth, git/svn, remote host, Ollama model selection, branching model" width="880"></p>
 
-`aiflow init` asks (Enter = the sensible default; token-saving + intensive graph memory are **on**):
+`aiflow init` asks (Enter = the sensible default; optional retrieval MCPs stay off for small projects):
 
-1. **caveman / rtk** — token-saving output + CLI filtering (default on).
-2. **graphify** (structural graph) and **cocoindex-code** (semantic RAG) — code memory (default on).
-3. **task-master**, **filesystem MCP**, **context7 MCP** (default on).
+1. **caveman / rtk** — optional output shaping and CLI filtering (enabled by default for Claude sessions).
+2. **graphify** and **cocoindex-code** — opt-in structural and semantic retrieval for larger repositories.
+3. **task-master**, **filesystem MCP**, **GitKraken** — opt-in; Context7 is enabled by default.
 4. **Memory** — enable persistent memory, graph learning, and **intensity** (default `aggressive`).
 5. **Claude access** — `apikey` (ANTHROPIC_API_KEY) or `oauth` (`claude setup-token`).
 6. **Version control** — `git` / `svn` / `none`.
@@ -370,9 +370,9 @@ Two different Claude Code mechanisms, both shipped:
 
 Beads and the Ralph loop also ship plugin commands (`/beads:ready`, `/beads:decision`, `/ralph-loop`).
 
-**Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`, Claude Code matches the skill's
-`description` against what you're doing and offers to run it (confirm before it acts on anything
-non-trivial). An **agent** is a role (who acts, with what authority, in what order); a **skill** is
+**Skills** — shared checklists live in `.agents/skills/<name>/SKILL.md` and are mirrored to
+`.claude/skills/<name>/SKILL.md`; skill discovery varies by agent and Claude Code can suggest a
+match. An **agent** is a role (who acts, with what authority, in what order); a **skill** is
 knowledge several roles need — the implementer writing an endpoint and the reviewer checking it
 read the same list. Full catalogue: [Skills](https://cyber93de.github.io/aiflow/skills).
 - **Technology stacks** — **stack-embedded** (C/C++ firmware: HAL separation, no allocation after

@@ -1,6 +1,6 @@
 ---
 name: security-advisor
-description: Manually triggered. Scans the WHOLE project for security vulnerabilities (Anthropic security-review methodology) and files a Beads issue per finding, prioritised by severity and prefixed [security-advisor]. Read-only on code; only writes Beads issues.
+description: "On demand: audit the whole project for security vulnerabilities and file severity-ranked [security-advisor] Beads issues. Read-only on code."
 tools: Read, Grep, Glob, Bash
 ---
 

@@ -287,8 +287,9 @@ The shipped agents are **deliberately generic** — a strong, universal base, no
 
 (Beads and the Ralph loop are also available as their own plugin commands, e.g. `/beads:ready`.)
 
-**Skills** — auto-offered, `.claude/skills/<name>/SKILL.md`: Claude Code matches the skill's
-`description` against what you're doing and offers to run it. An **agent** is a role (who acts,
+**Skills** — shared checklists live in `.agents/skills/<name>/SKILL.md` and are mirrored to
+`.claude/skills/<name>/SKILL.md`. Skill discovery varies by agent; Claude Code can suggest a match.
+An **agent** is a role (who acts,
 with what authority, in what order); a **skill** is knowledge several roles need — the implementer
 writing an endpoint and the reviewer checking it read the same list. Ships with:
 
@@ -304,7 +305,7 @@ writing an endpoint and the reviewer checking it read the same list. Ships with:
   secrets, supply chain), `seo-optimization`, `ponytail` (YAGNI ladder, off by default),
   `memory-setup`.
 
-Add your own by dropping a `<name>/SKILL.md` into `.claude/skills/` — the **description is the
+Add your own by dropping a `<name>/SKILL.md` into `.agents/skills/` — the **description is the
 trigger**, so write it as "invoke when …" plus the words that should match.
 
 ---

@@ -1,6 +1,6 @@
 ---
 name: performance-advisor
-description: Manually triggered. Audits the codebase for performance problems (N+1 queries, sync I/O in hot paths, O(n²) work, missing pagination/indexes, wasteful allocations) and files a Beads issue per finding, prefixed [performance]. Read-only on code.
+description: "On demand: find performance risks such as N+1 queries, hot-path I/O, poor complexity, or missing indexes; file [performance] Beads issues. Read-only on code."
 tools: Read, Grep, Glob, Bash
 ---
 

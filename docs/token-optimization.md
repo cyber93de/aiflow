@@ -3,7 +3,7 @@ layout: default
 title: Token optimization
 parent: Concepts
 nav_order: 2
-description: "Cut AI coding agent token cost with aiflow: caveman terse output and rtk CLI-output filtering for Claude Code, the Copilot token-optimization guide, CodexSaver for Codex CLI, graph + RAG retrieval instead of reading files, cheap/local model routing, haiku model routing for audit subagents, and the ponytail YAGNI skill."
+description: "Reduce context and token use across agents with concise shared instructions, progressive-disclosure skills, focused file reads, optional retrieval MCPs and agent-specific token tools."
 ---
 
 # Token optimization
@@ -14,15 +14,14 @@ description: "Cut AI coding agent token cost with aiflow: caveman terse output a
 
 ---
 
-Context is the budget. Each agent gets its own approach — see
-[Multi-Agent Support](multi-agent#token-savings-per-agent) for the quick per-agent summary; this
-page covers every mechanism (Claude Code's caveman/rtk, Copilot's guide, Codex's CodexSaver, and
-the agent-agnostic graph/RAG retrieval + model routing) in depth.
+Context is the budget. All agents share a low-overhead baseline: compact always-loaded instructions,
+task-loaded skills, targeted reads, and optional MCPs that stay disabled unless useful. Extra output
+filters and model routing are tool-specific; they are not assumed to work across agents.
 
-## Claude Code — caveman + rtk (on by default)
+## Shared baseline and optional Claude tools
 
-aiflow attacks Claude Code's token cost from four directions — the first two are **on by
-default**. Prefer full, unfiltered output instead? Initialise or reconfigure with
+aiflow's shared baseline applies to every agent. Claude-only output tools can be enabled during
+initialization or settings changes. Prefer full, unfiltered output instead? Initialise or reconfigure with
 `aiflow init --no-token-saving` / `aiflow change-settings --no-token-saving` — it switches
 **caveman and rtk off** in one go.
 
@@ -64,9 +63,10 @@ clobbers or duplicates it.
 
 ## Graph + RAG retrieval instead of reading files
 
-The biggest silent cost is re-reading whole files. aiflow routes questions through the
-[code memory](memory): **graphify** (structure) and **cocoindex-code** (semantic RAG, ~70% fewer
-tokens than opening files). The agent locates the few relevant chunks, then opens only those.
+The biggest silent cost is re-reading whole files. On larger projects, enable **graphify** (structure)
+or **cocoindex-code** (semantic search) in settings and use them to locate relevant files before
+opening targeted chunks. Both are opt-in because their setup and tool context do not pay off for
+every repository. Treat retrieval as navigation, then verify claims against source files.
 
 ## Model routing — cheap/local for easy work
 

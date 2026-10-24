@@ -72,8 +72,8 @@ jobs:
         run: |
           set -euo pipefail
           python .github/scripts/check-frontmatter.py \
-            .claude/agents .claude/commands .claude/skills \
-            templates/.claude/agents templates/.claude/commands templates/.claude/skills
+            .claude/agents .claude/commands .claude/skills .agents/skills \
+            templates/.claude/agents templates/.claude/commands templates/.claude/skills templates/.agents/skills
 
   python-helpers:
     name: CI helpers (compile + ruff)
@@ -220,7 +220,7 @@ jobs:
           cd "$RUNNER_TEMP/rendertest"
           python .github/scripts/check-frontmatter.py --selftest
           python .github/scripts/check-frontmatter.py \
-            .claude/agents .claude/commands .claude/skills
+            .claude/agents .claude/commands .claude/skills .agents/skills
 
   render-macos-bash32:
     name: macOS system bash 3.2 (empty arrays under set -u)

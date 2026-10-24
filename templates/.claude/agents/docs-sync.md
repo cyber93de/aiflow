@@ -1,6 +1,6 @@
 ---
 name: docs-sync
-description: Manually triggered. Detects drift between the code and the documentation (README, AGENTS.md, arc42, ADRs, API docs) and files a Beads issue per gap, prefixed [docs]. Read-only — reports drift, does not rewrite docs.
+description: "On demand: find drift between code and README, AGENTS.md, arc42, ADRs, or API docs; file [docs] Beads issues. Reports only; does not edit docs."
 tools: Read, Grep, Glob, Bash
 ---
 

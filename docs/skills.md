@@ -3,7 +3,7 @@ layout: default
 title: Skills
 parent: Agents & Workflows
 nav_order: 4
-description: "aiflow's Claude Code Skills: the catalogue (technology stacks, integration and data architecture, security, SEO, ponytail YAGNI, memory-setup) and the rule for what belongs in a skill versus an agent."
+description: "Portable aiflow skills for Codex, Copilot and Claude Code: technology stacks, integration and data architecture, security, SEO, ponytail YAGNI, memory setup, and the rule for what belongs in a skill versus an agent."
 ---
 
 # Skills
@@ -14,10 +14,11 @@ description: "aiflow's Claude Code Skills: the catalogue (technology stacks, int
 
 ---
 
-> **Claude Code only.** Skills live in `.claude/skills/<name>/SKILL.md`. Claude Code matches a
-> skill's `description` against what you are currently doing and offers to run it — no `/name`
-> needed, unlike a [slash-command](agents#slash-commands-and-skills). Copilot and Codex CLI have no
-> auto-offer mechanism: read the relevant `SKILL.md` directly as a manual checklist.
+Skills live in `.agents/skills/<name>/SKILL.md`, the portable source used by Codex and GitHub
+Copilot. aiflow mirrors the same skills to `.claude/skills/` because Claude Code discovers skills
+there. All three agents can use the same concise, progressive-disclosure checklists; automatic
+matching and invocation details vary by agent and version. Claude Code can suggest matching skills,
+while Codex and Copilot discover project skills through their native skill support.
 
 ## Skill or agent?
 
@@ -30,7 +31,7 @@ instead of restating it. The split follows one rule:
 | **Loaded** | when that role is dispatched | when the task matches, for **any** role |
 | **Examples** | "the reviewer decides PASS / CHANGES REQUIRED"; "the orchestrator dispatches one specialist at a time" | "a JWT must be checked for `alg`, `exp`, `aud`, `iss`"; "an ISR must not allocate" |
 
-So: workflow, decision authority, and handoffs stay in `.claude/agents/*.md`. Reusable, technology-
+So: workflow, decision authority, and handoffs stay in role-agent instructions. Reusable, technology-
 or topic-specific knowledge that *several* agents need becomes a skill — the implementer writing an
 endpoint and the reviewer checking it should be reading the same list. Rules that must fire on
 **every** task (the §3a/§3b/§3c quality gates, the §2 architecture rules) stay inline in
@@ -76,9 +77,9 @@ reads the same wherever it comes from.
 
 ## Adding your own
 
-Drop a `<name>/SKILL.md` into `.claude/skills/` with YAML frontmatter (`name`, `description`). The
-**description is the trigger** — write it as "invoke when …" plus the concrete words that should
-match, not as a title. Keep the body a checklist an agent can act on; if it reads like an essay it
+Drop a `<name>/SKILL.md` into `.agents/skills/` with YAML frontmatter (`name`, `description`). The
+**description guides discovery** — write it as "invoke when …" plus concrete matching words, not as a
+title. Keep the body a checklist an agent can act on; if it reads like an essay it
 will not change any behaviour.
 
 **Quote a description that contains a colon.** `description: … two hats: architect …` is invalid
@@ -90,5 +91,6 @@ project's `pre-commit` hook runs `.github/scripts/check-frontmatter.py` over eve
 and skill as soon as you stage one, and CI runs it again on every push. The hook needs
 `python3`/`python` + PyYAML; without them it says so and skips, so CI stays the backstop.
 
-For projects that use `aiflow project-update`, skills are refreshed from the templates like agents
-and commands — a customised file is backed up to `<file>.bak` first, never overwritten silently.
+For projects that use `aiflow project-update`, the portable skill directory and Claude mirror are
+refreshed from templates. A customised file is backed up to `<file>.bak` first, never overwritten
+silently.

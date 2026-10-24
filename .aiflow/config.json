@@ -81,6 +81,6 @@
   },
   "templates_search": false,
   "meta": {
-    "aiflowVersion": "0.9.0"
+    "aiflowVersion": "0.10.0-SNAPSHOT"
   }
 }

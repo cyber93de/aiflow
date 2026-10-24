@@ -11,20 +11,27 @@ have (subagents, slash-commands, hooks) — follow the same rules and steps manu
 Key points from `AGENTS.md` that apply directly to you:
 - Work is tracked in Beads (`bd`) — check `bd ready`, claim with `bd update <id> --claim`, close
   with `bd close <id> --reason "…"`. Don't invent your own TODO list.
-- Follow the branching model in `docs/branching.md` / `.aiflow/branching.json` — which branch
-  type to use, and that `main` only ever receives `develop`/`hotfix/*`/`chore/*`.
-- Never cut a release (`aiflow release --yes`, or merging into `main`) without the user's
-  explicit go-ahead first.
+- Start each task on the correct branch from the configured model. In gitflow, branch
+  `feature/*`/`bugfix/*` from `develop`, validate and merge back into `develop`; never send feature
+  work directly to `main`. Check the actual source/target in `docs/branching.md` and
+  `.aiflow/branching.json`.
+- Build and test task branches and `develop`. These are validation/snapshot builds: do not tag,
+  publish, or change `VERSION` during ordinary work. Promote to `main` only when explicitly asked.
+- Do not add an `aiflow release` step to task work. Follow `AGENTS.md` whether Copilot, Codex, or
+  Claude is driving.
 - Google Style Guides for code, mandatory tests (unit + BDD e2e, >80% coverage), no code smells,
   logging, `.http` files for REST changes — see `AGENTS.md` §3/§3a/§3b/§3c for the full detail.
 - Respect `AGENTS.md` §2 architecture rules — layering with inward dependencies, interfaces at
   every seam, DAO for data access, DTO on the wire, domain objects never leaving the domain. A task
   that doesn't fit is **not** built as-is: ask first, record the answer.
-- Before adding new code/dependencies/abstractions, check `.claude/skills/ponytail/SKILL.md`'s
+- Before adding new code/dependencies/abstractions, check `.agents/skills/ponytail/SKILL.md`'s
   decision ladder (needed? already in the codebase? stdlib? platform feature? installed dep? a
   one-liner? only then write it) if `ponytail.enabled` is set in `.aiflow/config.json` — see
   `AGENTS.md` §5/§9.
-- Copilot has no skill auto-offer: **open the matching `.claude/skills/<name>/SKILL.md` yourself**
+- Skills live in `.agents/skills/<name>/SKILL.md` and are shared with Codex and Copilot; aiflow
+  mirrors them into `.claude/skills/` for Claude Code. Use only the matching skill rather than
+  loading the whole catalogue:
+  **open the matching `.agents/skills/<name>/SKILL.md`**
   when the task fits it — `stack-embedded`, `stack-mobile`, `stack-web-frontend`, `stack-backend`,
   `api-design`, `messaging-events`, `data-storage`, `cloud-native`, `security`, `seo-optimization`.
   They are checklists, not reading material; the "typical findings" list at the end is the fastest
@@ -41,3 +48,4 @@ see the [Copilot token-optimization guide](https://github.com/olivomarco/github-
   instead of switching mid-thread.
 - On a large repo, prefer scoping additional instructions with `applyTo:` paths over growing this
   file further.
+- Use `rtk <command>` for noisy shell output when installed; preserve errors and diffs.

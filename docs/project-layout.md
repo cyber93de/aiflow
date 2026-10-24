@@ -13,6 +13,7 @@ What `aiflow init` puts in a project and what each piece does.
 
 ```
 your-project/
+├─ .agents/skills/            # portable task-specific skills shared by Codex and Copilot
 ├─ .aiflow/
 │  ├─ config.json            # the single source of truth (committed)
 │  ├─ team-prefs.json        # shared team preferences (committed)

@@ -6,6 +6,8 @@
 # Refreshed (agent definitions + git hooks - see backup rule below): AGENTS.md, CLAUDE.md,
 # .github/copilot-instructions.md, .claude/agents/*.md, .claude/commands/*.md,
 # .claude/skills/*/SKILL.md, .githooks/*, .aiflow/router-config.example.json.
+# Config: .aiflow/config.json keeps every value you set; keys a NEWER release introduced are
+# filled in from templates/.aiflow/config.defaults.json, and meta.aiflowVersion is stamped.
 # Backup rule: if a refreshed agent-definition file already differs from the incoming template
 # (i.e. you customised it, or it's genuinely changed upstream), the OLD file is renamed to
 # "<file>.bak" (never deleted) before the new one is written, and reported at the end so you can
@@ -167,6 +169,37 @@ if ($script:backedUp.Count -gt 0) {
 $verFile = Join-Path $AIFLOW_HOME 'VERSION'
 $newVer = if (Test-Path $verFile) { (Get-Content $verFile -TotalCount 1).Trim() } else { "0.0.0" }
 $cfgObj = Get-Content $CFG -Raw | ConvertFrom-Json
+
+# ---- config defaults: add keys a newer release introduced, never touch existing values ----
+# Only `init`/`change-settings` write config.json, so a key added by a release never reached an
+# already-generated project (aiflow-vxy). The merge walks the defaults and only writes what the
+# project does not already have, so an existing value always wins.
+function Add-MissingDefaults($target, $defaults) {
+  $added = 0
+  foreach ($prop in $defaults.PSObject.Properties) {
+    if ($prop.Name -eq '$comment') { continue }
+    $has = $target.PSObject.Properties.Match($prop.Name).Count -gt 0
+    if (-not $has) {
+      $target | Add-Member -NotePropertyName $prop.Name -NotePropertyValue $prop.Value
+      $added++
+    } elseif ($prop.Value -is [PSCustomObject] -and $target.($prop.Name) -is [PSCustomObject]) {
+      $added += Add-MissingDefaults $target.($prop.Name) $prop.Value
+    }
+  }
+  return $added
+}
+$defaultsPath = Join-Path $TPL '.aiflow/config.defaults.json'
+if (Test-Path $defaultsPath) {
+  try {
+    $defaults = Get-Content $defaultsPath -Raw | ConvertFrom-Json
+    if ((Add-MissingDefaults $cfgObj $defaults) -gt 0) {
+      Write-Output "   config.json: filled in defaults for keys this project did not have yet"
+    }
+  } catch {
+    [Console]::Error.WriteLine("   ! could not merge config defaults - .aiflow/config.json left untouched")
+  }
+}
+
 if ($cfgObj.PSObject.Properties.Match('meta').Count -eq 0) {
   $cfgObj | Add-Member -NotePropertyName meta -NotePropertyValue ([pscustomobject]@{})
 }

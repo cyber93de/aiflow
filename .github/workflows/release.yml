@@ -1,10 +1,11 @@
 name: Release
 
-# On every push to main: if VERSION has no matching git tag yet, build per-OS
-# archives, tag v<VERSION>, and publish a GitHub Release with the assets.
-# Bump VERSION + push  -> a release is cut. Ordinary pushes -> no-op.
+# After CI succeeds for a push to main: if VERSION is a finished version without
+# a matching GitHub Release, build per-OS archives and publish it.
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
 
 permissions:
@@ -16,10 +17,12 @@ concurrency:
 
 jobs:
   release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0   # need tags to detect existing releases
 
       - name: Read version
@@ -37,16 +40,12 @@ jobs:
         run: |
           v="${{ steps.ver.outputs.version }}"
           tag="${{ steps.ver.outputs.tag }}"
-          # main must never carry -SNAPSHOT/-HOTFIX (same rule the pre-push hook enforces) - if
-          # it transiently does (e.g. the moment a hotfix PR lands on main, before 'aiflow
-          # release --yes' strips the suffix), never cut a release for that literal string.
+          # main must never carry -SNAPSHOT/-HOTFIX (same rule the pre-push hook enforces).
           if [[ "$v" == *-SNAPSHOT || "$v" == *-HOTFIX ]]; then
             echo "exists=true"  >> "$GITHUB_OUTPUT"
-            echo "::notice::VERSION is '$v' (in-progress) — not releasing. Run 'aiflow release --yes' to cut the real release."
-          # Check the GitHub Release itself, not the raw git tag ref: 'aiflow release' creates
-          # and pushes the tag locally (git tag + push --follow-tags) BEFORE this workflow ever
-          # runs, so the tag always already exists on the very push meant to trigger the release.
-          # A tag-ref check would skip every real release; a Release-existence check doesn't.
+            echo "::notice::VERSION is '$v' (in-progress) — not publishing a release."
+          # The release action creates the tag as part of publishing, so checking only for a tag
+          # would skip the first release. Check whether the GitHub Release itself already exists.
           elif gh release view "$tag" >/dev/null 2>&1; then
             echo "exists=true"  >> "$GITHUB_OUTPUT"
             echo "::notice::Release $tag already exists — nothing to release."
@@ -58,35 +57,8 @@ jobs:
         if: steps.check.outputs.exists == 'false'
         run: |
           set -euo pipefail
-          ver="${{ steps.ver.outputs.version }}"
-          stage="aiflow-$ver"
-          # templates/ ships FULL (both .sh + .ps1) to every OS - a project may target either
-          # shell regardless of host. bin/ and lib/ are OS-scoped: windows gets only the .ps1
-          # tool scripts, linux/macos get only the .sh tool scripts - see aiflow-awr.
-          common=(README.md README.de.md LICENSE VERSION release-workflows templates)
-
-          mkdir -p "dist/win/$stage/bin" "dist/win/$stage/lib"
-          cp bin/aiflow.ps1 "dist/win/$stage/bin/"
-          cp lib/*.ps1 "dist/win/$stage/lib/"
-          cp install.ps1 "dist/win/$stage/"
-          cp -r "${common[@]}" "dist/win/$stage/"
-
-          mkdir -p "dist/posix/$stage/bin" "dist/posix/$stage/lib"
-          cp bin/aiflow "dist/posix/$stage/bin/"
-          cp lib/*.sh "dist/posix/$stage/lib/"
-          cp install.sh "dist/posix/$stage/"
-          cp -r "${common[@]}" "dist/posix/$stage/"
-
-          mkdir -p dist/out
-          cd dist
           command -v zip >/dev/null 2>&1 || sudo apt-get -y -q install zip
-          tar -czf "out/aiflow-$ver-linux.tar.gz" -C posix "$stage"
-          tar -czf "out/aiflow-$ver-macos.tar.gz" -C posix "$stage"
-          (cd win && zip -qr "../out/aiflow-$ver-windows.zip" "$stage")
-          cd out
-          sha256sum aiflow-"$ver"-linux.tar.gz aiflow-"$ver"-macos.tar.gz aiflow-"$ver"-windows.zip \
-            > "aiflow-$ver-SHA256SUMS.txt"
-          ls -la
+          bash .github/scripts/build-archives.sh
 
       - name: Publish GitHub Release
         if: steps.check.outputs.exists == 'false'

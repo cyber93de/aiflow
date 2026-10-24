@@ -30,7 +30,7 @@ opinionated setup.
 
 > 🇩🇪 Diese Anleitung gibt es auch auf **[Deutsch → README.de.md](README.de.md)**.
 
-**Version 0.8.0 · MIT License · [Changelog](CHANGELOG.md) ·
+**Version 0.9.0 · MIT License · [Changelog](CHANGELOG.md) ·
 📖 [Documentation site](https://cyber93de.github.io/aiflow/)**
 
 ---
@@ -691,19 +691,17 @@ production-ready on the first pass needs no re-prompting and no rework — that 
 
 - **`.github/workflows/ci.yml`** — validates the toolchain on push/PR: `bash -n` on all scripts,
   shellcheck (advisory), JSON validation of templates, PowerShell parse, and a **dry-run build** of
-  the per-OS archives (uploaded as an artifact).
-- **`.github/workflows/release.yml`** — on every push to `main`, if `VERSION` has no matching tag it
-  builds per-OS archives (`linux.tar.gz`, `macos.tar.gz`, `windows.zip` + SHA256SUMS), tags
-  `v<VERSION>`, and publishes a GitHub Release. **Bump `VERSION`, push → a release is cut.**
+  the same Linux, macOS and Windows archives as the release workflow (all uploaded as artifacts).
+- **`.github/workflows/release.yml`** — after CI succeeds for a push to `main`, if `VERSION` is a
+  finished version without an existing GitHub Release, it builds per-OS archives
+  (`linux.tar.gz`, `macos.tar.gz`, `windows.zip` + SHA256SUMS) and publishes the release.
 - **Projects** also get `.github/workflows/ci.yml` (detects Node/Python/Go/Dart → format + tests)
   and `.github/workflows/agent.yml` (runs the Ralph loop in CI on manual dispatch, the `agent` issue
   label, or nightly; auth from `ANTHROPIC_API_KEY` **or** `CLAUDE_CODE_OAUTH_TOKEN` repo secrets).
 
-Build locally the same way CI does:
+Build locally the same three platform archives CI and release use (requires `zip`):
 ```bash
-ver=$(cat VERSION); stage="aiflow-$ver"
-mkdir -p "dist/$stage" && cp -r bin lib templates install.sh install.ps1 README*.md LICENSE VERSION "dist/$stage/"
-( cd dist && tar -czf "aiflow-$ver-linux.tar.gz" "$stage" )
+bash .github/scripts/build-archives.sh
 ```
 
 ---

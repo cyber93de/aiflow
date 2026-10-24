@@ -1,5 +1,6 @@
 # local install artifacts
 bin/aiflow.cmd
+dist/
 # never commit a real .env if one lands here
 .env
 

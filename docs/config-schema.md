@@ -77,6 +77,12 @@ live in `.env`.
 | `dev.os` | which interpreter (`bash`/PowerShell) the rendered Claude Code hook commands use |
 | `meta.aiflowVersion` | compared against the installed CLI on every `aiflow` run; prompts `aiflow project-update` when behind |
 
+Keys are only ever written by `aiflow init` and `aiflow change-settings`. `aiflow
+project-update` additionally fills in keys a **newer release introduced** (from
+`templates/.aiflow/config.defaults.json`) — a value you set yourself always wins, and
+`meta.aiflowVersion` is stamped. Nothing else in the file is touched.
+
+
 ## Back-compat
 
 A legacy `.vcs` **string** (old host name) is still read as a fallback for `remote.type`.

@@ -3,7 +3,7 @@
 > Self-contained explanation of what aiflow is and how it works, for AI assistants and context7.
 > aiflow turns any repository into a governed, AI-driven software-delivery pipeline — agent-agnostic
 > across Claude Code, GitHub Copilot, and OpenAI Codex CLI.
-> Version 0.8.0 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
+> Version 0.9.0 · MIT · https://github.com/Cyber93de/aiflow · docs https://cyber93de.github.io/aiflow/
 
 ## What aiflow is
 A cross-platform CLI (POSIX bash + a Windows PowerShell launcher) that bootstraps and governs
@@ -260,8 +260,12 @@ care (B1-B8 cautionary guidance): they may be shared by other projects and must 
 to older app versions — never restructure/re-key/re-type/merge/split/normalise as a side effect;
 note improvement potential as recommendation beads; commissioned schema changes are high-risk work
 (external-consumer check, backward-compat/rollback plan, versioned migration). Uncommissioned
-structural changes in a feature diff = review BLOCKER. Branching models: simple | gitflow | none, PR-only, auto-release, SemVer/CalVer; enforced by
-hooks + `aiflow protect` + `aiflow release`. Gitflow: `feature/*`/`bugfix/*` from develop only,
+structural changes in a feature diff = review BLOCKER. Branching models: simple | gitflow | none,
+PR-only, optional release tooling, SemVer/CalVer; enforced by
+hooks + `aiflow protect`. Every gitflow task starts on `feature/*`/`bugfix/*` from develop,
+validates the task branch and merges to develop; CI builds every pushed branch. Finishing a task
+does not run `aiflow release` or promote to main; main promotion and publishing are separate,
+explicitly requested maintainer operations. Gitflow permits `hotfix/*` from main only for urgent fixes;
 `hotfix/*` from main (`aiflow hotfix <name>`, versions `X.Y.(Z+1)-HOTFIX`); only develop, hotfix/*,
 or chore/* may ever reach main; chore/* never releases; main may never carry a
 `-SNAPSHOT`/`-HOTFIX` version; releasing always needs explicit human confirmation

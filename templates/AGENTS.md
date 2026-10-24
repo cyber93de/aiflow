@@ -439,169 +439,34 @@ especially "never merge to `main` or release without explicit confirmation" — 
 
 ## 5. Agents (Claude Code only)
 
-Specialised subagents live in `.claude/agents/` and are dispatched automatically or via
-slash-commands — **this section only applies when Claude Code is driving.** GitHub Copilot and
-OpenAI Codex CLI have no equivalent subagent-dispatch mechanism today: follow the same roles and
-gates yourself, in the same order, reading the referenced section for each.
+Claude Code dispatches specialists from `.claude/agents/` and slash commands. Copilot and Codex do not
+have equivalent automatic dispatch: perform the same steps manually in order. For every task,
+plan, check architecture, implement, test risky changes, review, then close the bead. Keep handoff
+state in the bead so it survives context resets.
 
-### The network
+- **orchestrator** routes work; it does not implement. **planner** decomposes work into beads,
+  dependencies and acceptance criteria. **architect** records system decisions in ADR/arc42 and
+  fills §2b. **onboarder** maps an existing project into memory, this file and arc42.
+- **implementer** analyzes the approach before coding, follows architecture and quality gates, and
+  hands work to the reviewer. **tester** covers negative, boundary and failure cases for risky work.
+  **reviewer** checks architecture, design, risks and §3a gates; it returns changes or records PASS.
+- Audit roles are read-only unless stated: **security-advisor**, **quality-check**,
+  **dependency-auditor**, **test-gap-advisor**, **performance-advisor**, **docs-sync**,
+  **accessibility-checker**, and **requirements-check** report findings as Beads issues. The
+  **modernization-advisor** writes a report for the architect and does not change code or beads.
 
-`/orchestrate` is the entry point for anything that isn't a single obvious edit. The
-**orchestrator** owns the route; every step is executed by exactly one specialist, and every
-handover goes **through the bead** (`bd update <id> --notes "route: …"`), never through session
-context — a route that only exists in the conversation dies at the next `/compact`.
+Claude Code skills live in `.claude/skills/`; slash commands live in `.claude/commands/`. Skills
+provide reusable checklists, while agents define roles and handoffs. Rules that apply on every task
+remain in this file. Copilot and Codex must read relevant skill files manually. Stack skills cover
+embedded, mobile, web and backend; architecture skills cover API, messaging, storage and cloud;
+cross-cutting skills cover security, SEO, YAGNI and memory setup. The descriptions in each
+`SKILL.md` define their Claude trigger.
 
-```
-              user / VCS issue / goal
-                        │
-                  [orchestrator] ◄──────────────────────────┐
-                        │  (routes, never implements)       │
-        ┌───────────────┼───────────────┐                   │
-        ▼               ▼               ▼                   │
-   [onboarder]     [planner]      [architect]                │
-   codebase map   beads + AC +    ADR + arc42                │
-        │         agent per bead   (Rule zero: §2b)          │
-        └──────────────►│◄──────────────┘                   │
-                        ▼                                    │
-                 [implementer] ──► [tester] (risky changes)   │
-                        │               │                     │
-                        ▼◄──────────────┘                     │
-                   [reviewer] ── PASS ──► close bead ─────────┘
-                        └── CHANGES REQUIRED ──► implementer
-
-  manual, outside the loop — file beads that re-enter at the top:
-  security-advisor · quality-check · dependency-auditor · test-gap-advisor
-  performance-advisor · docs-sync · accessibility-checker · requirements-check
-  modernization-advisor (report only → architect)
-```
-
-| Agent | Receives from | Hands to |
-|-------|---------------|----------|
-| **orchestrator** | user, `/orchestrate` | planner · architect · onboarder · implementer · tester · reviewer |
-| **planner** | orchestrator, `/plan-epic`, `/decompose`, `/intake-issue` | orchestrator (handoff block: ready beads + agent per bead + order) |
-| **architect** | orchestrator, planner, implementer, reviewer, `/arch`, modernization report | orchestrator (ADR + arc42 + bead list) |
-| **onboarder** | orchestrator, `aiflow init` (brownfield), `/onboard` | architect (actual structure) + everyone via memory/arc42 |
-| **implementer** | orchestrator, `/implement` | reviewer (always); tester first when risky; back to architect/planner/user when blocked |
-| **tester** | orchestrator, implementer, reviewer | reviewer; bugs back to implementer |
-| **reviewer** | orchestrator, implementer, `/review-ac` | PASS → close · CHANGES REQUIRED → implementer · `[suggestion]` beads |
-| **audit agents** | manual trigger only | Beads (prefixed), which re-enter via orchestrator/planner |
-
-Each agent file repeats its own edges in a **"Net & handoffs"** section, so an agent started
-standalone still knows where its output goes.
-
-**Without Claude Code** (Copilot/Codex, or a human): there is no automatic dispatch, but the route
-is the same — plan, check architecture fit, implement, test if risky, review, close. Walk it
-manually in that order and read the section referenced for each step.
-
-- **orchestrator** — entry point and dispatcher: decides which specialist handles each step, one at
-  a time, and routes the result onward. Writes routing state into the bead. Never implements.
-- **architect** — system design, arc42 docs, ADRs, trade-offs. Read-only-ish. Establishes §2b +
-  an ADR when a project still has no architecture rules ("Rule zero").
-- **planner** — break an epic/issue into beads with dependencies + AC, and hand the ordered set
-  back to the orchestrator with a recommended agent per bead.
-- **implementer** — senior engineer for one ready bead: strategy-first pre-analysis, architecture
-  fit, proven frameworks/patterns over self-built, quality gates §3a/§3b, with tests.
-- **reviewer** — architect **and** quality gate in one: architecture/design/risk review plus the
-  objective §3a checklist; verdict PASS (release) or CHANGES REQUIRED (back to implementer);
-  suggestions persisted as beads. Does not write features.
-- **tester** — test/QA engineer: negative/edge/boundary/exception/invalid-input tests plus test
-  QUALITY (assertions, determinism, independence). Runs when the pre-analysis flags high
-  risk/complexity, or on demand.
-- **security-advisor** — manually triggered (`aiflow security-check` / `/security-check`). Scans the
-  whole project and files Beads issues per finding, prioritised by severity, prefixed `[security-advisor]`.
-- **requirements-check** — manually triggered (`aiflow requirements-check` / `/requirements-check`).
-  Advisory only: grades issue description quality/completeness against the architecture and reports
-  gaps. Never changes issues or code.
-- **quality-check** — manually triggered (`aiflow quality-check` / `/quality-check`). Audits the
-  codebase for refactoring needs (dead code, now-simplifiable code, duplication, complexity) and
-  files Beads issues prefixed `[technical issue]` for the PO to triage. Read-only on code.
-- **dependency-auditor** — `aiflow dependency-check`. Vulns/outdated/unused/license → `[dependency]` Beads.
-- **test-gap-advisor** — `aiflow test-gap`. Untested critical paths → `[test gap]` Beads.
-- **performance-advisor** — `aiflow perf-check`. Perf hotspots → `[performance]` Beads.
-- **docs-sync** — `aiflow docs-check`. Doc/code drift → `[docs]` Beads.
-- **accessibility-checker** — `aiflow a11y-check` / `/a11y-check`. Strict WCAG 2.2 AA audit of all
-  UI surfaces → `[accessibility]` Beads; recommends an automated a11y tool for the E2E suite
-  (axe-core/Pa11y/Lighthouse CI). Not part of the delivery loop.
-- **modernization-advisor** — `aiflow modernize-check` / `/modernize-check`. Walks the whole
-  brownfield codebase and proposes modernisation concepts (microservices, REST/cloud-native,
-  git over svn, supported stacks, missing unit/BDD/E2E test frameworks) as a **report** in
-  `.aiflow/modernization-report.md` for the architect to review — no code changes, no beads.
-  Not part of the delivery loop.
-- **onboarder** — `aiflow onboard`. Learns an existing codebase into memory + this file + arc42
-  (writes docs/memory only). Plus slash-commands `/explain <path>` and `/standup`.
-
-Customise them by editing the markdown in `.claude/agents/` (see README.md §8 "Customising").
-`aiflow` CLI commands (`aiflow security-check`, `aiflow quality-check`, …) are agent-agnostic
-entry points — they work from any shell regardless of which coding agent invoked them; only the
-automatic in-session dispatch (subagents, slash-commands) is Claude Code-specific.
-
-### Skills
-
-**Skills** (`.claude/skills/<name>/SKILL.md`, Claude Code only) are a different mechanism from
-slash-commands: Claude Code matches a skill's `description` against the current task and offers
-to run it automatically, rather than waiting for an explicit `/command`.
-
-**Skill or agent?** An **agent** is a *role* — who acts, with what authority, in what order, what
-it hands to whom. A **skill** is *knowledge* — a checklist or a set of trade-offs that several
-roles need (the implementer writing an endpoint and the reviewer checking it should read the same
-list). Both may exist for one topic; the same-named agent then uses the skill instead of restating
-it. Rules that must fire on **every** task — the §2 architecture rules and the §3a/§3b/§3c quality
-gates — stay inline in this file: a skill is offered by pattern match, which is the wrong mechanism
-for something that must never be missed, and Copilot/Codex get no auto-offer at all.
-
-**Technology stacks** — layering, toolchain, test pyramid and the typical findings per platform:
-- **stack-embedded** — C/C++ firmware: HAL/driver separation, no allocation after init, ISR
-  discipline, watchdog, deterministic timing, host tests against a mocked HAL.
-- **stack-mobile** — Flutter/Dart, Kotlin/Android, Swift/iOS: UI→presentation→domain←data,
-  one state-management choice, process death, offline/sync, Keystore/Keychain, store constraints.
-- **stack-web-frontend** — Angular/React/Vue: feature slices, server state vs client state,
-  DTO→view-model mapping, XSS and token handling, Core Web Vitals budgets, i18n, a11y.
-- **stack-backend** — Spring/Quarkus/Jakarta, .NET, Rust, Node, Go, Python: hexagonal layering with
-  ports, transaction boundaries, 12-factor config, resilience, observability, FOSS-first choices.
-
-**Integration & data architecture:**
-- **api-design** — REST (§3b) versioning, status codes, pagination, idempotency, `problem+json`,
-  OpenAPI, `.http` files; when SOAP is legitimate and how to migrate off it; GraphQL/gRPC trade-offs.
-- **messaging-events** — when async beats synchronous; Kafka/RabbitMQ/NATS/SQS; at-least-once +
-  idempotent consumers; transactional outbox; ordering; schema evolution; DLQs; sagas.
-- **data-storage** — relational default (§3c), when NoSQL is justified, embedded DBs, Redis as a
-  cache with real invalidation, Elasticsearch as a derived read layer, indexing and migrations.
-- **cloud-native** — container images, 12-factor, K8s probes/limits/rollout/secrets, EC2 immutable
-  images, modular monolith vs microservices, observability and cost.
-
-**Cross-cutting:**
-- **security** — OWASP Top 10 as a review raster + ASVS levels, IAM least privilege (roles,
-  short-lived credentials, rotation), API authN/authZ per §3b, secrets, crypto, supply chain
-  (pinning, scanning, never `curl | sh` unverified). The **security-advisor** uses this same raster.
-- **seo-optimization** — SEO for any web-facing project (HTML, GitHub Pages, static sites,
-  Next.js/Astro/Hugo/Jekyll/VuePress/VitePress/React/Vue/Svelte/Angular/…): meta tags, Open
-  Graph/Twitter Cards, JSON-LD, robots.txt/sitemap.xml, canonical URLs, Core Web Vitals. Never
-  applies non-trivial changes without confirming first; ends with an SEO report.
-- **ponytail** — a YAGNI decision ladder (does it need to exist? already in the codebase? stdlib?
-  native platform feature? installed dependency? a one-liner? only then write it) applied before
-  any new code/dependency/abstraction, plus `/ponytail-review` to audit a diff for
-  over-engineering. Toggled by `.aiflow/config.json → ponytail.enabled`/`.mode`
-  (`full`/`lite`/`ultra`, default **off**); when off the skill is present but inert.
-- **memory-setup** — the full memory/context-routing picture (§8 has the short version + toggle).
-
-Copilot/Codex have no auto-offer mechanism for any of these — read the relevant `SKILL.md` directly
-as a manual checklist (Codex reaches it via this file's pointer; Copilot: see the summary in
-`.github/copilot-instructions.md`). Add more by dropping a `<name>/SKILL.md` into
-`.claude/skills/`; the **description is the trigger**, so write it as "invoke when …" plus the
-words that should match.
-
-**Frontmatter must be valid YAML — nothing warns you if it isn't.** An agent whose frontmatter
-fails to parse is **silently dropped** from the roster; a command or skill silently falls back to
-its body text as the description, so it stops matching the trigger words you wrote. The usual
-cause is an unquoted `description:` containing `": "` — YAML reads that as a nested mapping key.
-Quote any description containing a colon (`description: "… two hats: architect …"`, single quotes
-if the text itself contains double quotes). The `pre-commit` hook checks this whenever you stage
-an agent/command/skill file, and CI enforces it on every push
-(`.github/scripts/check-frontmatter.py`). The hook needs `python3`/`python` + PyYAML; without them
-it says so and skips, so CI stays the backstop.
+Keep agent/command/skill frontmatter valid YAML. Quote descriptions containing `: `; malformed
+frontmatter silently removes an item from Claude's roster. The pre-commit hook and
+`.github/scripts/check-frontmatter.py` validate it when Python and PyYAML are available.
 
 ---
-
 ## 6. Ralph loop (autonomous iteration — agent-agnostic)
 
 For larger tasks, run the **Ralph loop** — the agent iterates on the same task until it emits a
@@ -639,27 +504,33 @@ on the task yourself until AC are met, checking back against §4 at each step.
   `commit-msg` git hook.
 - The `pre-commit` hook enforces Google-style format + lint + unit tests. Do not bypass it.
 - Never commit `.env` or secrets. Never `--no-verify`. Never force-push shared branches.
-- Branch per task: `task/bd-<id>-short-slug` (unless the branching model defines a type — then use it).
-- **Branching model:** follow `docs/branching.md` / `.aiflow/branching.json` — allowed branch
-  sources, merge directions, PR rules, and release/versioning. Enforced by the `pre-push` hook
-  (git-level, works no matter which agent or human pushes); releases via `aiflow release`. Do not
-  bypass it.
+- **Start every task on a task branch.** Check `git status` and the current branch first. For
+  gitflow, update `develop`, then create `feature/<slug>` (or `bugfix/<slug>`) from `develop`;
+  for docs/CI-only work use `chore/<slug>`. Never implement a feature directly on `develop` or
+  `main`. Do not switch branches with uncommitted user changes.
+- Codex and other agents do not have Claude's queue/stop hooks: when queue mode is enabled, run
+  `aiflow next` after closing a bead and apply this same branch/build/review flow to each task.
+- **Finish every task through the configured flow:** run the project's build, tests and checks on
+  the task branch; commit the change; open/merge a PR into `develop` (or follow the repo's stated
+  local merge policy); then validate `develop`. Promote `develop` to `main` only when the user or
+  repository explicitly requests it. Never skip a branch or target `main` with feature work.
+- **Builds and versions:** feature/PR and develop builds are validation or snapshot builds. They
+  must not tag, publish a release, rewrite `VERSION`, or promote themselves to `main`. Keep the
+  project's snapshot convention on `develop` if configured; do not strip `-SNAPSHOT` or bump a
+  release version as part of ordinary task work. There is no `aiflow release` step in the agent
+  workflow. A release policy, if the project has one, is handled separately by its maintainers.
+- **Branching model:** follow `docs/branching.md` / `.aiflow/branching.json` for allowed sources,
+  merge directions and PR rules. The local pre-push hook enforces some rules; it does not replace
+  checking the intended source and target. Never bypass governance.
 - **gitflow model — picking a branch type:**
   - `feature/*`, `bugfix/*` — branch from `develop`, merge back to `develop`. Never target `main`.
   - `chore/*` — docs-only changes and CI/workflow-file-only changes (`.github/workflows/**`)
     count as `chore/*`, not `feature/*`, even if the diff is substantial. May target `develop`
     or `main`. Never triggers a release.
-  - `hotfix/*` — for an urgent production fix only. Start with `aiflow hotfix <name>` (branches
-    off `main`, bumps `VERSION` to `X.Y.(Z+1)-HOTFIX`). Merges to `main` (triggers a patch
-    release) and is also merged into `develop` so the fix isn't lost there.
-- **`main` never carries an in-progress version.** Only `develop` carries `-SNAPSHOT` and only
-  `hotfix/*` carries `-HOTFIX`; `aiflow release` strips the suffix before it lands on `main`.
-  A pre-push guard rejects any push to `main` with a `-SNAPSHOT`/`-HOTFIX` version.
-- **Releasing is never automatic.** A release is only cut by merging `develop` → `main` (minor,
-  strips `-SNAPSHOT`) or `hotfix/*` → `main` (patch, strips `-HOTFIX`); `chore/*` → `main`
-  never releases. Always ask the user for explicit confirmation before merging into `main` or
-  running `aiflow release --yes` — never decide on your own that "it's time to release." This
-  applies to every agent equally — Claude Code, Copilot, and Codex CLI alike.
+  - `hotfix/*` — only for urgent production fixes; branch from `main`, then merge the fix to
+    `main` and back to `develop` according to `docs/branching.md`. Do not bump versions or publish.
+- Never merge to `main` without an explicit user or repository instruction. This applies equally
+  to Claude Code, Copilot and Codex CLI.
 - End agent-authored commit messages with a trailer naming whichever agent made the commit, e.g.
   `Co-Authored-By: Claude <noreply@anthropic.com>`, `Co-Authored-By: GitHub Copilot
   <noreply@github.com>`, or `Co-Authored-By: OpenAI Codex <noreply@openai.com>`.
@@ -685,66 +556,22 @@ directly, or the live routing table in `.claude/memory/memory-policy.md` once me
 
 ## 9. Communication & token budget
 
-- **Output style:** caveman by default (terse; mode in `.aiflow/config.json`) **(Claude Code
-  only)**. **Code, commits, PRs, and security warnings stay normal prose.** Toggle off with
-  `AIFLOW_CAVEMAN=off`.
-- **Keep context lean:** route via **graphify** (structure) + **cocoindex-code** (semantic RAG)
-  before reading whole files, on any agent that has them wired as MCP servers. See §8 +
-  `.claude/memory/memory-policy.md`.
-- **Compact regularly (`/compact`) (Claude Code only).** A full context window costs tokens on
-  *every* turn and degrades reasoning. The durable knowledge lives in Beads, `.claude/memory/`,
-  `docs/architecture/` and this file — the raw transcript that produced it does not. Compact:
-  - **right after `aiflow init`** on a greenfield project — the Q&A already wrote the aim,
-    the stack, and the architecture into config + memory; the interview transcript is dead weight;
-  - **right after the onboarder** on a brownfield project — likewise, everything it learned is
-    now in `.claude/memory/codebase-map.md`, AGENTS.md §1/§2 and arc42;
-  - **after every closed bead**, before picking up the next one;
-  - **before a long Ralph run** or any multi-file refactor, so the loop starts with headroom.
-
-  Before compacting, make sure what matters is persisted (bead notes/design, memory file, ADR) —
-  compaction is not a place to store anything. Copilot/Codex have no `/compact`: start a fresh
-  thread at the same four points, and re-read `AGENTS.md` + the bead instead.
-- **Route by difficulty:** trivial/background steps may run on cheap/local models via
-  `aiflow shell --router` **(Claude Code only)**; reserve top models for hard reasoning. Measure
-  with `aiflow cost` (Claude Code usage only).
-- **Model tiers per activity (MANDATORY).** Thinking-heavy work gets a strong model; mechanical
-  work does not. The rule is about the *activity*, not the agent's name:
-
-  | Activity | Tier | Why |
-  |----------|------|-----|
-  | Architecture, ADRs, concept work, planning/decomposition, **review**, security analysis, modernisation | **reasoning** — Fable 5 / Opus 5 | Wrong calls here are expensive and long-lived; they need real trade-off reasoning. |
-  | Implementation, unit tests, integration/E2E tests, refactoring, quality/a11y audits | **implementation** — Sonnet 5 | Bounded, well-specified work with an explicit AC to check against. |
-  | CI/CD wiring, docs drift, dependency scans, perf scans, test-gap scans, codebase mapping | **mechanical** — Haiku 4.5 | Pattern-matching and enumeration; no design judgement involved. |
-
-  Escalate a tier when a task turns out harder than it looked (a "simple" fix that touches the
-  architecture is architecture work) — never silently downgrade one.
-- **How the tiers are applied** — a Claude-Code-native mechanism, separate from the router above
-  (no external tool, always available). `.aiflow/config.json → modelRouting.enabled` (default
-  **on**); `aiflow apply` stamps the tier's model into each subagent's frontmatter:
-  - **reasoning** → `architect`, `planner`, `reviewer`, `security-advisor`, `requirements-check`,
-    `modernization-advisor`, `orchestrator`
-  - **implementation** → `implementer`, `tester`, `quality-check`, `accessibility-checker`
-  - **mechanical** → `docs-sync`, `test-gap-advisor`, `dependency-auditor`, `performance-advisor`,
-    `onboarder`
-
-  Override any of it in `.aiflow/config.json → modelRouting.tiers` (per-tier model id) and
-  `modelRouting.agents` (per-agent tier). With `modelRouting.enabled: false` every subagent runs
-  on the session's model. Toggle via `aiflow change-settings` **(Claude Code only)**. Copilot and
-  Codex: pick the equivalent model manually per thread and keep it stable within one thread.
-- **Ponytail** — `.aiflow/config.json → ponytail.enabled`/`.mode` (default off). When on, the
-  **ponytail** skill (§5) applies a YAGNI decision ladder before new code/dependencies/
-  abstractions; `/ponytail-review` audits a diff for over-engineering regardless of the toggle.
-- CLI output is filtered by **rtk** before reaching context **(Claude Code only)** —
-  errors/diffs are preserved.
-- **Copilot:** apply the [token-optimization guide](https://github.com/olivomarco/github-copilot-token-optimization)'s
-  techniques baked into `.github/copilot-instructions.md` — terse output, "landmines only"
-  context files, stable model/tool-set per thread.
-- **Codex:** when `codexsaver.enabled`, [CodexSaver](https://github.com/fendouai/CodexSaver)
-  routes cheap/bounded work (docs, tests, explanation, search) to a cheaper worker automatically
-  via MCP — Codex stays responsible for architecture, security, and final review.
+- Be concise, except for code, commits, PRs and security warnings, which require clear full prose.
+  Claude Code's caveman output mode is optional (`AIFLOW_CAVEMAN=off`).
+- Use graphify for structure and cocoindex-code for semantic search when available; avoid loading
+  whole files before targeted search. See §8 and `.claude/memory/memory-policy.md`.
+- Claude Code users should compact after init/onboarding, each closed bead and before long Ralph or
+  refactor work. Persist decisions in Beads, memory or ADRs first. Codex/Copilot users should start
+  a fresh thread at those points and reread this file and the active bead.
+- Match model effort to the work: strongest reasoning for architecture, planning, review and
+  security; implementation models for bounded coding and tests; lighter models for scans, docs
+  drift and mapping. Escalate when scope grows. Claude routing is configured in
+  `.aiflow/config.json`; Codex/Copilot users choose an equivalent model manually.
+- The optional ponytail skill checks new code/dependencies for YAGNI. rtk filters command output
+  for Claude Code; errors and diffs must remain visible. Codex/Copilot should keep output focused
+  and use available code search/context tools.
 
 ---
-
 ## 10. Definition of Done (quick checklist)
 
 - [ ] Acceptance criteria met and verified

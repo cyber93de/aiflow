@@ -57,11 +57,10 @@ echo "  branching: $MODEL (strict=$STRICT prOnly=$PRONLY autoRelease=$AUTOREL ve
   echo
   echo "- **Permanent branches:** main, develop"
   echo "- **The mainline is named \`main\`** — not \`master\`. Every rule below, the pre-push hook,"
-  echo "  \`aiflow release\` and \`aiflow hotfix\` reference \`main\` by name. A repo still on \`master\`"
+  echo "  \`aiflow hotfix\` references \`main\` by name. A repo still on \`master\`"
   echo "  is renamed by \`aiflow apply\` (\`git branch -m master main\`); push it and switch the"
   echo "  default branch on your remote, then delete the old \`master\`."
-  echo "- **Strict rules:** $STRICT   **PR-only:** $PRONLY   **Auto-release:** $AUTOREL   **chore/*:** $CHORE"
-  [ "$AUTOREL" = true ] && echo "- **Versioning:** $VER   **Release tags:** $TAGS"
+  echo "- **Strict rules:** $STRICT   **PR-only:** $PRONLY   **chore/*:** $CHORE"
   echo
   echo "## Allowed branch creation"
   jq -r '.allowedCreations[] | "- \(.type) ← from: \(.from|join(", "))"' .aiflow/branching.json
@@ -81,23 +80,12 @@ echo "  branching: $MODEL (strict=$STRICT prOnly=$PRONLY autoRelease=$AUTOREL ve
     echo "- No direct push to main/develop; merge only via PR; PR must pass validation."
     echo
   fi
-  if [ "$AUTOREL" = true ]; then
-    echo "## Releases"
-    echo "- A merge of \`develop\` → \`main\` **or** \`hotfix/*\` → \`main\` creates a release (\`aiflow release\`)."
-    echo "- A merge of \`chore/*\` → \`main\` never triggers a release."
-    echo "- **Releasing is never automatic** — always ask the user before running \`aiflow release\` / merging into main."
-    if [ "$VER" = calver ]; then
-      echo "- **CalVer** \`YYYY.MM\`: release uses the current calendar version; develop is bumped to the next."
-    else
-      echo "- **SemVer** \`MAJOR.MINOR.PATCH\`, in-progress work always carries a suffix; \`main\` never does:"
-      echo "  - develop carries \`X.Y.0-SNAPSHOT\`; on release → \`X.Y.0\` (minor release)."
-      echo "  - \`aiflow hotfix <name>\` branches off main and bumps to \`X.Y.(Z+1)-HOTFIX\`; on release → \`X.Y.(Z+1)\` (patch release)."
-      echo "  - either way, develop is then bumped to \`X.(Y+1).0-SNAPSHOT\`, and hotfix commits are also merged into develop so the fix isn't lost."
-      echo "  - a pre-push guard rejects any push to \`main\` whose \`VERSION\` still ends in \`-SNAPSHOT\`/\`-HOTFIX\`."
-    fi
-    [ "$TAGS" = true ] && echo "- A git tag is created on each release ($([ "$VER" = calver ] && echo '{version}' || echo 'v{version}'))."
-    echo
-  fi
+  echo "## Work and build flow"
+  echo "- Start each feature/bugfix from develop; build and validate it, then merge it into develop."
+  echo "- Snapshot builds validate changes; they do not edit VERSION, tag, or publish a release."
+  echo "- Promote develop to main only when explicitly requested, after the full checks pass."
+  echo "- Ordinary agent work has no aiflow release step; maintainers handle publishing separately."
+  echo
   echo "Enforced locally by the \`pre-push\` git hook; enforce on the server with branch protection (\`aiflow protect\`)."
 } > docs/branching.md
 

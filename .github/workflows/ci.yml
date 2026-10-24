@@ -4,7 +4,7 @@ name: CI
 # Keeps the bootstrapper installable and the generated configs well-formed.
 on:
   push:
-    branches: [main, develop]
+    branches: ['**']
   pull_request:
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
           fail=0
           while IFS= read -r f; do
             bash -n "$f" || { echo "::error file=$f::bash syntax error"; fail=1; }
-          done < <(find bin lib templates install.sh -type f \
+          done < <(find bin lib templates .github/scripts install.sh -type f \
                      \( -name '*.sh' -o -name 'aiflow' -o -path '*/.githooks/*' \) 2>/dev/null)
           exit $fail
 
@@ -332,16 +332,10 @@ jobs:
       - name: Stage + package (no publish)
         run: |
           set -euo pipefail
-          ver="$(tr -d ' \t\r\n' < VERSION)"
-          stage="aiflow-$ver"; mkdir -p "dist/$stage"
-          cp -r bin lib templates install.sh install.ps1 README.md README.de.md LICENSE VERSION "dist/$stage/"
-          cd dist
           command -v zip >/dev/null 2>&1 || sudo apt-get -y -q install zip
-          tar -czf "aiflow-$ver-linux.tar.gz" "$stage"
-          zip -qr "aiflow-$ver-windows.zip" "$stage"
-          ls -la
+          bash .github/scripts/build-archives.sh
       - uses: actions/upload-artifact@v7
         with:
           name: aiflow-dist
-          path: dist/*.tar.gz
+          path: dist/out/*
           retention-days: 7

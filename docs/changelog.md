@@ -3,7 +3,7 @@ layout: default
 title: Changelog
 parent: Support
 nav_order: 4
-description: "aiflow changelog and release history: 0.8.0 orchestrated agent network, binding architecture rules, model tiers, Windows/WSL prerequisites; 0.7.0 queue mode (Beads as a work queue), four self-testing CI guards, hardened git hooks, project-update reach; 0.6.0 model routing for audit subagents, ponytail YAGNI skill, memory-setup skill; 0.5.0 native PowerShell (no more Git Bash on Windows) + OS-scoped release archives; 0.4.0 real multi-agent tooling (CLI installs, Copilot token-optimization, CodexSaver, open-ralph-wiggum); 0.3.0 agent-agnostic core + gitflow automation + Skills; 0.2.0 cross-platform scripts + self-update; 0.1.1 quality-gate release; and the 0.1.0 first public release."
+description: "aiflow changelog and release history: 0.9.0 shared cross-platform archive builder, all-branch CI, clearer Codex workflow and smaller AGENTS.md; 0.8.0 orchestrated agent network, binding architecture rules, model tiers, Windows/WSL prerequisites; 0.7.0 queue mode, CI guards, hardened git hooks, project-update reach; earlier releases added native PowerShell, multi-agent tooling, gitflow automation, skills and self-update."
 ---
 
 # Changelog
@@ -12,6 +12,17 @@ description: "aiflow changelog and release history: 0.8.0 orchestrated agent net
 aiflow follows [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/). The authoritative, always-current changelog lives in the
 repository: **[CHANGELOG.md](https://github.com/Cyber93de/aiflow/blob/main/CHANGELOG.md)**.
+
+## 0.9.0 — consistent gitflow work and verified platform archives
+
+- Every task branch now runs CI on push. Feature work starts from `develop` and returns there;
+  promotion to `main` remains a separate maintainer action.
+- CI and release jobs share one archive builder, so Linux, macOS and Windows packages use the same
+  OS-specific layout. CI validates all three and uploads each archive and checksum file.
+- Generated `AGENTS.md` is under 40 KB and explains how Codex follows the shared workflow without
+  Claude's automatic subagents and hooks.
+- The self-hosted project version metadata is current, so the CLI no longer offers a redundant
+  template update on every command.
 
 ## 0.8.0 — an orchestrated agent network, binding architecture rules, Windows/WSL
 
